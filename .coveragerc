@@ -1,0 +1,10 @@
+[run]
+# Exclude specific files or directories from coverage
+omit =
+    */migrations/*
+    */tests/*
+    */admin.py
+    */apps.py
+    */__init__.py
+    */openapi/*
+    manage.py
