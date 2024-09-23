@@ -21,7 +21,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-ROOT_URLCONF = "accounts.urls"
+ROOT_URLCONF = "auctions.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -37,7 +37,7 @@ TEMPLATES = [
         },
     },
 ]
-WSGI_APPLICATION = "accounts.wsgi.application"
+WSGI_APPLICATION = "auctions.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 DATABASES = {
