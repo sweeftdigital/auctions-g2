@@ -15,6 +15,9 @@ services:
       - .env
     depends_on:
       - postgres
+      - auctions_redis
+    networks:
+      - micro-network
 
   postgres:
     container_name: auctions_postgres
@@ -27,5 +30,16 @@ services:
     ports:
       - "5433:5433"
 
+  auctions_redis:
+    container_name: auctions_redis
+    image: redis:alpine
+    restart: always
+    ports:
+      - "6380:6380"
+
 volumes:
   postgres_data:
+
+networks:
+  micro-network:
+    external: true
