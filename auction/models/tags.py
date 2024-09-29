@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -91,6 +92,11 @@ class TagChoices(models.TextChoices):
 
 class Tag(models.Model):
     name = models.CharField(max_length=50, choices=TagChoices.choices)
+
+    def delete(self, *args, **kwargs):
+        if self.auctions.exists():
+            raise ValidationError("Cannot delete tag with existing auctions.")
+        super().delete(*args, **kwargs)
 
     def __str__(self):
         return self.name
