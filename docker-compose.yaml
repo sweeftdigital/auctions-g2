@@ -14,21 +14,24 @@ services:
     env_file:
       - .env
     depends_on:
-      - postgres
+      - auctions_postgres
       - auctions_redis
     networks:
       - micro-network
+      - auctions-private-network
 
-  postgres:
+  auctions_postgres:
     container_name: auctions_postgres
     image: postgres:16
     restart: always
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - postgres_auctions_data:/var/lib/postgresql/data/
     env_file:
       - .env
     ports:
-      - "5433:5433"
+      - "5433:5432"
+    networks:
+      - auctions-private-network
 
   auctions_redis:
     container_name: auctions_redis
@@ -36,10 +39,14 @@ services:
     restart: always
     ports:
       - "6380:6380"
+    networks:
+      - auctions-private-network
 
 volumes:
-  postgres_data:
+  postgres_auctions_data:
 
 networks:
   micro-network:
     external: true
+  auctions-private-network:
+    external: false
