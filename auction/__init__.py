@@ -1,0 +1,1 @@
+from auction.authentication import CustomJWTAuthenticationScheme

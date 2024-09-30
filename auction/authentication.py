@@ -2,6 +2,7 @@ import os
 
 import jwt
 from django.core.cache import caches
+from drf_spectacular.extensions import OpenApiAuthenticationExtension
 from rest_framework import authentication, exceptions
 
 
@@ -144,3 +145,15 @@ class UserProxy:
             f"<UserProxy id={self.id} email={self.email} type={self._user_type} "
             f"profile={self._user_profile_type} verified={self.is_verified}>"
         )
+
+
+class CustomJWTAuthenticationScheme(OpenApiAuthenticationExtension):
+    target_class = "auction.authentication.CustomJWTAuthentication"
+    name = "BearerAuth"
+
+    def get_security_definition(self, auto_schema):
+        return {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        }

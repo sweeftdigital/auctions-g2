@@ -117,5 +117,10 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "API for managing user accounts, including registration, authentication, and OTP verification.",
     "VERSION": "1.0.0",
     "SORT_OPERATIONS": False,
-    "SERVE_AUTHENTICATION": True,
+    "SWAGGER_UI_SETTINGS": {
+        "persistAuthorization": True,  # Keeps authorization across page reloads
+    },
+    "SECURITY": [
+        {"BearerAuth": []},  # Enable Bearer token input in Swagger
+    ],
 }
