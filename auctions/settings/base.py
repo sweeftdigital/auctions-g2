@@ -111,3 +111,11 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Accounts API",
+    "DESCRIPTION": "API for managing user accounts, including registration, authentication, and OTP verification.",
+    "VERSION": "1.0.0",
+    "SORT_OPERATIONS": False,
+    "SERVE_AUTHENTICATION": True,
+}

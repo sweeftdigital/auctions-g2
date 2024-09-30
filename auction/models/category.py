@@ -40,7 +40,10 @@ class CategoryChoices(models.TextChoices):
 
 class Category(models.Model):
     name = models.CharField(
-        max_length=255, choices=CategoryChoices.choices, default=CategoryChoices.OTHER
+        max_length=255,
+        choices=CategoryChoices.choices,
+        default=CategoryChoices.OTHER,
+        unique=True,
     )
 
     def __str__(self):
