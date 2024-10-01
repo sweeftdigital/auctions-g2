@@ -36,10 +36,12 @@ class AuctionSerializer(serializers.ModelSerializer):
 
 class BookmarkCreateSerializer(serializers.ModelSerializer):
     auction_id = serializers.UUIDField(write_only=True)
+    bookmark_id = serializers.UUIDField(source="id", read_only=True)
+    user_id = serializers.UUIDField(read_only=True)
 
     class Meta:
         model = Bookmark
-        fields = ["auction_id"]
+        fields = ["auction_id", "user_id", "bookmark_id"]
 
     @staticmethod
     def validate_auction_id(value):

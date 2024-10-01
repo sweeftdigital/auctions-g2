@@ -1,10 +1,11 @@
 from rest_framework import status
-from rest_framework.generics import CreateAPIView, ListAPIView
+from rest_framework.generics import CreateAPIView, DestroyAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from auction.filters import AuctionFilterSet
-from auction.models import Auction
+from auction.models import Auction, Bookmark
+from auction.permissions import IsOwner
 from auction.serializers import AuctionSerializer, BookmarkCreateSerializer
 
 
@@ -31,6 +32,15 @@ class AddBookmarkView(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         bookmark = serializer.save()
 
-        response_data = {"user_id": bookmark.user_id, "auction_id": bookmark.auction.id}
+        response_data = {
+            "bookmark_id": bookmark.id,
+            "user_id": bookmark.user_id,
+            "auction_id": bookmark.auction.id,
+        }
 
         return Response(response_data, status=status.HTTP_201_CREATED)
+
+
+class DeleteBookmarkView(DestroyAPIView):
+    queryset = Bookmark.objects.all()
+    permission_classes = (IsAuthenticated, IsOwner)
