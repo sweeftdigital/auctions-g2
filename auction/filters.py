@@ -2,7 +2,6 @@ from django_filters import rest_framework as filters
 
 from auction.models.auction import (
     AcceptedBiddersChoices,
-    AcceptedLocations,
     Auction,
     ConditionChoices,
     CurrencyChoices,
@@ -21,9 +20,7 @@ class AuctionFilterSet(filters.FilterSet):
         choices=AcceptedBiddersChoices.choices, field_name="accepted_bidders"
     )
 
-    accepted_locations = filters.ChoiceFilter(
-        choices=AcceptedLocations.choices, field_name="accepted_locations"
-    )
+    accepted_locations = filters.CharFilter(field_name="accepted_locations")
 
     currency = filters.ChoiceFilter(
         choices=CurrencyChoices.choices, field_name="currency"

@@ -48,7 +48,7 @@ class AuctionFactory(factory.django.DjangoModelFactory):
         AcceptedBiddersChoices.choices, getter=lambda x: x[0]
     )
     accepted_locations = factory.Faker(
-        "random_element", elements=["My Location", "International"]
+        "random_element", elements=["Georgia", "Albania", "Croatia", "International"]
     )
     status = factory.Iterator(StatusChoices.choices, getter=lambda x: x[0])
     currency = factory.Iterator(CurrencyChoices.choices, getter=lambda x: x[0])

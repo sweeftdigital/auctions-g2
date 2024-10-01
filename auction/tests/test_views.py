@@ -12,7 +12,6 @@ from auction.factories.model_factories import (
 )
 from auction.models.auction import (
     AcceptedBiddersChoices,
-    AcceptedLocations,
     ConditionChoices,
     StatusChoices,
 )
@@ -41,7 +40,7 @@ class AuctionListViewTests(APITestCase):
             category=self.category1,
             status=StatusChoices.ACTIVE,
             accepted_bidders=AcceptedBiddersChoices.BOTH,
-            accepted_locations=AcceptedLocations.MY_LOCATION,
+            accepted_locations="Albania",
             start_date=datetime.now() - timedelta(days=5),
             end_date=datetime.now() + timedelta(days=1),
             max_price=100,
@@ -53,7 +52,7 @@ class AuctionListViewTests(APITestCase):
             category=self.category2,
             status=StatusChoices.COMPLETED,
             accepted_bidders=AcceptedBiddersChoices.COMPANY,
-            accepted_locations=AcceptedLocations.INTERNATIONAL,
+            accepted_locations="Croatia",
             start_date=datetime.now() - timedelta(days=1),
             end_date=datetime.now() - timedelta(days=2),
             max_price=200,
@@ -98,7 +97,9 @@ class AuctionListViewTests(APITestCase):
         self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
 
     def test_filter_by_accepted_locations(self):
-        response = self.client.get(self.url, {"accepted_locations": "My Location"})
+        response = self.client.get(
+            self.url, {"accepted_locations": self.auction1.accepted_locations}
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
