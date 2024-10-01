@@ -32,11 +32,6 @@ class CurrencyChoices(models.TextChoices):
     EUR = "EUR", "EUR"
 
 
-class AcceptedLocations(models.TextChoices):
-    MY_LOCATION = "My Location", "My Location"
-    INTERNATIONAL = "International", "International"
-
-
 class Auction(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -53,11 +48,7 @@ class Auction(models.Model):
         choices=AcceptedBiddersChoices.choices,
         default=AcceptedBiddersChoices.BOTH,
     )
-    accepted_locations = models.CharField(
-        max_length=20,
-        choices=AcceptedLocations.choices,
-        default=AcceptedLocations.MY_LOCATION,
-    )
+    accepted_locations = models.CharField(default="International")
     tags = models.ManyToManyField("Tag", related_name="auctions")
     status = models.CharField(
         max_length=20, choices=StatusChoices.choices, default=StatusChoices.DRAFT
