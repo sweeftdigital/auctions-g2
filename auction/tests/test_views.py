@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timedelta
 
 from django.urls import reverse
 from rest_framework import status
@@ -41,6 +42,9 @@ class AuctionListViewTests(APITestCase):
             status=StatusChoices.ACTIVE,
             accepted_bidders=AcceptedBiddersChoices.BOTH,
             accepted_locations=AcceptedLocations.MY_LOCATION,
+            start_date=datetime.now() - timedelta(days=5),
+            end_date=datetime.now() + timedelta(days=1),
+            max_price=100,
         )
         self.auction1.tags.add(self.tag1, self.tag2)
 
@@ -50,6 +54,9 @@ class AuctionListViewTests(APITestCase):
             status=StatusChoices.COMPLETED,
             accepted_bidders=AcceptedBiddersChoices.COMPANY,
             accepted_locations=AcceptedLocations.INTERNATIONAL,
+            start_date=datetime.now() - timedelta(days=1),
+            end_date=datetime.now() - timedelta(days=2),
+            max_price=200,
         )
         self.auction2.tags.add(self.tag1)
 
@@ -101,3 +108,38 @@ class AuctionListViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+
+    def test_filter_by_max_price(self):
+        response = self.client.get(self.url, {"max_price": 100})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+
+    def test_filter_by_min_price(self):
+        response = self.client.get(self.url, {"min_price": 101})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["product"], self.auction2.auction_name)
+
+    def test_filter_by_start_date(self):
+        response = self.client.get(
+            self.url, {"start_date": str(self.auction1.start_date.date())}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+    def test_filter_by_end_date(self):
+        response = self.client.get(self.url, {"end_date": (datetime.now()).date()})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+    def test_filter_by_both_dates(self):
+        response = self.client.get(
+            self.url,
+            {
+                "start_date": "2000-01-01",
+                "end_date": "2040-01-01",
+            },
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)

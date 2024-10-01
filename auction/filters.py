@@ -28,6 +28,10 @@ class AuctionFilterSet(filters.FilterSet):
     currency = filters.ChoiceFilter(
         choices=CurrencyChoices.choices, field_name="currency"
     )
+    max_price = filters.NumberFilter(field_name="max_price", lookup_expr="lte")
+    min_price = filters.NumberFilter(field_name="max_price", lookup_expr="gte")
+    start_date = filters.DateFilter(field_name="start_date", lookup_expr="gte")
+    end_date = filters.DateFilter(field_name="end_date", lookup_expr="lte")
 
     class Meta:
         model = Auction
@@ -37,4 +41,8 @@ class AuctionFilterSet(filters.FilterSet):
             "accepted_bidders",
             "accepted_locations",
             "currency",
+            "max_price",
+            "min_price",
+            "start_date",
+            "end_date",
         ]
