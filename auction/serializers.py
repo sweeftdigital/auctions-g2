@@ -39,7 +39,7 @@ class BookmarkCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Bookmark
-        fields = ["user_id", "auction_id"]
+        fields = ["auction_id"]
 
     @staticmethod
     def validate_auction_id(value):
@@ -50,7 +50,7 @@ class BookmarkCreateSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        user_id = validated_data["user_id"]
+        user_id = self.context.get("user_id")
         auction_id = validated_data["auction_id"]
 
         if Bookmark.objects.filter(user_id=user_id, auction_id=auction_id).exists():

@@ -25,10 +25,9 @@ class AddBookmarkView(CreateAPIView):
 
     def create(self, request, *args, **kwargs):
 
-        data = request.data
-        data["user_id"] = request.user.id
-
-        serializer = self.get_serializer(data=data)
+        serializer = self.get_serializer(
+            data=request.data, context={"user_id": request.user.id}
+        )
         serializer.is_valid(raise_exception=True)
         bookmark = serializer.save()
 
