@@ -115,8 +115,8 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Accounts API",
-    "DESCRIPTION": "API for managing user accounts, including registration, authentication, and OTP verification.",
+    "TITLE": "Auctions API",
+    "DESCRIPTION": "API for managing auctions, including creating auctions and bids.",
     "VERSION": "1.0.0",
     "SORT_OPERATIONS": False,
     "SWAGGER_UI_SETTINGS": {
