@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_spectacular",
     "django_filters",
+    "django_countries",
     # Local
     "auction.apps.AuctionConfig",
 ]
