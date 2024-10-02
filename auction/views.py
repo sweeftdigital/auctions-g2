@@ -28,6 +28,12 @@ from auction.serializers import AuctionSerializer
             required=False,
             type=str,
         ),
+        OpenApiParameter(
+            name="page",
+            description='The page number or "last" for the last page.',
+            required=False,
+            type={"oneOf": [{"type": "integer"}, {"type": "string"}]},
+        ),
     ],
 )
 class AuctionListView(ListAPIView):

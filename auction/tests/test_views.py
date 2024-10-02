@@ -68,7 +68,7 @@ class AuctionListViewTests(APITestCase):
     def test_auction_listing(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data.get("results")), 2)
 
     def test_unauthenticated_access(self):
         self.client.logout()
@@ -78,8 +78,10 @@ class AuctionListViewTests(APITestCase):
     def test_filter_by_status(self):
         response = self.client.get(self.url, {"status": StatusChoices.ACTIVE})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
 
     def test_filter_by_invalid_status(self):
         response = self.client.get(self.url, {"status": "invalid_status"})
@@ -91,54 +93,66 @@ class AuctionListViewTests(APITestCase):
 
         response = self.client.get(self.url, {"condition": ConditionChoices.NEW})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
 
     def test_filter_by_accepted_bidders(self):
         response = self.client.get(
             self.url, {"accepted_bidders": AcceptedBiddersChoices.BOTH}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
 
     def test_filter_by_accepted_locations(self):
         response = self.client.get(
             self.url, {"accepted_locations": self.auction1.accepted_locations}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
 
     def test_filter_by_currency(self):
         response = self.client.get(self.url, {"currency": self.auction1.currency})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
 
     def test_filter_by_max_price(self):
         response = self.client.get(self.url, {"max_price": 100})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
 
     def test_filter_by_min_price(self):
         response = self.client.get(self.url, {"min_price": 101})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["product"], self.auction2.auction_name)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction2.auction_name
+        )
 
     def test_filter_by_start_date(self):
         response = self.client.get(
             self.url, {"start_date": str(self.auction1.start_date.date())}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data.get("results")), 2)
 
     def test_filter_by_end_date(self):
         response = self.client.get(self.url, {"end_date": (datetime.now()).date()})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data.get("results")), 1)
 
     def test_filter_by_both_dates(self):
         response = self.client.get(
@@ -149,13 +163,15 @@ class AuctionListViewTests(APITestCase):
             },
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data.get("results")), 2)
 
     def test_filter_by_category(self):
         response = self.client.get(self.url, {"category": self.category1.name})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
 
     def test_filter_by_invalid_category(self):
         response = self.client.get(self.url, {"category": "Invalid Category"})
@@ -164,91 +180,115 @@ class AuctionListViewTests(APITestCase):
     def test_search_by_auction_name(self):
         response = self.client.get(self.url, {"search": "Awesome Pet Supplies Auction"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
 
     def test_search_by_description(self):
         response = self.client.get(
             self.url, {"search": "Bidding for various old electronics."}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["product"], self.auction2.auction_name)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction2.auction_name
+        )
 
     def test_search_by_partial_match(self):
         response = self.client.get(self.url, {"search": "Awesome"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
 
     def test_search_by_no_results(self):
         response = self.client.get(self.url, {"search": "Nonexistent Auction"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data.get("results")), 0)
 
     def test_search_by_tags(self):
         response = self.client.get(self.url, {"search": "Animals"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction2.auction_name
+        )
 
     def test_search_by_nonexistent_tag(self):
         response = self.client.get(self.url, {"search": "Nonexistent Tag"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data.get("results")), 0)
 
     def test_order_by_start_date_ascending(self):
         response = self.client.get(self.url + "?ordering=start_date")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
 
     def test_order_by_start_date_descending(self):
         response = self.client.get(self.url + "?ordering=-start_date")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]["product"], self.auction2.auction_name)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction2.auction_name
+        )
 
     def test_order_by_end_date_ascending(self):
         response = self.client.get(self.url + "?ordering=end_date")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]["product"], self.auction2.auction_name)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction2.auction_name
+        )
 
     def test_order_by_end_date_descending(self):
         response = self.client.get(self.url + "?ordering=-end_date")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
 
     def test_order_by_max_price_ascending(self):
         response = self.client.get(self.url + "?ordering=max_price")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
 
     def test_order_by_max_price_descending(self):
         response = self.client.get(self.url + "?ordering=-max_price")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]["product"], self.auction2.auction_name)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction2.auction_name
+        )
 
     def test_order_by_quantity_ascending(self):
         response = self.client.get(self.url + "?ordering=quantity")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
 
     def test_order_by_quantity_descending(self):
         response = self.client.get(self.url + "?ordering=-quantity")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]["product"], self.auction2.auction_name)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction2.auction_name
+        )
