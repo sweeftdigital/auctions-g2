@@ -1,4 +1,4 @@
-from rest_framework import status
+from rest_framework import generics, status
 from rest_framework.generics import CreateAPIView, DestroyAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -6,7 +6,11 @@ from rest_framework.response import Response
 from auction.filters import AuctionFilterSet
 from auction.models import Auction, Bookmark
 from auction.permissions import IsOwner
-from auction.serializers import AuctionSerializer, BookmarkCreateSerializer
+from auction.serializers import (
+    AuctionRetrieveSerializer,
+    AuctionSerializer,
+    BookmarkCreateSerializer,
+)
 
 
 class AuctionListView(ListAPIView):
@@ -14,6 +18,13 @@ class AuctionListView(ListAPIView):
     queryset = Auction.objects.all()
     serializer_class = AuctionSerializer
     filterset_class = AuctionFilterSet
+
+
+class RetrieveAuctionView(generics.RetrieveAPIView):
+    permission_classes = (IsAuthenticated,)
+    queryset = Auction.objects.all()
+    serializer_class = AuctionRetrieveSerializer
+    lookup_field = "id"
 
 
 class AddBookmarkView(CreateAPIView):

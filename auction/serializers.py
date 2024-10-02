@@ -34,6 +34,12 @@ class AuctionSerializer(serializers.ModelSerializer):
         ]
 
 
+class AuctionRetrieveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Auction
+        fields = "__all__"
+
+
 class BookmarkCreateSerializer(serializers.ModelSerializer):
     auction_id = serializers.UUIDField(write_only=True)
     bookmark_id = serializers.UUIDField(source="id", read_only=True)
