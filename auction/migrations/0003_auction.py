@@ -95,12 +95,10 @@ class Migration(migrations.Migration):
                     models.CharField(
                         choices=[
                             ("New", "New"),
-                            ("Open box", "Open box"),
-                            ("Excellent", "Excellent"),
-                            ("Very Good", "Very Good"),
-                            ("Good", "Good"),
-                            ("Used", "Used"),
-                            ("For parts or not working", "For parts or not working"),
+                            ("Used - Like New", "Used - Like New"),
+                            ("Used - Very Good", "Used - Very Good"),
+                            ("Used - Good", "Used - Good"),
+                            ("Used - Acceptable", "Used - Acceptable"),
                         ],
                         default="New",
                         max_length=50,

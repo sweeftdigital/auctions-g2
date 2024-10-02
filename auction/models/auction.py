@@ -6,12 +6,10 @@ from django_countries.fields import CountryField
 
 class ConditionChoices(models.TextChoices):
     NEW = "New", "New"
-    OPEN_BOX = "Open box", "Open box"
-    EXCELLENT = "Excellent", "Excellent"
-    VERY_GOOD = "Very Good", "Very Good"
-    GOOD = "Good", "Good"
-    USED = "Used", "Used"
-    FOR_PARTS = "For parts or not working", "For parts or not working"
+    USED_LIKE_NEW = "Used - Like New", "Used - Like New"
+    USED_VERY_GOOD = "Used - Very Good", "Used - Very Good"
+    USED_GOOD = "Used - Good", "Used - Good"
+    USED_ACCEPTABLE = "Used - Acceptable", "Used - Acceptable"
 
 
 class StatusChoices(models.TextChoices):
