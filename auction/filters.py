@@ -7,6 +7,7 @@ from auction.models.auction import (
     CurrencyChoices,
     StatusChoices,
 )
+from auction.models.category import CategoryChoices
 
 
 class AuctionFilterSet(filters.FilterSet):
@@ -29,6 +30,10 @@ class AuctionFilterSet(filters.FilterSet):
     min_price = filters.NumberFilter(field_name="max_price", lookup_expr="gte")
     start_date = filters.DateFilter(field_name="start_date", lookup_expr="gte")
     end_date = filters.DateFilter(field_name="end_date", lookup_expr="lte")
+    # category = filters.ModelChoiceFilter(queryset=Category.objects.all(), field_name="category__name")
+    category = filters.ChoiceFilter(
+        choices=CategoryChoices.choices, field_name="category__name"
+    )
 
     class Meta:
         model = Auction
@@ -42,4 +47,5 @@ class AuctionFilterSet(filters.FilterSet):
             "min_price",
             "start_date",
             "end_date",
+            "category",
         ]

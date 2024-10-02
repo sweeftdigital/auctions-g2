@@ -30,8 +30,8 @@ class AuctionListViewTests(APITestCase):
         self.client.force_authenticate(user=self.user)
         self.url = reverse("auction-list")
 
-        self.category1 = CategoryFactory()
-        self.category2 = CategoryFactory()
+        self.category1 = CategoryFactory(name="Pet Supplies")
+        self.category2 = CategoryFactory(name="Electronics")
         self.tag1 = TagFactory()
         self.tag2 = TagFactory()
 
@@ -144,3 +144,13 @@ class AuctionListViewTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
+
+    def test_filter_by_category(self):
+        response = self.client.get(self.url, {"category": self.category1.name})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+
+    def test_filter_by_invalid_category(self):
+        response = self.client.get(self.url, {"category": "Invalid Category"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
