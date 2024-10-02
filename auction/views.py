@@ -27,6 +27,12 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
     lookup_field = "id"
 
 
+class DeleteAuctionView(generics.DestroyAPIView):
+    queryset = Auction.objects.all()
+    lookup_field = "id"
+    permission_classes = [IsAuthenticated]
+
+
 class AddBookmarkView(CreateAPIView):
     """
     View to handle the creation of bookmarks for auctions.
