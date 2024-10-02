@@ -1,6 +1,7 @@
 import uuid
 
 from django.db import models
+from django_countries.fields import CountryField
 
 
 class ConditionChoices(models.TextChoices):
@@ -48,7 +49,7 @@ class Auction(models.Model):
         choices=AcceptedBiddersChoices.choices,
         default=AcceptedBiddersChoices.BOTH,
     )
-    accepted_locations = models.CharField(default="International")
+    accepted_locations = CountryField(multiple=True, blank=True)
     tags = models.ManyToManyField("Tag", related_name="auctions")
     status = models.CharField(
         max_length=20, choices=StatusChoices.choices, default=StatusChoices.DRAFT
