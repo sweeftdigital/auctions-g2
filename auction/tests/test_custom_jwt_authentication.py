@@ -7,7 +7,11 @@ from django.test import TestCase
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.test import APIRequestFactory
 
-from auction.authentication import CustomJWTAuthentication, UserProxy
+from auction.authentication import (
+    CustomJWTAuthentication,
+    CustomJWTAuthenticationScheme,
+    UserProxy,
+)
 
 
 class CustomJWTAuthenticationTest(TestCase):
@@ -175,3 +179,19 @@ class CustomJWTAuthenticationTest(TestCase):
         request = self.factory.get("/")
         auth_header = self.auth.authenticate_header(request)
         self.assertEqual(auth_header, "Bearer")
+
+
+class CustomJWTAuthenticationSchemeTest(TestCase):
+    def test_get_security_definition(self):
+        """Test that get_security_definition returns the correct security definition."""
+
+        auth_scheme = CustomJWTAuthenticationScheme(target="dummy_target")
+        security_definition = auth_scheme.get_security_definition(None)
+
+        expected_definition = {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        }
+
+        self.assertEqual(security_definition, expected_definition)
