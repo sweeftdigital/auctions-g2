@@ -6,6 +6,7 @@ from auction.models import Auction, Bookmark, Category, Tag
 @admin.register(Auction)
 class AuctionAdmin(admin.ModelAdmin):
     list_display = (
+        "id",
         "auction_name",
         "author",
         "status",
@@ -50,6 +51,6 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Bookmark)
 class BookmarkAdmin(admin.ModelAdmin):
-    list_display = ("user_id", "auction")
+    list_display = ("id", "user_id", "auction")
     search_fields = ("user_id", "auction__auction_name")
     ordering = ("-auction",)
