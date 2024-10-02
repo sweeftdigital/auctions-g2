@@ -18,6 +18,16 @@ from auction.serializers import AuctionSerializer
             required=False,
             type=str,
         ),
+        OpenApiParameter(
+            name="ordering",
+            description=(
+                "Comma-separated list of fields to order by. Prepend with '-' to "
+                "indicate descending order. Valid fields are: `start_date`, `end_date`, "
+                "`max_price`, `quantity`"
+            ),
+            required=False,
+            type=str,
+        ),
     ],
 )
 class AuctionListView(ListAPIView):
@@ -25,5 +35,6 @@ class AuctionListView(ListAPIView):
     queryset = Auction.objects.all()
     serializer_class = AuctionSerializer
     filterset_class = AuctionFilterSet
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ("auction_name", "description", "tags__name")
+    ordering_fields = ("start_date", "end_date", "max_price", "quantity")

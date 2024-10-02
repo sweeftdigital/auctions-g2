@@ -44,6 +44,7 @@ class AuctionListViewTests(APITestCase):
             start_date=datetime.now() - timedelta(days=5),
             end_date=datetime.now() + timedelta(days=1),
             max_price=100,
+            quantity=1,
             auction_name="Awesome Pet Supplies Auction",
             description="Bid on the best pet supplies.",
         )
@@ -55,9 +56,10 @@ class AuctionListViewTests(APITestCase):
             status=StatusChoices.COMPLETED,
             accepted_bidders=AcceptedBiddersChoices.COMPANY,
             accepted_locations="Croatia",
-            start_date=datetime.now() - timedelta(days=1),
-            end_date=datetime.now() - timedelta(days=2),
+            start_date=datetime.now() - timedelta(days=2),
+            end_date=datetime.now() - timedelta(days=1),
             max_price=200,
+            quantity=2,
             auction_name="Old Electronics Auction",
             description="Bidding for various old electronics.",
         )
@@ -194,3 +196,59 @@ class AuctionListViewTests(APITestCase):
         response = self.client.get(self.url, {"search": "Nonexistent Tag"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
+
+    def test_order_by_start_date_ascending(self):
+        response = self.client.get(self.url + "?ordering=start_date")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+
+    def test_order_by_start_date_descending(self):
+        response = self.client.get(self.url + "?ordering=-start_date")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]["product"], self.auction2.auction_name)
+
+    def test_order_by_end_date_ascending(self):
+        response = self.client.get(self.url + "?ordering=end_date")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]["product"], self.auction2.auction_name)
+
+    def test_order_by_end_date_descending(self):
+        response = self.client.get(self.url + "?ordering=-end_date")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+
+    def test_order_by_max_price_ascending(self):
+        response = self.client.get(self.url + "?ordering=max_price")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+
+    def test_order_by_max_price_descending(self):
+        response = self.client.get(self.url + "?ordering=-max_price")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]["product"], self.auction2.auction_name)
+
+    def test_order_by_quantity_ascending(self):
+        response = self.client.get(self.url + "?ordering=quantity")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+
+    def test_order_by_quantity_descending(self):
+        response = self.client.get(self.url + "?ordering=-quantity")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]["product"], self.auction2.auction_name)
