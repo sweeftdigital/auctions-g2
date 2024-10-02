@@ -28,6 +28,7 @@ class AuctionListSerializer(serializers.ModelSerializer):
             "status",
             "category",
             "max_price",
+            "currency",
             "quantity",
             "start_date",
             "end_date",
