@@ -10,8 +10,8 @@ from auction.filters import AuctionFilterSet
 from auction.models import Auction, Bookmark
 from auction.permissions import IsOwner
 from auction.serializers import (
+    AuctionListSerializer,
     AuctionRetrieveSerializer,
-    AuctionSerializer,
     BookmarkCreateSerializer,
 )
 
@@ -45,7 +45,7 @@ from auction.serializers import (
 class AuctionListView(ListAPIView):
     permission_classes = (IsAuthenticated,)
     queryset = Auction.objects.all()
-    serializer_class = AuctionSerializer
+    serializer_class = AuctionListSerializer
     filterset_class = AuctionFilterSet
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ("auction_name", "description", "tags__name")

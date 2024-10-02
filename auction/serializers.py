@@ -15,7 +15,7 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ["name"]
 
 
-class AuctionSerializer(serializers.ModelSerializer):
+class AuctionListSerializer(serializers.ModelSerializer):
     category = CategorySerializer()
     product = serializers.CharField(source="auction_name")
 
