@@ -16,8 +16,20 @@ class AuctionAdmin(admin.ModelAdmin):
         "currency",
         "condition",
     )
-    list_filter = ("status", "category", "accepted_bidders", "currency", "condition")
-    search_fields = ("auction_name", "description", "category__name", "author")
+    list_filter = (
+        "status",
+        "category",
+        "accepted_bidders",
+        "currency",
+        "condition",
+        "accepted_locations",
+    )
+    search_fields = (
+        "auction_name",
+        "description",
+        "category__name",
+        "author",
+    )
     ordering = ("-start_date",)
     autocomplete_fields = ["tags"]
 
