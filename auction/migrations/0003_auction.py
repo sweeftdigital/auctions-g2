@@ -116,6 +116,18 @@ class Migration(migrations.Migration):
                     "tags",
                     models.ManyToManyField(related_name="auctions", to="auction.tag"),
                 ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Auction Created At"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Auction Updated At"
+                    ),
+                ),
             ],
         ),
     ]

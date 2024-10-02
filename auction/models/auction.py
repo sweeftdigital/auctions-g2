@@ -66,6 +66,15 @@ class Auction(models.Model):
     condition = models.CharField(
         max_length=50, choices=ConditionChoices.choices, default=ConditionChoices.NEW
     )
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="Auction Created At"
+    )
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Auction Updated At")
+
+    class Meta:
+        ordering = [
+            "-created_at",
+        ]
 
     def __str__(self):
         return f"{self.auction_name} - Status: {self.status}"
