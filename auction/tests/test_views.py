@@ -43,7 +43,7 @@ class AuctionListViewTests(APITestCase):
             category=self.category1,
             status=StatusChoices.ACTIVE,
             accepted_bidders=AcceptedBiddersChoices.BOTH,
-            accepted_locations="Albania",
+            accepted_locations="AL",
             start_date=datetime.now() - timedelta(days=5),
             end_date=datetime.now() + timedelta(days=1),
             max_price=100,
@@ -58,7 +58,7 @@ class AuctionListViewTests(APITestCase):
             category=self.category2,
             status=StatusChoices.COMPLETED,
             accepted_bidders=AcceptedBiddersChoices.COMPANY,
-            accepted_locations="Croatia",
+            accepted_locations="HR",
             start_date=datetime.now() - timedelta(days=2),
             end_date=datetime.now() - timedelta(days=1),
             max_price=200,
@@ -360,4 +360,41 @@ class AddBookmarkViewTestCase(APITestCase):
         self.assertIn("auction_id", response.data)
         self.assertEqual(
             str(response.data["auction_id"][0]), "Auction with this ID does not exist."
+        )
+
+
+class AuctionRetrieveViewTests(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = MockUser(user_id=uuid4())
+        self.client.force_authenticate(user=self.user)
+        self.category1 = CategoryFactory(name="Pet Supplies")
+        self.tag1 = TagFactory(name="Animals")
+        self.tag2 = TagFactory(name="Pet Toys")
+
+        self.auction = AuctionFactory(
+            author=self.user.id,
+            category=self.category1,
+            status=StatusChoices.ACTIVE,
+            accepted_bidders=AcceptedBiddersChoices.BOTH,
+            accepted_locations=["GE", "AL", "HR"],
+            start_date=datetime.now() - timedelta(days=5),
+            end_date=datetime.now() + timedelta(days=1),
+            max_price=100,
+            quantity=1,
+            auction_name="Awesome Pet Supplies Auction",
+            description="Bid on the best pet supplies.",
+        )
+        self.auction.tags.add(self.tag1, self.tag2)
+
+        self.url = reverse("retrieve-auction", kwargs={"id": self.auction.id})
+
+    def test_retrieve_auction_success(self):
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["tags"][0], "Animals")
+        self.assertEqual(response.data["tags"][1], "Pet Toys")
+        self.assertEqual(
+            response.data["accepted_locations"], ["Albania", "Georgia", "Croatia"]
         )

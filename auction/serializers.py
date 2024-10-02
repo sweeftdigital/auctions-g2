@@ -1,3 +1,4 @@
+from django_countries.serializers import CountryFieldMixin
 from rest_framework import serializers
 
 from auction.models import Auction, Bookmark, Category, Tag
@@ -33,10 +34,19 @@ class AuctionListSerializer(serializers.ModelSerializer):
         ]
 
 
-class AuctionRetrieveSerializer(serializers.ModelSerializer):
+class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):
+    accepted_locations = serializers.SerializerMethodField()
+    tags = serializers.SerializerMethodField()
+
     class Meta:
         model = Auction
         fields = "__all__"
+
+    def get_accepted_locations(self, obj):
+        return [country.name for country in obj.accepted_locations]
+
+    def get_tags(self, obj):
+        return [tag.name for tag in obj.tags.all()]
 
 
 class BookmarkCreateSerializer(serializers.ModelSerializer):
