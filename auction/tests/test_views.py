@@ -1,15 +1,18 @@
-import uuid
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
+from unittest.mock import patch
+from uuid import uuid4
 
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
+from auction.authentication import UserProxy
 from auction.factories.model_factories import (
     AuctionFactory,
     CategoryFactory,
     TagFactory,
 )
+from auction.models import Auction, Bookmark, Category
 from auction.models.auction import (
     AcceptedBiddersChoices,
     ConditionChoices,
@@ -26,7 +29,7 @@ class MockUser:
 class AuctionListViewTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = MockUser(user_id=uuid.uuid4())
+        self.user = MockUser(user_id=uuid4())
         self.client.force_authenticate(user=self.user)
         self.url = reverse("auction-list")
 
@@ -144,3 +147,69 @@ class AuctionListViewTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
+
+
+class AddBookmarkViewTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user_payload = {
+            "user_id": str(uuid4()),
+            "email": "user@example.com",
+            "is_verified": True,
+            "user_type": "Buyer",
+            "user_profile_type": "Individual",
+        }
+        self.user_proxy = UserProxy(self.user_payload)
+
+        self.category = Category.objects.create(name="Test Category")
+
+        self.auction = Auction.objects.create(
+            author=self.user_proxy.id,
+            auction_name="Test Auction",
+            description="This is a test auction.",
+            category=self.category,
+            start_date=date.today(),
+            end_date=date.today(),
+            max_price=1000.00,
+            quantity=1,
+            accepted_bidders="Both",
+            status="draft",
+            currency="GEL",
+            condition="New",
+        )
+
+        patcher = patch("auction.authentication.CustomJWTAuthentication.authenticate")
+        self.mock_authenticate = patcher.start()
+        self.mock_authenticate.return_value = (self.user_proxy, None)
+        self.addCleanup(patcher.stop)
+
+        self.url = reverse("add-bookmark")
+
+    def test_create_bookmark_success(self):
+        data = {"auction_id": str(self.auction.id)}
+        response = self.client.post(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("bookmark_id", response.data)
+        self.assertEqual(response.data["user_id"], self.user_payload["user_id"])
+        self.assertEqual(str(response.data["auction_id"]), str(self.auction.id))
+        self.assertEqual(Bookmark.objects.count(), 1)
+
+    def test_create_bookmark_duplicate(self):
+        Bookmark.objects.create(user_id=self.user_proxy.id, auction=self.auction)
+
+        data = {"auction_id": str(self.auction.id)}
+        response = self.client.post(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(str(response.data[0]), "This auction is already bookmarked.")
+
+    def test_create_bookmark_invalid_auction(self):
+        data = {"auction_id": str(uuid4())}
+        response = self.client.post(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("auction_id", response.data)
+        self.assertEqual(
+            str(response.data["auction_id"][0]), "Auction with this ID does not exist."
+        )
