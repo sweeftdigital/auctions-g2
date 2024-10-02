@@ -44,6 +44,8 @@ class AuctionListViewTests(APITestCase):
             start_date=datetime.now() - timedelta(days=5),
             end_date=datetime.now() + timedelta(days=1),
             max_price=100,
+            auction_name="Awesome Pet Supplies Auction",
+            description="Bid on the best pet supplies.",
         )
         self.auction1.tags.add(self.tag1, self.tag2)
 
@@ -56,6 +58,8 @@ class AuctionListViewTests(APITestCase):
             start_date=datetime.now() - timedelta(days=1),
             end_date=datetime.now() - timedelta(days=2),
             max_price=200,
+            auction_name="Old Electronics Auction",
+            description="Bidding for various old electronics.",
         )
         self.auction2.tags.add(self.tag1)
 
@@ -154,3 +158,28 @@ class AuctionListViewTests(APITestCase):
     def test_filter_by_invalid_category(self):
         response = self.client.get(self.url, {"category": "Invalid Category"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_search_by_auction_name(self):
+        response = self.client.get(self.url, {"search": "Awesome Pet Supplies Auction"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+
+    def test_search_by_description(self):
+        response = self.client.get(
+            self.url, {"search": "Bidding for various old electronics."}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["product"], self.auction2.auction_name)
+
+    def test_search_by_partial_match(self):
+        response = self.client.get(self.url, {"search": "Awesome"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+
+    def test_search_by_no_results(self):
+        response = self.client.get(self.url, {"search": "Nonexistent Auction"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
