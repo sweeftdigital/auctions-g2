@@ -14,7 +14,7 @@ from auction.serializers import AuctionSerializer
     parameters=[
         OpenApiParameter(
             name="search",
-            description="Fields that will be searched by are: `auction_name`, `description`.",
+            description="Fields that will be searched by are: `auction_name`, `description`, `tags`.",
             required=False,
             type=str,
         ),
@@ -26,7 +26,4 @@ class AuctionListView(ListAPIView):
     serializer_class = AuctionSerializer
     filterset_class = AuctionFilterSet
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    search_fields = (
-        "auction_name",
-        "description",
-    )
+    search_fields = ("auction_name", "description", "tags__name")

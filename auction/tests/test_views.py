@@ -32,8 +32,8 @@ class AuctionListViewTests(APITestCase):
 
         self.category1 = CategoryFactory(name="Pet Supplies")
         self.category2 = CategoryFactory(name="Electronics")
-        self.tag1 = TagFactory()
-        self.tag2 = TagFactory()
+        self.tag1 = TagFactory(name="Animals")
+        self.tag2 = TagFactory(name="Water Device")
 
         self.auction1 = AuctionFactory(
             author=self.user.id,
@@ -181,5 +181,16 @@ class AuctionListViewTests(APITestCase):
 
     def test_search_by_no_results(self):
         response = self.client.get(self.url, {"search": "Nonexistent Auction"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
+    def test_search_by_tags(self):
+        response = self.client.get(self.url, {"search": "Animals"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]["product"], self.auction1.auction_name)
+
+    def test_search_by_nonexistent_tag(self):
+        response = self.client.get(self.url, {"search": "Nonexistent Tag"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
