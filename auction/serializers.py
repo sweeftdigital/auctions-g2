@@ -17,7 +17,6 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class AuctionSerializer(serializers.ModelSerializer):
     category = CategorySerializer()
-    # tags = TagSerializer(many=True)
     product = serializers.CharField(source="auction_name")
 
     class Meta:
