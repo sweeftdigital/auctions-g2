@@ -13,6 +13,7 @@ from auction.serializers import (
     AuctionListSerializer,
     AuctionRetrieveSerializer,
     BookmarkCreateSerializer,
+    BookmarkListSerializer,
 )
 
 
@@ -50,6 +51,12 @@ class AuctionListView(ListAPIView):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ("auction_name", "description", "tags__name")
     ordering_fields = ("start_date", "end_date", "max_price", "quantity")
+
+
+class BookmarkListView(ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    queryset = Bookmark.objects.all()
+    serializer_class = BookmarkListSerializer
 
 
 class RetrieveAuctionView(generics.RetrieveAPIView):

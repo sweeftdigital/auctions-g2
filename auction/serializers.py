@@ -35,6 +35,28 @@ class AuctionListSerializer(serializers.ModelSerializer):
         ]
 
 
+class BookmarkListSerializer(serializers.ModelSerializer):
+    auction = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Bookmark
+        fields = ["id", "user_id", "auction"]
+
+    def get_auction(self, obj):
+        auction = obj.auction
+        return {
+            "id": auction.id,
+            "product": auction.auction_name,
+            "status": auction.status,
+            "category": CategorySerializer(auction.category).data,
+            "max_price": auction.max_price,
+            "currency": auction.currency,
+            "quantity": auction.quantity,
+            "start_date": auction.start_date,
+            "end_date": auction.end_date,
+        }
+
+
 class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):
     accepted_locations = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
