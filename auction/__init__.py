@@ -1,1 +1,1 @@
-from auction.authentication import CustomJWTAuthenticationScheme
+from auction.authentication.jwt_auth_scheme import CustomJWTAuthenticationScheme

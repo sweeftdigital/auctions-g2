@@ -7,11 +7,9 @@ from django.test import TestCase
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.test import APIRequestFactory
 
-from auction.authentication import (
-    CustomJWTAuthentication,
-    CustomJWTAuthenticationScheme,
-    UserProxy,
-)
+from auction.authentication.custom_jwt_auth import CustomJWTAuthentication
+from auction.authentication.jwt_auth_scheme import CustomJWTAuthenticationScheme
+from auction.authentication.user_proxy import UserProxy
 
 
 class CustomJWTAuthenticationTest(TestCase):
@@ -22,7 +20,8 @@ class CustomJWTAuthenticationTest(TestCase):
         self.patcher.start()
 
         with mock.patch(
-            "auction.authentication.CustomJWTAuthentication.__init__", return_value=None
+            "auction.authentication.custom_jwt_auth.CustomJWTAuthentication.__init__",
+            return_value=None,
         ):
             self.auth = CustomJWTAuthentication()
             self.auth.public_key = os.environ["RSA_PUBLIC_KEY"]
