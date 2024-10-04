@@ -32,3 +32,13 @@ class IsBuyer(BasePermission):
     def has_permission(self, request, view):
         # Check if the user is a Buyer
         return not request.user.is_seller
+
+
+class IsSeller(BasePermission):
+    """
+    Custom permission to only allow sellers to access certain views.
+    """
+
+    def has_permission(self, request, view):
+        # Check if the user is a seller
+        return not request.user.is_buyer
