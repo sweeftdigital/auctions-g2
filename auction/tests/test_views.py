@@ -32,7 +32,7 @@ class AuctionListViewTests(APITestCase):
         self.client = APIClient()
         self.user = MockUser(user_id=uuid4())
         self.client.force_authenticate(user=self.user)
-        self.url = reverse("auction-list")
+        self.url = reverse("auction-list-buyer")
 
         self.category1 = CategoryFactory(name="Pet Supplies")
         self.category2 = CategoryFactory(name="Electronics")
@@ -68,6 +68,21 @@ class AuctionListViewTests(APITestCase):
             description="Bidding for various old electronics.",
         )
         self.auction2.tags.add(self.tag1)
+
+        self.auction3 = AuctionFactory(
+            author=uuid4(),
+            category=self.category1,
+            status=StatusChoices.LIVE,
+            accepted_bidders=AcceptedBiddersChoices.COMPANY,
+            accepted_locations="HR",
+            start_date=datetime.now() - timedelta(days=2),
+            end_date=datetime.now() - timedelta(days=1),
+            max_price=300,
+            quantity=3,
+            auction_name="Auction from different user.",
+            description="Simple auction.",
+        )
+        self.auction3.tags.add(self.tag1)
 
     def test_auction_listing(self):
         response = self.client.get(self.url)
@@ -219,11 +234,20 @@ class AuctionListViewTests(APITestCase):
         response = self.client.get(self.url + "?ordering=-category")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data.get("results")), 2)
-        print(response.data, "*" * 200)
         self.assertEqual(response.data["results"][0]["category"]["name"], "Pet Supplies")
-
-        # Check if the second result has the next category
         self.assertEqual(response.data["results"][1]["category"]["name"], "Electronics")
+
+    def test_auction_list_returns_only_auctions_of_author(self):
+        # Check that the view does not return auctions of different users.
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertNotEqual(
+            response.data["results"][0]["product"], self.auction3.auction_name
+        )
+        self.assertNotEqual(
+            response.data["results"][1]["product"], self.auction3.auction_name
+        )
 
 
 class BookmarkListViewTests(APITestCase):

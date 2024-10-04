@@ -6,7 +6,7 @@ from rest_framework.generics import CreateAPIView, DestroyAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from auction.filters import AuctionFilterSet, BookmarkFilterSet
+from auction.filters import BookmarkFilterSet, BuyerAuctionFilterSet
 from auction.models import Auction, Bookmark
 from auction.permissions import IsOwner
 from auction.serializers import (
@@ -44,11 +44,11 @@ from auction.serializers import (
         ),
     ],
 )
-class AuctionListView(ListAPIView):
+class BuyerAuctionListView(ListAPIView):
     permission_classes = (IsAuthenticated,)
     queryset = Auction.objects.all()
     serializer_class = AuctionListSerializer
-    filterset_class = AuctionFilterSet
+    filterset_class = BuyerAuctionFilterSet
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ("auction_name", "description", "tags__name")
     ordering_fields = (
@@ -61,7 +61,8 @@ class AuctionListView(ListAPIView):
     )
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        user = self.request.user.id
+        queryset = Auction.objects.filter(author=user)
 
         # Override ordering if 'category' is in the query params
         ordering = self.request.query_params.get("ordering", None)

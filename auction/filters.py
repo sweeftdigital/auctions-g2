@@ -11,7 +11,7 @@ from auction.models.bookmark import Bookmark
 from auction.models.category import CategoryChoices
 
 
-class AuctionFilterSet(filters.FilterSet):
+class BuyerAuctionFilterSet(filters.FilterSet):
     status = filters.ChoiceFilter(choices=StatusChoices.choices, field_name="status")
 
     class Meta:
