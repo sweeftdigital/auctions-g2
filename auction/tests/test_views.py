@@ -425,7 +425,7 @@ class BookmarkListViewTests(APITestCase):
             self.url, {"start_date": str(self.auction1.start_date.date())}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data.get("results")), 2)  # Adjust if necessary
+        self.assertEqual(len(response.data.get("results")), 2)
 
     def test_filter_by_end_date(self):
         response = self.client.get(self.url, {"end_date": (datetime.now()).date()})
@@ -454,6 +454,28 @@ class BookmarkListViewTests(APITestCase):
     def test_filter_by_invalid_category(self):
         response = self.client.get(self.url, {"category": "Invalid Category"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_user_can_only_list_their_bookmarks(self):
+        author = uuid4()
+        category = CategoryFactory(name="Other")
+        auction_from_another_user = AuctionFactory(
+            author=author,
+            auction_name="Auction from another user",
+            category=category,
+        )
+
+        BookmarkFactory(user_id=author, auction=auction_from_another_user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertNotEqual(
+            response.data["results"][0]["auction"]["product"],
+            auction_from_another_user.auction_name,
+        )
+        self.assertNotEqual(
+            response.data["results"][1]["auction"]["product"],
+            auction_from_another_user.auction_name,
+        )
 
 
 class AddBookmarkViewTestCase(APITestCase):

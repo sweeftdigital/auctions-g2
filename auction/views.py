@@ -70,6 +70,9 @@ class BookmarkListView(ListAPIView):
     filter_backends = [DjangoFilterBackend]
     filterset_class = BookmarkFilterSet
 
+    def get_queryset(self):
+        return Bookmark.objects.filter(user_id=self.request.user.id)
+
 
 class RetrieveAuctionView(generics.RetrieveAPIView):
     permission_classes = (IsAuthenticated,)
