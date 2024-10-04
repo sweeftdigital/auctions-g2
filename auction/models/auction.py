@@ -13,10 +13,11 @@ class ConditionChoices(models.TextChoices):
 
 
 class StatusChoices(models.TextChoices):
-    ACTIVE = "active", "Active"
-    DRAFT = "draft", "Draft"
-    COMPLETED = "completed", "Completed"
-    CANCELED = "canceled", "Canceled"
+    LIVE = "Live", "Live"
+    DRAFT = "Draft", "Draft"
+    COMPLETED = "Completed", "Completed"
+    CANCELED = "Canceled", "Canceled"
+    UPCOMING = "Upcoming", "Upcoming"
 
 
 class AcceptedBiddersChoices(models.TextChoices):
