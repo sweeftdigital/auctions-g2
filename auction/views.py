@@ -140,7 +140,7 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
 class DeleteAuctionView(generics.DestroyAPIView):
     queryset = Auction.objects.all()
     lookup_field = "id"
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated, IsOwner)
 
 
 @extend_schema(
