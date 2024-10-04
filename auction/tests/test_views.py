@@ -460,11 +460,12 @@ class BookmarkListViewTests(APITestCase):
         category = CategoryFactory(name="Other")
         auction_from_another_user = AuctionFactory(
             author=author,
-            auction_name="Auction from another user",
+            auction_name="Pet auction from another user",
             category=category,
         )
-
         BookmarkFactory(user_id=author, auction=auction_from_another_user)
+
+        # Listing test
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data.get("results")), 2)
@@ -475,6 +476,38 @@ class BookmarkListViewTests(APITestCase):
         self.assertNotEqual(
             response.data["results"][1]["auction"]["product"],
             auction_from_another_user.auction_name,
+        )
+
+        # Filtering
+        response = self.client.get(self.url, {"category": "Other"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 0)
+
+        # Searching
+        # Name of the auction that is created in this test case
+        # includes 'Pet', similarily the name of auction1 includes 'Pet'
+        response = self.client.get(self.url + "?search=Pet")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 1)
+        print()
+        self.assertNotEqual(
+            response.data["results"][0]["auction"]["product"],
+            auction_from_another_user.auction_name,
+        )
+        self.assertEqual(
+            response.data["results"][0]["auction"]["product"],
+            self.auction1.auction_name,
+        )
+
+        # Ordering
+        response = self.client.get(self.url + "?ordering=start_date")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["auction"]["product"], self.auction2.auction_name
+        )
+        self.assertEqual(
+            response.data["results"][1]["auction"]["product"], self.auction1.auction_name
         )
 
 

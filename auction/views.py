@@ -56,6 +56,22 @@ class AuctionListView(ListAPIView):
 @extend_schema(
     parameters=[
         OpenApiParameter(
+            name="search",
+            description="Fields that will be searched by are: `auction_name`, `description`, `tags`.",
+            required=False,
+            type=str,
+        ),
+        OpenApiParameter(
+            name="ordering",
+            description=(
+                "Comma-separated list of fields to order by. Prepend with '-' to "
+                "indicate descending order. Valid fields are: `start_date`, `end_date`, "
+                "`max_price`, `quantity`"
+            ),
+            required=False,
+            type=str,
+        ),
+        OpenApiParameter(
             name="page",
             description='The page number or "last" for the last page.',
             required=False,
@@ -67,8 +83,19 @@ class BookmarkListView(ListAPIView):
     permission_classes = (IsAuthenticated,)
     queryset = Bookmark.objects.all()
     serializer_class = BookmarkListSerializer
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = BookmarkFilterSet
+    search_fields = (
+        "auction__auction_name",
+        "auction__description",
+        "auction__tags__name",
+    )
+    ordering_fields = (
+        "auction__start_date",
+        "auction__end_date",
+        "auction__max_price",
+        "auction__quantity",
+    )
 
     def get_queryset(self):
         return Bookmark.objects.filter(user_id=self.request.user.id)
