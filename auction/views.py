@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from auction.filters import BookmarkFilterSet, BuyerAuctionFilterSet
 from auction.models import Auction, Bookmark
-from auction.permissions import IsNotSellerAndIsOwner, IsOwner
+from auction.permissions import IsBuyer, IsNotSellerAndIsOwner, IsOwner
 from auction.serializers import (
     AuctionListSerializer,
     AuctionRetrieveSerializer,
@@ -45,7 +45,7 @@ from auction.serializers import (
     ],
 )
 class BuyerAuctionListView(ListAPIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsBuyer)
     queryset = Auction.objects.all()
     serializer_class = AuctionListSerializer
     filterset_class = BuyerAuctionFilterSet

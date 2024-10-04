@@ -22,3 +22,13 @@ class IsNotSellerAndIsOwner(BasePermission):
             return False
 
         return obj.author == request.user
+
+
+class IsBuyer(BasePermission):
+    """
+    Custom permission to only allow buyers to access certain views.
+    """
+
+    def has_permission(self, request, view):
+        # Check if the user is a Buyer
+        return not request.user.is_seller

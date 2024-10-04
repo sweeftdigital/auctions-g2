@@ -250,6 +250,11 @@ class BuyerAuctionListViewTests(APITestCase):
             response.data["results"][1]["product"], self.auction3.auction_name
         )
 
+    def test_seller_trying_to_list_buyer_auctions(self):
+        self.user.is_seller = True
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
 
 class AuctionRetrieveViewTests(APITestCase):
     def setUp(self):
