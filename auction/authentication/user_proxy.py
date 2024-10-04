@@ -15,8 +15,8 @@ class UserProxy:
         self.is_verified = payload.get("is_verified", False)
         self._user_type = payload.get("user_type", "")
         self._user_profile_type = payload.get("user_profile_type", "")
-        self.email = payload.get("email", "")
-        self.phone_number = payload.get("phone_number", "")
+        self.email = payload.get("email")
+        self.phone_number = payload.get("phone_number")
         self.two_factor_authentication_activated = payload.get(
             "two_factor_authentication_activated", False
         )
@@ -70,6 +70,11 @@ class UserProxy:
     def get_settings(self) -> dict:
         """Return a dictionary containing the user's settings."""
         return {"theme": self.theme, "language": self.language}
+
+    @property
+    def is_anonymous(self):
+        """Return False because this is a proxy for authenticated users."""
+        return False
 
     def __str__(self) -> str:
         return (

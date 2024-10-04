@@ -98,3 +98,57 @@ class BookmarkCreateSerializer(serializers.ModelSerializer):
 
         bookmark = Bookmark.objects.create(user_id=user_id, auction_id=auction_id)
         return bookmark
+
+
+class AuctionCreateSerializer(CountryFieldMixin, serializers.ModelSerializer):
+    tags = TagSerializer(many=True)
+    category = CategorySerializer()
+
+    class Meta:
+        model = Auction
+        fields = [
+            "id",
+            "author",
+            "auction_name",
+            "description",
+            "category",
+            "start_date",
+            "end_date",
+            "max_price",
+            "quantity",
+            "accepted_bidders",
+            "accepted_locations",
+            "tags",
+            "status",
+            "currency",
+            "custom_fields",
+            "condition",
+        ]
+        read_only_fields = ["id", "status"]
+
+    def validate_end_date(self, value):
+        start_date = self.initial_data.get("start_date")
+        if isinstance(start_date, str):
+            start_date = serializers.DateField().to_internal_value(start_date)
+
+        if value <= start_date:
+            raise serializers.ValidationError("End date must be after the start date.")
+        return value
+
+    def create(self, validated_data):
+        tags_data = validated_data.pop("tags", [])
+        category_data = validated_data.pop("category")
+
+        # Get or create the category directly in the create method
+        category_name = category_data["name"]
+        category, created = Category.objects.get_or_create(name=category_name)
+
+        # Create the auction instance
+        auction = Auction.objects.create(category=category, **validated_data)
+
+        # Handle tags
+        tags = {tag_data["name"] for tag_data in tags_data}
+        tag_objects = [Tag.objects.get_or_create(name=name)[0] for name in tags]
+        auction.tags.set(tag_objects)
+
+        return auction
