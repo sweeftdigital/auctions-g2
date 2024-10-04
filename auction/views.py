@@ -51,7 +51,6 @@ from auction.serializers import (
 )
 class BuyerAuctionListView(ListAPIView):
     permission_classes = (IsAuthenticated, IsBuyer)
-    queryset = Auction.objects.all()
     serializer_class = BuyerAuctionListSerializer
     filterset_class = BuyerAuctionFilterSet
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -109,7 +108,6 @@ class BuyerAuctionListView(ListAPIView):
 )
 class SellerAuctionListView(ListAPIView):
     permission_classes = (IsAuthenticated, IsSeller)
-    queryset = Auction.objects.all()
     serializer_class = SellerAuctionListSerializer
     filterset_class = SellerAuctionFilterSet
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
