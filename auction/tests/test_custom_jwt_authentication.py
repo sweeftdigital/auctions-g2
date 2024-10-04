@@ -59,9 +59,9 @@ class CustomJWTAuthenticationTest(TestCase):
 
         self.assertIsInstance(user, UserProxy)
         self.assertEqual(user.id, mock_payload["user_id"])
-        self.assertTrue(user.is_buyer())
+        self.assertTrue(user.is_buyer)
         self.assertTrue(user.is_individual())
-        self.assertFalse(user.is_seller())
+        self.assertFalse(user.is_seller)
         self.assertFalse(user.is_company())
         self.assertEqual(user.full_name, "John Doe")
         self.assertTrue(user.has_verified_account())
