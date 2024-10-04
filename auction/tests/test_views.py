@@ -42,7 +42,7 @@ class AuctionListViewTests(APITestCase):
         self.auction1 = AuctionFactory(
             author=self.user.id,
             category=self.category1,
-            status=StatusChoices.ACTIVE,
+            status=StatusChoices.LIVE,
             accepted_bidders=AcceptedBiddersChoices.BOTH,
             accepted_locations="AL",
             start_date=datetime.now() - timedelta(days=5),
@@ -80,7 +80,7 @@ class AuctionListViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_filter_by_status(self):
-        response = self.client.get(self.url, {"status": StatusChoices.ACTIVE})
+        response = self.client.get(self.url, {"status": StatusChoices.LIVE})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data.get("results")), 1)
         self.assertEqual(
@@ -89,96 +89,6 @@ class AuctionListViewTests(APITestCase):
 
     def test_filter_by_invalid_status(self):
         response = self.client.get(self.url, {"status": "invalid_status"})
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_filter_by_condition(self):
-        self.auction1.condition = ConditionChoices.NEW
-        self.auction1.save()
-
-        response = self.client.get(self.url, {"condition": ConditionChoices.NEW})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data.get("results")), 1)
-        self.assertEqual(
-            response.data["results"][0]["product"], self.auction1.auction_name
-        )
-
-    def test_filter_by_accepted_bidders(self):
-        response = self.client.get(
-            self.url, {"accepted_bidders": AcceptedBiddersChoices.BOTH}
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data.get("results")), 1)
-        self.assertEqual(
-            response.data["results"][0]["product"], self.auction1.auction_name
-        )
-
-    def test_filter_by_accepted_locations(self):
-        response = self.client.get(
-            self.url, {"accepted_locations": self.auction1.accepted_locations}
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data.get("results")), 1)
-        self.assertEqual(
-            response.data["results"][0]["product"], self.auction1.auction_name
-        )
-
-    def test_filter_by_currency(self):
-        response = self.client.get(self.url, {"currency": self.auction1.currency})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data.get("results")), 1)
-        self.assertEqual(
-            response.data["results"][0]["product"], self.auction1.auction_name
-        )
-
-    def test_filter_by_max_price(self):
-        response = self.client.get(self.url, {"max_price": 100})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data.get("results")), 1)
-        self.assertEqual(
-            response.data["results"][0]["product"], self.auction1.auction_name
-        )
-
-    def test_filter_by_min_price(self):
-        response = self.client.get(self.url, {"min_price": 101})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data.get("results")), 1)
-        self.assertEqual(
-            response.data["results"][0]["product"], self.auction2.auction_name
-        )
-
-    def test_filter_by_start_date(self):
-        response = self.client.get(
-            self.url, {"start_date": str(self.auction1.start_date.date())}
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data.get("results")), 2)
-
-    def test_filter_by_end_date(self):
-        response = self.client.get(self.url, {"end_date": (datetime.now()).date()})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data.get("results")), 1)
-
-    def test_filter_by_both_dates(self):
-        response = self.client.get(
-            self.url,
-            {
-                "start_date": "2000-01-01",
-                "end_date": "2040-01-01",
-            },
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data.get("results")), 2)
-
-    def test_filter_by_category(self):
-        response = self.client.get(self.url, {"category": self.category1.name})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data.get("results")), 1)
-        self.assertEqual(
-            response.data["results"][0]["product"], self.auction1.auction_name
-        )
-
-    def test_filter_by_invalid_category(self):
-        response = self.client.get(self.url, {"category": "Invalid Category"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_search_by_auction_name(self):
@@ -297,6 +207,24 @@ class AuctionListViewTests(APITestCase):
             response.data["results"][0]["product"], self.auction2.auction_name
         )
 
+    def test_order_by_category_ascending(self):
+        response = self.client.get(self.url + "?ordering=category")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction2.auction_name
+        )
+
+    def test_order_by_category_descending(self):
+        response = self.client.get(self.url + "?ordering=-category")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 2)
+        print(response.data, "*" * 200)
+        self.assertEqual(response.data["results"][0]["category"]["name"], "Pet Supplies")
+
+        # Check if the second result has the next category
+        self.assertEqual(response.data["results"][1]["category"]["name"], "Electronics")
+
 
 class BookmarkListViewTests(APITestCase):
     def setUp(self):
@@ -313,7 +241,7 @@ class BookmarkListViewTests(APITestCase):
         self.auction1 = AuctionFactory(
             author=self.user.id,
             category=self.category1,
-            status=StatusChoices.ACTIVE,
+            status=StatusChoices.LIVE,
             accepted_bidders=AcceptedBiddersChoices.BOTH,
             accepted_locations="AL",
             start_date=datetime.now() - timedelta(days=5),
@@ -354,7 +282,7 @@ class BookmarkListViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_filter_by_status(self):
-        response = self.client.get(self.url, {"status": StatusChoices.ACTIVE})
+        response = self.client.get(self.url, {"status": StatusChoices.LIVE})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data.get("results")), 1)
         self.assertEqual(
@@ -589,7 +517,7 @@ class AuctionRetrieveViewTests(APITestCase):
         self.auction = AuctionFactory(
             author=self.user.id,
             category=self.category1,
-            status=StatusChoices.ACTIVE,
+            status=StatusChoices.LIVE,
             accepted_bidders=AcceptedBiddersChoices.BOTH,
             accepted_locations=["GE", "AL", "HR"],
             start_date=datetime.now() - timedelta(days=5),

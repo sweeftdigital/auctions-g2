@@ -31,7 +31,7 @@ from auction.serializers import (
             description=(
                 "Comma-separated list of fields to order by. Prepend with '-' to "
                 "indicate descending order. Valid fields are: `start_date`, `end_date`, "
-                "`max_price`, `quantity`"
+                "`max_price`, `quantity`, `category`, `status`."
             ),
             required=False,
             type=str,
@@ -51,7 +51,27 @@ class AuctionListView(ListAPIView):
     filterset_class = AuctionFilterSet
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ("auction_name", "description", "tags__name")
-    ordering_fields = ("start_date", "end_date", "max_price", "quantity")
+    ordering_fields = (
+        "start_date",
+        "end_date",
+        "max_price",
+        "quantity",
+        "category__name",
+        "status",
+    )
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        # Override ordering if 'category' is in the query params
+        ordering = self.request.query_params.get("ordering", None)
+        if ordering:
+            if "category" in ordering:
+                # Map 'category' to 'category__name'
+                ordering = ordering.replace("category", "category__name")
+            queryset = queryset.order_by(ordering)
+
+        return queryset
 
 
 @extend_schema(
