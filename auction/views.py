@@ -6,7 +6,7 @@ from rest_framework.generics import CreateAPIView, DestroyAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from auction.filters import AuctionFilterSet
+from auction.filters import AuctionFilterSet, BookmarkFilterSet
 from auction.models import Auction, Bookmark
 from auction.permissions import IsOwner
 from auction.serializers import (
@@ -53,10 +53,22 @@ class AuctionListView(ListAPIView):
     ordering_fields = ("start_date", "end_date", "max_price", "quantity")
 
 
+@extend_schema(
+    parameters=[
+        OpenApiParameter(
+            name="page",
+            description='The page number or "last" for the last page.',
+            required=False,
+            type={"oneOf": [{"type": "integer"}, {"type": "string"}]},
+        ),
+    ],
+)
 class BookmarkListView(ListAPIView):
     permission_classes = (IsAuthenticated,)
     queryset = Bookmark.objects.all()
     serializer_class = BookmarkListSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = BookmarkFilterSet
 
 
 class RetrieveAuctionView(generics.RetrieveAPIView):
