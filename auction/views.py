@@ -18,6 +18,7 @@ from auction.serializers import (
 
 
 @extend_schema(
+    tags=["Auctions"],
     parameters=[
         OpenApiParameter(
             name="search",
@@ -54,6 +55,7 @@ class AuctionListView(ListAPIView):
 
 
 @extend_schema(
+    tags=["Bookmarks"],
     parameters=[
         OpenApiParameter(
             name="search",
@@ -101,6 +103,9 @@ class BookmarkListView(ListAPIView):
         return Bookmark.objects.filter(user_id=self.request.user.id)
 
 
+@extend_schema(
+    tags=["Auctions"],
+)
 class RetrieveAuctionView(generics.RetrieveAPIView):
     permission_classes = (IsAuthenticated,)
     queryset = Auction.objects.all()
@@ -108,12 +113,18 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
     lookup_field = "id"
 
 
+@extend_schema(
+    tags=["Auctions"],
+)
 class DeleteAuctionView(generics.DestroyAPIView):
     queryset = Auction.objects.all()
     lookup_field = "id"
     permission_classes = [IsAuthenticated]
 
 
+@extend_schema(
+    tags=["Bookmarks"],
+)
 class AddBookmarkView(CreateAPIView):
     """
     View to handle the creation of bookmarks for auctions.
@@ -139,6 +150,9 @@ class AddBookmarkView(CreateAPIView):
         return Response(response_data, status=status.HTTP_201_CREATED)
 
 
+@extend_schema(
+    tags=["Bookmarks"],
+)
 class DeleteBookmarkView(DestroyAPIView):
     queryset = Bookmark.objects.all()
     permission_classes = (IsAuthenticated, IsOwner)

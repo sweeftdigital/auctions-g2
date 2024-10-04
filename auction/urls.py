@@ -10,11 +10,15 @@ from auction.views import (
 )
 
 urlpatterns = [
-    path("auctions/", AuctionListView.as_view(), name="auction-list"),
-    path("auction/<uuid:id>/", RetrieveAuctionView.as_view(), name="retrieve-auction"),
+    path("auctions/list/", AuctionListView.as_view(), name="auction-list"),
+    path(
+        "auction/retrieve/<uuid:id>/",
+        RetrieveAuctionView.as_view(),
+        name="retrieve-auction",
+    ),
     path("auction/delete/<uuid:id>/", DeleteAuctionView.as_view(), name="delete-auction"),
-    path("bookmarks/", BookmarkListView.as_view(), name="bookmark-list"),
-    path("bookmarks/add/", AddBookmarkView.as_view(), name="add-bookmark"),
+    path("bookmarks/list/", BookmarkListView.as_view(), name="bookmark-list"),
+    path("bookmarks/create/", AddBookmarkView.as_view(), name="add-bookmark"),
     path(
         "bookmarks/delete/<uuid:pk>/",
         DeleteBookmarkView.as_view(),
