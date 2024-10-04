@@ -1,7 +1,7 @@
-from rest_framework import permissions
+from rest_framework.permissions import BasePermission
 
 
-class IsOwner(permissions.BasePermission):
+class IsOwner(BasePermission):
     """
     Custom permission to only allow owners of an object to delete it.
     """
@@ -9,3 +9,16 @@ class IsOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         result = str(obj.user_id) == str(request.user.id)
         return result
+
+
+class IsNotSellerAndIsOwner(BasePermission):
+    """
+    Custom permission to only allow auction owners to delete their auctions,
+    but prevent sellers from deleting any auctions.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        if request.user.is_seller:
+            return False
+
+        return obj.author == request.user

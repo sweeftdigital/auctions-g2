@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from auction.filters import BookmarkFilterSet, BuyerAuctionFilterSet
 from auction.models import Auction, Bookmark
-from auction.permissions import IsOwner
+from auction.permissions import IsNotSellerAndIsOwner, IsOwner
 from auction.serializers import (
     AuctionListSerializer,
     AuctionRetrieveSerializer,
@@ -140,7 +140,7 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
 class DeleteAuctionView(generics.DestroyAPIView):
     queryset = Auction.objects.all()
     lookup_field = "id"
-    permission_classes = (IsAuthenticated, IsOwner)
+    permission_classes = (IsAuthenticated, IsNotSellerAndIsOwner)
 
 
 @extend_schema(
