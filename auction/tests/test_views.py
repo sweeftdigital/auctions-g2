@@ -6,7 +6,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from auction.authentication import UserProxy
+from auction.authentication.user_proxy import UserProxy
 from auction.factories.model_factories import (
     AuctionFactory,
     BookmarkFactory,
@@ -540,7 +540,9 @@ class AddBookmarkViewTestCase(APITestCase):
             condition="New",
         )
 
-        patcher = patch("auction.authentication.CustomJWTAuthentication.authenticate")
+        patcher = patch(
+            "auction.authentication.custom_jwt_auth.CustomJWTAuthentication.authenticate"
+        )
         self.mock_authenticate = patcher.start()
         self.mock_authenticate.return_value = (self.user_proxy, None)
         self.addCleanup(patcher.stop)

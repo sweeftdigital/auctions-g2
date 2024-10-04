@@ -43,7 +43,6 @@ class Category(models.Model):
         max_length=255,
         choices=CategoryChoices.choices,
         default=CategoryChoices.OTHER,
-        unique=True,
     )
 
     def __str__(self):

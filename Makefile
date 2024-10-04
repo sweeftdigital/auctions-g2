@@ -10,6 +10,8 @@ help:
 	@echo "  coverage_report  - Generate coverage report. Usage: 'make coverage_report'"
 	@echo "  createsuperuser  - Create admin/super user. Usage: 'make createsuperuser'"
 	@echo "  install_pre_commit - Install pre commits on local system. Usage: 'make install_pre_commit'"
+	@echo "  create_auctions  - Generate 201 auction records using the management command. Usage:'make create_auctions'"
+
 
 # Create migration files
 makemigrations:
@@ -50,3 +52,8 @@ createsuperuser:
 install_pre_commit:
 	@echo "Installing pre-commit on the local system..."
 	pre-commit install
+
+# Run the create_auctions management command
+create_auctions:
+	@echo "Creating 201 auction records using management command..."
+	docker compose run --rm auctions python manage.py create_auctions

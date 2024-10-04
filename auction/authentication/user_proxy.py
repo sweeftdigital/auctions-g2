@@ -1,65 +1,3 @@
-import os
-
-import jwt
-from django.core.cache import caches
-from drf_spectacular.extensions import OpenApiAuthenticationExtension
-from rest_framework import authentication, exceptions
-
-
-class CustomJWTAuthentication(authentication.BaseAuthentication):
-    ACCOUNTS_SERVICE_CACHE = caches["accounts_redis"]
-
-    def __init__(self):
-        self.public_key = os.environ.get("RSA_PUBLIC_KEY")
-        if not self.public_key:
-            raise ValueError("RSA_PUBLIC_KEY environment variable is not set")
-
-    def authenticate(self, request):
-        auth_header = request.headers.get("Authorization")
-        if not auth_header:
-            return None
-
-        try:
-            token_type, token = auth_header.split()
-            if token_type.lower() != "bearer":
-                raise exceptions.AuthenticationFailed(
-                    "Authorization type must be Bearer."
-                )
-        except ValueError:
-            raise exceptions.AuthenticationFailed("Invalid authorization header format.")
-
-        if self.ACCOUNTS_SERVICE_CACHE.get(token):
-            raise exceptions.AuthenticationFailed("This token has been blacklisted.")
-
-        try:
-            payload = self.decode_token(token)
-        except jwt.ExpiredSignatureError:
-            raise exceptions.AuthenticationFailed("Token has expired.")
-        except jwt.InvalidTokenError:
-            raise exceptions.AuthenticationFailed("Invalid token.")
-
-        user = self.get_user_proxy(payload)
-        return user, None
-
-    def decode_token(self, token):
-        options = {
-            "verify_exp": True,
-        }
-        return jwt.decode(token, self.public_key, algorithms=["RS256"], options=options)
-
-    def get_user_proxy(self, payload):
-        user_id = payload.get("user_id")
-        if not user_id:
-            raise exceptions.AuthenticationFailed(
-                "Token does not contain a valid user_id."
-            )
-
-        return UserProxy(payload)
-
-    def authenticate_header(self, request):
-        return "Bearer"
-
-
 class UserProxy:
     USER_TYPE_BUYER = "Buyer"
     USER_TYPE_SELLER = "Seller"
@@ -77,8 +15,8 @@ class UserProxy:
         self.is_verified = payload.get("is_verified", False)
         self._user_type = payload.get("user_type", "")
         self._user_profile_type = payload.get("user_profile_type", "")
-        self.email = payload.get("email", "")
-        self.phone_number = payload.get("phone_number", "")
+        self.email = payload.get("email")
+        self.phone_number = payload.get("phone_number")
         self.two_factor_authentication_activated = payload.get(
             "two_factor_authentication_activated", False
         )
@@ -133,6 +71,11 @@ class UserProxy:
         """Return a dictionary containing the user's settings."""
         return {"theme": self.theme, "language": self.language}
 
+    @property
+    def is_anonymous(self):
+        """Return False because this is a proxy for authenticated users."""
+        return False
+
     def __str__(self) -> str:
         return (
             f"UserProxy (ID: {self.id}, Email: {self.email}, "
@@ -145,15 +88,3 @@ class UserProxy:
             f"<UserProxy id={self.id} email={self.email} type={self._user_type} "
             f"profile={self._user_profile_type} verified={self.is_verified}>"
         )
-
-
-class CustomJWTAuthenticationScheme(OpenApiAuthenticationExtension):
-    target_class = "auction.authentication.CustomJWTAuthentication"
-    name = "BearerAuth"
-
-    def get_security_definition(self, auto_schema):
-        return {
-            "type": "http",
-            "scheme": "bearer",
-            "bearerFormat": "JWT",
-        }

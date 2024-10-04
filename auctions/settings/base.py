@@ -8,6 +8,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # Application definition
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -19,6 +20,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "django_filters",
     "django_countries",
+    "channels",
     # Local
     "auction.apps.AuctionConfig",
 ]
@@ -47,7 +49,21 @@ TEMPLATES = [
         },
     },
 ]
+
 WSGI_APPLICATION = "auctions.wsgi.application"
+ASGI_APPLICATION = "auctions.asgi.application"
+
+# Channels
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("auctions_redis", 6379)],
+        },
+    },
+}
+
+
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 DATABASES = {
@@ -109,7 +125,9 @@ CACHES = {
 
 # DRF settings
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ("auction.authentication.CustomJWTAuthentication",),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "auction.authentication.custom_jwt_auth.CustomJWTAuthentication",
+    ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
