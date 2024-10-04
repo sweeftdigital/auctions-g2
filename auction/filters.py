@@ -11,7 +11,7 @@ from auction.models.bookmark import Bookmark
 from auction.models.category import CategoryChoices
 
 
-class BuyerAuctionFilterSet(filters.FilterSet):
+class BaseAuctionFilterSet(filters.FilterSet):
     status = filters.ChoiceFilter(choices=StatusChoices.choices, field_name="status")
 
     class Meta:
@@ -21,8 +21,11 @@ class BuyerAuctionFilterSet(filters.FilterSet):
         ]
 
 
-class SellerAuctionFilterSet(filters.FilterSet):
-    status = filters.ChoiceFilter(choices=StatusChoices.choices, field_name="status")
+class BuyerAuctionFilterSet(BaseAuctionFilterSet):
+    pass
+
+
+class SellerAuctionFilterSet(BaseAuctionFilterSet):
     start_date = filters.DateFilter(field_name="start_date", lookup_expr="gte")
     end_date = filters.DateFilter(field_name="end_date", lookup_expr="lte")
     category = filters.ChoiceFilter(
@@ -31,10 +34,8 @@ class SellerAuctionFilterSet(filters.FilterSet):
     max_price = filters.NumberFilter(field_name="max_price", lookup_expr="lte")
     min_price = filters.NumberFilter(field_name="max_price", lookup_expr="gte")
 
-    class Meta:
-        model = Auction
-        fields = [
-            "status",
+    class Meta(BaseAuctionFilterSet.Meta):
+        fields = BaseAuctionFilterSet.Meta.fields + [
             "start_date",
             "end_date",
             "category",
