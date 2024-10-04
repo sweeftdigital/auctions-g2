@@ -26,6 +26,7 @@ class MockUser:
         self.id = user_id
         self.is_authenticated = True
         self.is_seller = False
+        self.is_buyer = False
 
 
 class BuyerAuctionListViewTests(APITestCase):
@@ -254,6 +255,127 @@ class BuyerAuctionListViewTests(APITestCase):
         self.user.is_seller = True
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class SellerAuctionListViewTests(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = MockUser(user_id=uuid4())
+        self.client.force_authenticate(user=self.user)
+        self.url = reverse("auction-list-seller")
+
+        self.category1 = CategoryFactory(name="Collectibles & Art")
+        self.category2 = CategoryFactory(name="Automobiles")
+        self.tag1 = TagFactory(name="Expensive")
+        self.tag2 = TagFactory(name="Rare")
+
+        self.auction1 = AuctionFactory(
+            author=self.user.id,
+            category=self.category1,
+            status=StatusChoices.LIVE,
+            accepted_bidders=AcceptedBiddersChoices.BOTH,
+            start_date=datetime.now() - timedelta(days=1),
+            end_date=datetime.now() + timedelta(days=1),
+            max_price=5000,
+            quantity=1,
+            auction_name="Exclusive Art Auction",
+            description="Rare and expensive art pieces.",
+        )
+        self.auction1.tags.add(self.tag1)
+
+        self.auction2 = AuctionFactory(
+            author=uuid4(),
+            category=self.category2,
+            status=StatusChoices.UPCOMING,
+            accepted_bidders=AcceptedBiddersChoices.BOTH,
+            start_date=datetime.now() + timedelta(days=1),
+            end_date=datetime.now() + timedelta(days=5),
+            max_price=20000,
+            quantity=2,
+            auction_name="Luxury Car Auction",
+            description="Luxury cars for bidding.",
+        )
+        self.auction2.tags.add(self.tag2)
+
+    def test_seller_auction_listing(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 2)
+
+    def test_buyer_auction_listing(self):
+        self.user.is_buyer = True
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_unauthenticated_access(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_filter_by_status(self):
+        response = self.client.get(self.url, {"status": StatusChoices.LIVE})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
+
+    def test_search_by_tag(self):
+        response = self.client.get(self.url, {"search": "Expensive"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
+
+    def test_order_by_start_date(self):
+        response = self.client.get(self.url, {"ordering": "start_date"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
+
+    def test_order_by_max_price_desc(self):
+        response = self.client.get(self.url, {"ordering": "-max_price"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction2.auction_name
+        )
+
+    def test_order_by_category_ascending(self):
+        response = self.client.get(self.url + "?ordering=category")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction2.auction_name
+        )
+
+    def test_order_by_category_descending(self):
+        response = self.client.get(self.url + "?ordering=-category")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["category"]["name"], "Collectibles & Art"
+        )
+        self.assertEqual(response.data["results"][1]["category"]["name"], "Automobiles")
+
+    def test_order_by_tag_ascending(self):
+        response = self.client.get(self.url + "?ordering=tags")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(response.data["results"][0]["tags"][0], "Expensive")
+        self.assertEqual(response.data["results"][1]["tags"][0], "Rare")
+
+    def test_order_by_tag_descending(self):
+        response = self.client.get(self.url + "?ordering=-tags")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(response.data["results"][0]["tags"][0], "Rare")
+        self.assertEqual(response.data["results"][1]["tags"][0], "Expensive")
 
 
 class AuctionRetrieveViewTests(APITestCase):

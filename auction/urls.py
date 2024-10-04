@@ -7,11 +7,19 @@ from auction.views import (
     DeleteAuctionView,
     DeleteBookmarkView,
     RetrieveAuctionView,
+    SellerAuctionListView,
 )
 
 urlpatterns = [
     path(
-        "buyer/auctions/list/", BuyerAuctionListView.as_view(), name="auction-list-buyer"
+        "buyer/auctions/list/",
+        BuyerAuctionListView.as_view(),
+        name="auction-list-buyer",
+    ),
+    path(
+        "seller/auctions/list/",
+        SellerAuctionListView.as_view(),
+        name="auction-list-seller",
     ),
     path(
         "auction/retrieve/<uuid:id>/",
