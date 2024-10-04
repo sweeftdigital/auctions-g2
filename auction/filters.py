@@ -21,6 +21,28 @@ class BuyerAuctionFilterSet(filters.FilterSet):
         ]
 
 
+class SellerAuctionFilterSet(filters.FilterSet):
+    status = filters.ChoiceFilter(choices=StatusChoices.choices, field_name="status")
+    start_date = filters.DateFilter(field_name="start_date", lookup_expr="gte")
+    end_date = filters.DateFilter(field_name="end_date", lookup_expr="lte")
+    category = filters.ChoiceFilter(
+        choices=CategoryChoices.choices, field_name="category__name"
+    )
+    max_price = filters.NumberFilter(field_name="max_price", lookup_expr="lte")
+    min_price = filters.NumberFilter(field_name="max_price", lookup_expr="gte")
+
+    class Meta:
+        model = Auction
+        fields = [
+            "status",
+            "start_date",
+            "end_date",
+            "category",
+            "max_price",
+            "min_price",
+        ]
+
+
 class BookmarkFilterSet(filters.FilterSet):
     status = filters.ChoiceFilter(
         choices=StatusChoices.choices, field_name="auction__status"
