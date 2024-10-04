@@ -31,10 +31,12 @@ class UserProxy:
         """Return the full name of the user."""
         return f"{self.first_name} {self.last_name}".strip()
 
+    @property
     def is_buyer(self) -> bool:
         """Check if the user is a buyer."""
         return self._user_type == self.USER_TYPE_BUYER
 
+    @property
     def is_seller(self) -> bool:
         """Check if the user is a seller."""
         return self._user_type == self.USER_TYPE_SELLER

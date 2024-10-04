@@ -6,14 +6,19 @@ from rest_framework.generics import CreateAPIView, DestroyAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from auction.filters import AuctionFilterSet, BookmarkFilterSet
+from auction.filters import (
+    BookmarkFilterSet,
+    BuyerAuctionFilterSet,
+    SellerAuctionFilterSet,
+)
 from auction.models import Auction, Bookmark
-from auction.permissions import IsOwner
+from auction.permissions import IsBuyer, IsNotSellerAndIsOwner, IsOwner, IsSeller
 from auction.serializers import (
-    AuctionListSerializer,
     AuctionRetrieveSerializer,
     BookmarkCreateSerializer,
     BookmarkListSerializer,
+    BuyerAuctionListSerializer,
+    SellerAuctionListSerializer,
 )
 
 
@@ -31,7 +36,7 @@ from auction.serializers import (
             description=(
                 "Comma-separated list of fields to order by. Prepend with '-' to "
                 "indicate descending order. Valid fields are: `start_date`, `end_date`, "
-                "`max_price`, `quantity`"
+                "`max_price`, `quantity`, `category`, `status`."
             ),
             required=False,
             type=str,
@@ -44,14 +49,92 @@ from auction.serializers import (
         ),
     ],
 )
-class AuctionListView(ListAPIView):
-    permission_classes = (IsAuthenticated,)
-    queryset = Auction.objects.all()
-    serializer_class = AuctionListSerializer
-    filterset_class = AuctionFilterSet
+class BuyerAuctionListView(ListAPIView):
+    permission_classes = (IsAuthenticated, IsBuyer)
+    serializer_class = BuyerAuctionListSerializer
+    filterset_class = BuyerAuctionFilterSet
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ("auction_name", "description", "tags__name")
-    ordering_fields = ("start_date", "end_date", "max_price", "quantity")
+    ordering_fields = (
+        "start_date",
+        "end_date",
+        "max_price",
+        "quantity",
+        "category__name",
+        "status",
+    )
+
+    def get_queryset(self):
+        user = self.request.user.id
+        queryset = Auction.objects.filter(author=user)
+
+        # Override ordering if 'category' is in the query params
+        ordering = self.request.query_params.get("ordering", None)
+        if ordering:
+            if "category" in ordering:
+                # Map 'category' to 'category__name'
+                ordering = ordering.replace("category", "category__name")
+            queryset = queryset.order_by(ordering)
+
+        return queryset
+
+
+@extend_schema(
+    tags=["Auctions"],
+    parameters=[
+        OpenApiParameter(
+            name="search",
+            description="Fields that will be searched by are: `auction_name`, `description`, `tags`.",
+            required=False,
+            type=str,
+        ),
+        OpenApiParameter(
+            name="ordering",
+            description=(
+                "Comma-separated list of fields to order by. Prepend with '-' to "
+                "indicate descending order. Valid fields are: `start_date`, `end_date`, "
+                "`max_price`, `quantity`, `category`, `status`, `tags__name`."
+            ),
+            required=False,
+            type=str,
+        ),
+        OpenApiParameter(
+            name="page",
+            description='The page number or "last" for the last page.',
+            required=False,
+            type={"oneOf": [{"type": "integer"}, {"type": "string"}]},
+        ),
+    ],
+)
+class SellerAuctionListView(ListAPIView):
+    permission_classes = (IsAuthenticated, IsSeller)
+    serializer_class = SellerAuctionListSerializer
+    filterset_class = SellerAuctionFilterSet
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ("auction_name", "description", "tags__name")
+    ordering_fields = (
+        "start_date",
+        "end_date",
+        "max_price",
+        "quantity",
+        "category__name",
+        "status",
+        "tags__name",
+    )
+
+    def get_queryset(self):
+        queryset = Auction.objects.all()
+
+        # Override ordering if 'tags' or 'category' is in the query params
+        ordering = self.request.query_params.get("ordering", None)
+        if ordering:
+            if "category" in ordering:
+                ordering = ordering.replace("category", "category__name")
+            if "tags" in ordering:
+                ordering = ordering.replace("tags", "tags__name")
+            queryset = queryset.order_by(ordering)
+
+        return queryset
 
 
 @extend_schema(
@@ -112,6 +195,16 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
     serializer_class = AuctionRetrieveSerializer
     lookup_field = "id"
 
+    def get_object(self):
+        auction = super().get_object()
+
+        if auction.status == "Draft":
+            # Deny access if the user is a seller or not the author of the draft
+            if self.request.user.is_seller or auction.author != self.request.user.id:
+                self.permission_denied(self.request)
+
+        return auction
+
 
 @extend_schema(
     tags=["Auctions"],
@@ -119,7 +212,7 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
 class DeleteAuctionView(generics.DestroyAPIView):
     queryset = Auction.objects.all()
     lookup_field = "id"
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated, IsNotSellerAndIsOwner)
 
 
 @extend_schema(

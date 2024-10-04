@@ -59,12 +59,13 @@ class Migration(migrations.Migration):
                     "status",
                     models.CharField(
                         choices=[
-                            ("active", "Active"),
-                            ("draft", "Draft"),
-                            ("completed", "Completed"),
-                            ("canceled", "Canceled"),
+                            ("Live", "Live"),
+                            ("Draft", "Draft"),
+                            ("Completed", "Completed"),
+                            ("Canceled", "Canceled"),
+                            ("Upcoming", "Upcoming"),
                         ],
-                        default="draft",
+                        default="Draft",
                         max_length=20,
                     ),
                 ),

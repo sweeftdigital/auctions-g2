@@ -2,15 +2,25 @@ from django.urls import path
 
 from auction.views import (
     AddBookmarkView,
-    AuctionListView,
     BookmarkListView,
+    BuyerAuctionListView,
     DeleteAuctionView,
     DeleteBookmarkView,
     RetrieveAuctionView,
+    SellerAuctionListView,
 )
 
 urlpatterns = [
-    path("auctions/list/", AuctionListView.as_view(), name="auction-list"),
+    path(
+        "buyer/auctions/list/",
+        BuyerAuctionListView.as_view(),
+        name="auction-list-buyer",
+    ),
+    path(
+        "seller/auctions/list/",
+        SellerAuctionListView.as_view(),
+        name="auction-list-seller",
+    ),
     path(
         "auction/retrieve/<uuid:id>/",
         RetrieveAuctionView.as_view(),
