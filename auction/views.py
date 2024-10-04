@@ -133,6 +133,16 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
     serializer_class = AuctionRetrieveSerializer
     lookup_field = "id"
 
+    def get_object(self):
+        auction = super().get_object()
+
+        if auction.status == "Draft":
+            # Deny access if the user is a seller or not the author of the draft
+            if self.request.user.is_seller or auction.author != self.request.user.id:
+                self.permission_denied(self.request)
+
+        return auction
+
 
 @extend_schema(
     tags=["Auctions"],

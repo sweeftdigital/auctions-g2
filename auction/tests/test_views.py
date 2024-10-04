@@ -292,6 +292,20 @@ class AuctionRetrieveViewTests(APITestCase):
             response.data["accepted_locations"], ["Albania", "Georgia", "Croatia"]
         )
 
+    def test_retrieve_draft_auction_with_seller(self):
+        self.user.is_seller = True
+        self.auction.status = StatusChoices.DRAFT
+        self.auction.save()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_retrieve_draft_auction_with_non_author_user(self):
+        self.auction.status = StatusChoices.DRAFT
+        self.auction.author = uuid4()
+        self.auction.save()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
 
 class AuctionDeleteViewTests(APITestCase):
     def setUp(self):
