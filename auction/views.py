@@ -1,3 +1,5 @@
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.openapi import OpenApiParameter
 from drf_spectacular.utils import extend_schema
@@ -14,6 +16,7 @@ from auction.filters import (
 from auction.models import Auction, Bookmark
 from auction.permissions import IsBuyer, IsNotSellerAndIsOwner, IsOwner, IsSeller
 from auction.serializers import (
+    AuctionCreateSerializer,
     AuctionRetrieveSerializer,
     BookmarkCreateSerializer,
     BookmarkListSerializer,
@@ -249,3 +252,29 @@ class AddBookmarkView(CreateAPIView):
 class DeleteBookmarkView(DestroyAPIView):
     queryset = Bookmark.objects.all()
     permission_classes = (IsAuthenticated, IsOwner)
+
+
+@extend_schema(
+    tags=["Auctions"],
+)
+class CreateAuctionView(CreateAPIView):
+    queryset = Auction.objects.all()
+    serializer_class = AuctionCreateSerializer
+    permission_classes = [IsAuthenticated, IsBuyer]
+
+    def perform_create(self, serializer):
+        auction = serializer.save(author=self.request.user.id)
+
+        # Notify the WebSocket consumer about the new auction
+        self.notify_new_auction(auction.id)
+
+    def notify_new_auction(self, auction_id):
+        channel_layer = get_channel_layer()
+        # Send a message to the group notifying that a new auction has been created
+        async_to_sync(channel_layer.group_send)(
+            "auctions_for_bidders",  # This is the group name in your consumer
+            {
+                "type": "new_auction_notification",  # The type of message to handle
+                "new_auction_id": str(auction_id),  # Include the auction ID
+            },
+        )
