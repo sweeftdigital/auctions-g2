@@ -90,4 +90,8 @@ class AuctionConsumer(AsyncJsonWebsocketConsumer):
         if message_type == "create.auction":
             await self.create_auction(content)
         elif message_type == "load.new.auctions":
-            await self.reset_user_counter()
+            user = self.scope["user"]
+            if user.is_buyer:
+                await self.send_json({"error": "Buyers cannot load new auctions."})
+            else:
+                await self.reset_user_counter()
