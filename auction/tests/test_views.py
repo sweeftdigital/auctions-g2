@@ -3,6 +3,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
@@ -27,6 +28,7 @@ class MockUser:
         self.is_authenticated = True
         self.is_seller = False
         self.is_buyer = False
+        self.country = "Georgia"
 
 
 class BuyerAuctionListViewTests(APITestCase):
@@ -745,3 +747,160 @@ class AddBookmarkViewTestCase(APITestCase):
         self.assertEqual(
             str(response.data["auction_id"][0]), "Auction with this ID does not exist."
         )
+
+
+class CreateAuctionViewTests(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = MockUser(user_id=uuid4())
+        self.client.force_authenticate(user=self.user)
+        self.url = reverse("publish-auction")
+
+        self.category = CategoryFactory(name="Collectibles & Art")
+        self.tag1 = TagFactory(name="Luxury")
+        self.tag2 = TagFactory(name="Rare")
+
+        self.frequently_used_data = {
+            "auction_name": "Luxury Painting Auction",
+            "description": "Auctioning a rare and expensive painting.",
+            "category": self.category.name,
+            "start_date": timezone.now() + timedelta(days=1),
+            "end_date": timezone.now() + timedelta(days=5),
+            "max_price": 5000.00,
+            "quantity": 1,
+            "accepted_bidders": AcceptedBiddersChoices.BOTH,
+            "accepted_locations": ["US"],
+            "tags": [{"name": self.tag1.name}, {"name": self.tag2.name}],
+            "condition": ConditionChoices.NEW,
+        }
+
+    def test_create_auction_success(self):
+        data = self.frequently_used_data
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["auction_name"], data["auction_name"])
+        self.assertEqual(response.data["status"], StatusChoices.LIVE)
+
+    def test_unauthenticated_user_cannot_create_auction(self):
+        self.client.logout()
+        data = self.frequently_used_data
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_missing_required_fields(self):
+        data = self.frequently_used_data
+        data.pop("auction_name")
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("auction_name", response.data)
+
+    def test_end_date_before_start_date(self):
+        data = self.frequently_used_data
+        data["start_date"] = timezone.now() + timedelta(days=5)
+        data["end_date"] = timezone.now() + timedelta(days=1)
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("end_date", response.data)
+        self.assertIn("End date must be after the start date.", response.data["end_date"])
+
+    def test_start_date_in_past(self):
+        data = self.frequently_used_data
+        data["start_date"] = timezone.now() - timedelta(days=1)
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("start_date", response.data)
+        self.assertIn("Start date cannot be in the past.", response.data["start_date"])
+
+    def test_invalid_max_price(self):
+        data = self.frequently_used_data
+        data["max_price"] = -1
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("max_price", response.data)
+        self.assertIn("Max price must be greater than 0.", response.data["max_price"])
+
+    def test_invalid_accepted_bidders_choice(self):
+        data = self.frequently_used_data
+        data["accepted_bidders"] = "Invalid"
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("accepted_bidders", response.data)
+
+    def test_create_auction_with_invalid_tag(self):
+        data = self.frequently_used_data
+        data["tags"] = [{"name": "invalid"}]
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("tags", response.data)
+
+    def test_create_auction_with_invalid_category(self):
+        data = self.frequently_used_data
+        data["category"] = "invalid"
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("category", response.data)
+
+    def test_user_has_no_country_in_profile(self):
+        self.user.country = ""
+        data = self.frequently_used_data
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertIn(
+            "User must set a country in their profile before proceeding.",
+            response.data.get("detail"),
+        )
+
+    def test_quantity_negative_value(self):
+        data = self.frequently_used_data
+        data["quantity"] = -1
+        response = self.client.post(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("quantity", response.data)
+
+    def test_read_only_fields(self):
+        data = self.frequently_used_data
+        data["id"] = uuid4()
+        data["status"] = StatusChoices.DRAFT
+        data["author"] = uuid4()
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_country_codes_are_translated_to_country_names(self):
+        data = self.frequently_used_data
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            Auction.objects.last().accepted_locations[0].name, "United States of America"
+        )
+
+    def test_invalid_condition(self):
+        data = self.frequently_used_data
+        data["condition"] = "Invalid"
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("condition", response.data)
+
+    def test_invalid_date(self):
+        data = self.frequently_used_data
+        data["start_date"] = datetime.now() - timedelta(days=1)
+        data["end_date"] = datetime.now() + timedelta(days=1)
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_auction_with_empty_tags(self):
+        data = self.frequently_used_data
+        data["tags"] = []
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Tags are required, make sure to include them.", response.data.get("tags")
+        )
+
+    def test_create_auction_with_empty_accepted_locations(self):
+        data = self.frequently_used_data
+        data["accepted_locations"] = []
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("accepted_locations", response.data)
+        self.assertEqual(response.data.get("accepted_locations"), ["International"])
