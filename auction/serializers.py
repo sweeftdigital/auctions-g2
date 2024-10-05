@@ -155,20 +155,38 @@ class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
         return data
 
     def validate_start_date(self, value):
+        if value.tzinfo is None:
+            # If value is naive, convert it to aware
+            value = timezone.make_aware(value, timezone.get_default_timezone())
+
         if value <= timezone.now():
             raise serializers.ValidationError("Start date cannot be in the past.")
         return value
 
     def validate_end_date(self, value):
+        # Make sure the value is timezone-aware
+        if value.tzinfo is None:
+            # If value is naive, convert it to aware
+            value = timezone.make_aware(value, timezone.get_default_timezone())
+            print(value)
+
         start_date_str = self.initial_data.get("start_date")
+
         if start_date_str:
             start_date = timezone.datetime.fromisoformat(
                 start_date_str.replace("Z", "+00:00")
             )
+            if start_date.tzinfo is None:
+                start_date = timezone.make_aware(
+                    start_date, timezone.get_default_timezone()
+                )
+                print(start_date)
+
             if value <= start_date:
                 raise serializers.ValidationError(
                     "End date must be after the start date."
                 )
+
         return value
 
     def validate_max_price(self, value):
