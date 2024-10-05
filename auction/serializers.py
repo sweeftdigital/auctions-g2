@@ -148,6 +148,12 @@ class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "status", "author"]
 
+    def validate(self, data):
+        for field in self.Meta.read_only_fields:
+            if field in self.initial_data:
+                raise serializers.ValidationError({field: "This field is read-only."})
+        return data
+
     def validate_start_date(self, value):
         if value <= timezone.now():
             raise serializers.ValidationError("Start date cannot be in the past.")
