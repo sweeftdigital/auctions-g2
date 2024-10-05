@@ -3,6 +3,7 @@ import uuid
 import factory
 from django.utils import timezone
 
+from auction.models import Bid, BidImage
 from auction.models.auction import (
     AcceptedBiddersChoices,
     Auction,
@@ -59,3 +60,19 @@ class BookmarkFactory(factory.django.DjangoModelFactory):
 
     user_id = factory.LazyFunction(uuid.uuid4)
     auction = factory.SubFactory(AuctionFactory)
+
+
+class BidFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Bid
+
+    offer = factory.Faker("pydecimal", left_digits=5, right_digits=2, positive=True)
+    description = factory.Faker("sentence")
+
+
+class BidImageFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = BidImage
+
+    bid = factory.SubFactory(BidFactory)
+    image_url = factory.Faker("image_url")

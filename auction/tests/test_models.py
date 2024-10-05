@@ -1,15 +1,18 @@
 import uuid
+from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from auction.factories import (
     AuctionFactory,
+    BidFactory,
+    BidImageFactory,
     BookmarkFactory,
     CategoryFactory,
     TagFactory,
 )
-from auction.models import Auction, Bookmark, Category, Tag
+from auction.models import Auction, Bid, BidImage, Bookmark, Category, Tag
 
 
 class CategoryModelTest(TestCase):
@@ -97,3 +100,51 @@ class BookmarkModelTest(TestCase):
 
         self.assertNotEqual(bookmark1.user_id, bookmark2.user_id)
         self.assertEqual(bookmark1.auction, bookmark2.auction)
+
+
+class BidModelTest(TestCase):
+
+    def test_bid_str_representation_exactly_50_chars(self):
+        description = "This is a test bid description that is exactly fifty chars."
+        bid = BidFactory(offer=Decimal("150.50"), description=description)
+
+        expected_str = f"Bid of $150.50 - {description[:50]}"
+        self.assertEqual(str(bid), expected_str)
+
+    def test_bid_str_representation_truncated(self):
+        description = (
+            "This is a longer description for a test bid that exceeds fifty characters."
+        )
+        bid = BidFactory(offer=Decimal("150.50"), description=description)
+
+        expected_str = f"Bid of $150.50 - {description[:50]}"
+        self.assertEqual(str(bid), expected_str)
+
+    def test_bid_default_description(self):
+        bid = BidFactory()
+        self.assertIsNotNone(bid.description)
+
+
+class BidImageModelTest(TestCase):
+
+    def test_bid_image_creation(self):
+        bid_image = BidImageFactory()
+        self.assertTrue(isinstance(bid_image, BidImage))
+        self.assertIsNotNone(bid_image.image_url)
+        self.assertTrue(bid_image.image_url.startswith("http"))
+        self.assertTrue(isinstance(bid_image.bid, Bid))
+
+    def test_multiple_images_for_single_bid(self):
+        bid = BidFactory()
+        image1 = BidImageFactory(bid=bid)
+        image2 = BidImageFactory(bid=bid)
+
+        self.assertEqual(BidImage.objects.filter(bid=bid).count(), 2)
+        self.assertIn(image1, bid.images.all())
+        self.assertIn(image2, bid.images.all())
+
+    def test_bid_image_str_representation(self):
+        bid = BidFactory(offer=Decimal("99.99"), description="Another test bid")
+        bid_image = BidImageFactory(bid=bid)
+        expected_str = f"Image for Bid ID: {bid.id}"
+        self.assertEqual(str(bid_image), expected_str)
