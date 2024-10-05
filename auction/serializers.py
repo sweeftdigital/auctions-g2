@@ -164,6 +164,12 @@ class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
                 )
         return value
 
+    def validate_max_price(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Max price must be greater than 0.")
+
+        return value
+
     def create(self, validated_data):
         tags_data = validated_data.pop("tags", [])
         category_data = validated_data.pop("category")
