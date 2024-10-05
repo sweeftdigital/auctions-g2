@@ -168,7 +168,6 @@ class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
         if value.tzinfo is None:
             # If value is naive, convert it to aware
             value = timezone.make_aware(value, timezone.get_default_timezone())
-            print(value)
 
         start_date_str = self.initial_data.get("start_date")
 
@@ -180,7 +179,6 @@ class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
                 start_date = timezone.make_aware(
                     start_date, timezone.get_default_timezone()
                 )
-                print(start_date)
 
             if value <= start_date:
                 raise serializers.ValidationError(
@@ -200,6 +198,13 @@ class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
             raise serializers.ValidationError(f"{value} is not a valid category.")
         return value
 
+    def validate_tags(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                "Tags are required, make sure to include them."
+            )
+        return value
+
     def create(self, validated_data):
         tags_data = validated_data.pop("tags", [])
         category_data = validated_data.pop("category")
@@ -216,9 +221,11 @@ class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation["accepted_locations"] = [
-            country.name for country in instance.accepted_locations
-        ]
+        representation["accepted_locations"] = (
+            [country.name for country in instance.accepted_locations]
+            if len(representation["accepted_locations"]) > 0
+            else ["International"]
+        )
         representation["tags"] = [tag.name for tag in instance.tags.all()]
 
         return representation
