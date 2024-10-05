@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from auction.models import Auction, Bookmark, Category, Tag
 from auction.models.auction import StatusChoices
+from auction.models.category import CategoryChoices
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -123,7 +124,7 @@ class BookmarkCreateSerializer(serializers.ModelSerializer):
 
 class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
     tags = TagSerializer(many=True)
-    category = CategorySerializer()
+    category = serializers.CharField()
 
     class Meta:
         model = Auction
@@ -170,17 +171,19 @@ class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
 
         return value
 
+    def validate_category(self, value):
+        if value not in CategoryChoices.values:
+            raise serializers.ValidationError(f"{value} is not a valid category.")
+        return value
+
     def create(self, validated_data):
         tags_data = validated_data.pop("tags", [])
         category_data = validated_data.pop("category")
 
-        category_name = category_data["name"]
-        category, created = Category.objects.get_or_create(name=category_name)
-
+        category, created = Category.objects.get_or_create(name=category_data)
         auction = Auction.objects.create(
             category=category, status=StatusChoices.LIVE, **validated_data
         )
-
         tags = {tag_data["name"] for tag_data in tags_data}
         tag_objects = [Tag.objects.get_or_create(name=name)[0] for name in tags]
         auction.tags.set(tag_objects)
@@ -193,6 +196,5 @@ class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
             country.name for country in instance.accepted_locations
         ]
         representation["tags"] = [tag.name for tag in instance.tags.all()]
-        representation["category"] = instance.category.name
 
         return representation
