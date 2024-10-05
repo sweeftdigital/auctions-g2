@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django_countries.serializers import CountryFieldMixin
 from rest_framework import serializers
 
@@ -143,31 +144,46 @@ class AuctionCreateSerializer(CountryFieldMixin, serializers.ModelSerializer):
             "custom_fields",
             "condition",
         ]
-        read_only_fields = ["id", "status"]
+        read_only_fields = ["id", "status", "author"]
+
+    def validate_start_date(self, value):
+        if value <= timezone.now():
+            raise serializers.ValidationError("Start date cannot be in the past.")
+        return value
 
     def validate_end_date(self, value):
-        start_date = self.initial_data.get("start_date")
-        if isinstance(start_date, str):
-            start_date = serializers.DateField().to_internal_value(start_date)
-
-        if value <= start_date:
-            raise serializers.ValidationError("End date must be after the start date.")
+        start_date_str = self.initial_data.get("start_date")
+        if start_date_str:
+            start_date = timezone.datetime.fromisoformat(
+                start_date_str.replace("Z", "+00:00")
+            )
+            if value <= start_date:
+                raise serializers.ValidationError(
+                    "End date must be after the start date."
+                )
         return value
 
     def create(self, validated_data):
         tags_data = validated_data.pop("tags", [])
         category_data = validated_data.pop("category")
 
-        # Get or create the category directly in the create method
         category_name = category_data["name"]
         category, created = Category.objects.get_or_create(name=category_name)
 
-        # Create the auction instance
         auction = Auction.objects.create(category=category, **validated_data)
 
-        # Handle tags
         tags = {tag_data["name"] for tag_data in tags_data}
         tag_objects = [Tag.objects.get_or_create(name=name)[0] for name in tags]
         auction.tags.set(tag_objects)
 
         return auction
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation["accepted_locations"] = [
+            country.name for country in instance.accepted_locations
+        ]
+        representation["tags"] = [tag.name for tag in instance.tags.all()]
+        representation["category"] = instance.category.name
+
+        return representation
