@@ -3,6 +3,7 @@ from django_countries.serializers import CountryFieldMixin
 from rest_framework import serializers
 
 from auction.models import Auction, Bookmark, Category, Tag
+from auction.models.auction import StatusChoices
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -120,7 +121,7 @@ class BookmarkCreateSerializer(serializers.ModelSerializer):
         return bookmark
 
 
-class AuctionCreateSerializer(CountryFieldMixin, serializers.ModelSerializer):
+class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
     tags = TagSerializer(many=True)
     category = CategorySerializer()
 
@@ -170,7 +171,9 @@ class AuctionCreateSerializer(CountryFieldMixin, serializers.ModelSerializer):
         category_name = category_data["name"]
         category, created = Category.objects.get_or_create(name=category_name)
 
-        auction = Auction.objects.create(category=category, **validated_data)
+        auction = Auction.objects.create(
+            category=category, status=StatusChoices.LIVE, **validated_data
+        )
 
         tags = {tag_data["name"] for tag_data in tags_data}
         tag_objects = [Tag.objects.get_or_create(name=name)[0] for name in tags]

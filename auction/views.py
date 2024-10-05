@@ -16,7 +16,7 @@ from auction.filters import (
 from auction.models import Auction, Bookmark
 from auction.permissions import IsBuyer, IsNotSellerAndIsOwner, IsOwner, IsSeller
 from auction.serializers import (
-    AuctionCreateSerializer,
+    AuctionPublishSerializer,
     AuctionRetrieveSerializer,
     BookmarkCreateSerializer,
     BookmarkListSerializer,
@@ -257,9 +257,9 @@ class DeleteBookmarkView(DestroyAPIView):
 @extend_schema(
     tags=["Auctions"],
 )
-class CreateAuctionView(CreateAPIView):
+class PublishAuctionView(CreateAPIView):
     queryset = Auction.objects.all()
-    serializer_class = AuctionCreateSerializer
+    serializer_class = AuctionPublishSerializer
     permission_classes = [IsAuthenticated, IsBuyer]
 
     def perform_create(self, serializer):

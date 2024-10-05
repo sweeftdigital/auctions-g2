@@ -1,7 +1,7 @@
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
-from auction.serializers import AuctionCreateSerializer
+from auction.serializers import AuctionPublishSerializer
 
 
 class AuctionConsumer(AsyncJsonWebsocketConsumer):
@@ -30,7 +30,7 @@ class AuctionConsumer(AsyncJsonWebsocketConsumer):
     def _create_auction(self, data, user_id):
         data["author"] = user_id
 
-        serializer = AuctionCreateSerializer(data=data)
+        serializer = AuctionPublishSerializer(data=data)
         serializer.is_valid(raise_exception=True)
 
         return serializer.save()
