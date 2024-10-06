@@ -1,5 +1,6 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.openapi import OpenApiParameter
 from drf_spectacular.utils import extend_schema
@@ -272,25 +273,38 @@ class PublishAuctionView(CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user.id)
-        self.notify_new_auction(serializer.data)
+        notification_status = self.notify_new_auction(serializer.data)
+        if notification_status is not None:
+            self.warning_message = notification_status
 
     def notify_new_auction(self, auction_data):
         channel_layer = get_channel_layer()
 
-        # Notify the auctions_for_bidders group
-        async_to_sync(channel_layer.group_send)(
-            "auctions_for_bidders",
-            {
-                "type": "new_auction_notification",
-                "new_auction_id": str(auction_data.get("id")),
-            },
-        )
+        try:
+            # Notify the general group for sellers
+            async_to_sync(channel_layer.group_send)(
+                "auctions_for_bidders",
+                {
+                    "type": "new_auction_notification",
+                    "data": {"auction_id": auction_data.get("id")},
+                },
+            )
 
-        # Notify the specific buyer's group
-        async_to_sync(channel_layer.group_send)(
-            f"buyer_{self.request.user.id}",
-            {
-                "type": "new_auction_notification",
-                "new_auction_data": auction_data,
-            },
-        )
+            # Notify the specific buyer's group
+            async_to_sync(channel_layer.group_send)(
+                f"buyer_{self.request.user.id}",
+                {
+                    "type": "new_auction_notification",
+                    "data": auction_data,
+                },
+            )
+
+        except Exception:
+            # Return a warning message, not a full error
+            return _("Auction created successfully, but failed to send notification.")
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        if hasattr(self, "warning_message"):
+            response.data["warning"] = self.warning_message
+        return response
