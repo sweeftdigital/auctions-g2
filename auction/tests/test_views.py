@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -49,8 +49,8 @@ class BuyerAuctionListViewTests(APITestCase):
             status=StatusChoices.LIVE,
             accepted_bidders=AcceptedBiddersChoices.BOTH,
             accepted_locations="AL",
-            start_date=datetime.now() - timedelta(days=5),
-            end_date=datetime.now() + timedelta(days=1),
+            start_date=timezone.now() - timedelta(days=5),
+            end_date=timezone.now() + timedelta(days=1),
             max_price=100,
             quantity=1,
             auction_name="Awesome Pet Supplies Auction",
@@ -61,11 +61,11 @@ class BuyerAuctionListViewTests(APITestCase):
         self.auction2 = AuctionFactory(
             author=self.user.id,
             category=self.category2,
-            status=StatusChoices.COMPLETED,
+            status=StatusChoices.LIVE,
             accepted_bidders=AcceptedBiddersChoices.COMPANY,
             accepted_locations="HR",
-            start_date=datetime.now() - timedelta(days=2),
-            end_date=datetime.now() - timedelta(days=1),
+            start_date=timezone.now() - timedelta(days=2),
+            end_date=timezone.now() - timedelta(days=1),
             max_price=200,
             quantity=2,
             auction_name="Old Electronics Auction",
@@ -79,8 +79,8 @@ class BuyerAuctionListViewTests(APITestCase):
             status=StatusChoices.LIVE,
             accepted_bidders=AcceptedBiddersChoices.COMPANY,
             accepted_locations="HR",
-            start_date=datetime.now() - timedelta(days=2),
-            end_date=datetime.now() - timedelta(days=1),
+            start_date=timezone.now() - timedelta(days=2),
+            end_date=timezone.now() - timedelta(days=1),
             max_price=300,
             quantity=3,
             auction_name="Auction from different user.",
@@ -101,9 +101,12 @@ class BuyerAuctionListViewTests(APITestCase):
     def test_filter_by_status(self):
         response = self.client.get(self.url, {"status": StatusChoices.LIVE})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(len(response.data.get("results")), 2)
         self.assertEqual(
-            response.data["results"][0]["product"], self.auction1.auction_name
+            response.data["results"][0]["product"], self.auction2.auction_name
+        )
+        self.assertEqual(
+            response.data["results"][1]["product"], self.auction1.auction_name
         )
 
     def test_filter_by_invalid_status(self):
@@ -258,6 +261,23 @@ class BuyerAuctionListViewTests(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_auction_with_start_date_in_future(self):
+        self.auction2.start_date = timezone.now() + timedelta(days=1)
+        self.auction2.end_date = timezone.now() + timedelta(days=2)
+        self.auction2.save()
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction2.auction_name
+        )
+        self.assertEqual(
+            response.data["results"][1]["product"], self.auction1.auction_name
+        )
+        self.assertEqual(response.data["results"][0]["status"], "Upcoming")
+        self.assertEqual(response.data["results"][1]["status"], StatusChoices.LIVE)
+
 
 class SellerAuctionListViewTests(APITestCase):
     def setUp(self):
@@ -276,8 +296,8 @@ class SellerAuctionListViewTests(APITestCase):
             category=self.category1,
             status=StatusChoices.LIVE,
             accepted_bidders=AcceptedBiddersChoices.BOTH,
-            start_date=datetime.now() - timedelta(days=1),
-            end_date=datetime.now() + timedelta(days=1),
+            start_date=timezone.now() - timedelta(days=1),
+            end_date=timezone.now() + timedelta(days=1),
             max_price=5000,
             quantity=1,
             auction_name="Exclusive Art Auction",
@@ -290,8 +310,8 @@ class SellerAuctionListViewTests(APITestCase):
             category=self.category2,
             status=StatusChoices.LIVE,
             accepted_bidders=AcceptedBiddersChoices.BOTH,
-            start_date=datetime.now() + timedelta(days=1),
-            end_date=datetime.now() + timedelta(days=5),
+            start_date=timezone.now() + timedelta(days=1),
+            end_date=timezone.now() + timedelta(days=5),
             max_price=20000,
             quantity=2,
             auction_name="Luxury Car Auction",
@@ -393,6 +413,19 @@ class SellerAuctionListViewTests(APITestCase):
             response.data["results"][0]["product"], self.auction1.auction_name
         )
 
+    def test_auction_with_start_date_in_future(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction2.auction_name
+        )
+        self.assertEqual(
+            response.data["results"][1]["product"], self.auction1.auction_name
+        )
+        self.assertEqual(response.data["results"][0]["status"], "Upcoming")
+        self.assertEqual(response.data["results"][1]["status"], StatusChoices.LIVE)
+
 
 class AuctionRetrieveViewTests(APITestCase):
     def setUp(self):
@@ -409,8 +442,8 @@ class AuctionRetrieveViewTests(APITestCase):
             status=StatusChoices.LIVE,
             accepted_bidders=AcceptedBiddersChoices.BOTH,
             accepted_locations=["GE", "AL", "HR"],
-            start_date=datetime.now() - timedelta(days=5),
-            end_date=datetime.now() + timedelta(days=1),
+            start_date=timezone.now() - timedelta(days=5),
+            end_date=timezone.now() + timedelta(days=1),
             max_price=100,
             quantity=1,
             auction_name="Awesome Pet Supplies Auction",
@@ -460,8 +493,8 @@ class AuctionDeleteViewTests(APITestCase):
             status=StatusChoices.LIVE,
             accepted_bidders=AcceptedBiddersChoices.BOTH,
             accepted_locations="AL",
-            start_date=datetime.now() - timedelta(days=5),
-            end_date=datetime.now() + timedelta(days=1),
+            start_date=timezone.now() - timedelta(days=5),
+            end_date=timezone.now() + timedelta(days=1),
             max_price=100,
             quantity=1,
             auction_name="Awesome Pet Supplies Auction",
@@ -500,8 +533,8 @@ class BookmarkListViewTests(APITestCase):
             status=StatusChoices.LIVE,
             accepted_bidders=AcceptedBiddersChoices.BOTH,
             accepted_locations="AL",
-            start_date=datetime.now() - timedelta(days=5),
-            end_date=datetime.now() + timedelta(days=1),
+            start_date=timezone.now() - timedelta(days=5),
+            end_date=timezone.now() + timedelta(days=1),
             max_price=100,
             quantity=1,
             auction_name="Awesome Pet Supplies Auction",
@@ -515,8 +548,8 @@ class BookmarkListViewTests(APITestCase):
             status=StatusChoices.COMPLETED,
             accepted_bidders=AcceptedBiddersChoices.COMPANY,
             accepted_locations="HR",
-            start_date=datetime.now() - timedelta(days=2),
-            end_date=datetime.now() - timedelta(days=1),
+            start_date=timezone.now() - timedelta(days=2),
+            end_date=timezone.now() - timedelta(days=1),
             max_price=200,
             quantity=2,
             auction_name="Old Electronics Auction",
@@ -612,7 +645,7 @@ class BookmarkListViewTests(APITestCase):
         self.assertEqual(len(response.data.get("results")), 2)
 
     def test_filter_by_end_date(self):
-        response = self.client.get(self.url, {"end_date": (datetime.now()).date()})
+        response = self.client.get(self.url, {"end_date": (timezone.now()).date()})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data.get("results")), 1)
 
@@ -897,8 +930,8 @@ class CreateAuctionViewTests(APITestCase):
 
     def test_invalid_date(self):
         data = self.frequently_used_data
-        data["start_date"] = datetime.now() - timedelta(days=1)
-        data["end_date"] = datetime.now() + timedelta(days=1)
+        data["start_date"] = timezone.now() - timedelta(days=1)
+        data["end_date"] = timezone.now() + timedelta(days=1)
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
