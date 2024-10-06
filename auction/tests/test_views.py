@@ -432,6 +432,17 @@ class SellerAuctionListViewTests(APITestCase):
         self.assertEqual(response.data["results"][0]["status"], "Upcoming")
         self.assertEqual(response.data["results"][1]["status"], StatusChoices.LIVE)
 
+    def test_list_view_with_completed_status(self):
+        self.auction1.status = StatusChoices.COMPLETED
+        self.auction1.save()
+        response = self.client.get(self.url, {"status": "Completed"})
+        print(response.data, "*" * 500)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Select a valid choice. Completed is not one of the available choices.",
+            response.data.get("status"),
+        )
+
 
 class AuctionRetrieveViewTests(APITestCase):
     def setUp(self):
