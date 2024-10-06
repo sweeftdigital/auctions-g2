@@ -271,18 +271,22 @@ class PublishAuctionView(CreateAPIView):
     permission_classes = [IsAuthenticated, IsBuyer, HasCountryInProfile]
 
     def perform_create(self, serializer):
-        auction = serializer.save(author=self.request.user.id)
+        serializer.save(author=self.request.user.id)
+        self.notify_new_auction(serializer.data)
 
-        # Notify the WebSocket consumer about the new auction
-        self.notify_new_auction(auction.id)
-
-    def notify_new_auction(self, auction_id):
+    def notify_new_auction(self, auction):
         channel_layer = get_channel_layer()
-        # Send a message to the group notifying that a new auction has been created
         async_to_sync(channel_layer.group_send)(
-            "auctions_for_bidders",  # This is the group name in your consumer
+            "auctions_for_bidders",
             {
-                "type": "new_auction_notification",  # The type of message to handle
-                "new_auction_id": str(auction_id),  # Include the auction ID
+                "type": "new_auction_notification",
+                "new_auction_id": str(auction.get("id")),
+            },
+        )
+        async_to_sync(channel_layer.group_send)(
+            f"buyer_{self.request.user.id}",
+            {
+                "type": "new_auction_notification",
+                "new_auction_data": auction,
             },
         )
