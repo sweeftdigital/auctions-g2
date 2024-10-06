@@ -237,5 +237,9 @@ class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
             else ["International"]
         )
         representation["tags"] = [tag.name for tag in instance.tags.all()]
+        # Check if the auction's start_date is in the future
+        # and set status to "Upcoming"
+        if instance.start_date > timezone.now():
+            representation["status"] = "Upcoming"
 
         return representation

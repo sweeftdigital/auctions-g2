@@ -831,7 +831,7 @@ class CreateAuctionViewTests(APITestCase):
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["auction_name"], data["auction_name"])
-        self.assertEqual(response.data["status"], StatusChoices.LIVE)
+        self.assertEqual(response.data["status"], "Upcoming")  # Start date is in future
 
     def test_unauthenticated_user_cannot_create_auction(self):
         self.client.logout()
