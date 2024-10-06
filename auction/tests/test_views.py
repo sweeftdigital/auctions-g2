@@ -21,6 +21,7 @@ from auction.models.auction import (
     ConditionChoices,
     StatusChoices,
 )
+from auction.views import BaseAuctionView, CreateDraftAuctionView, CreateLiveAuctionView
 
 
 class MockUser:
@@ -874,12 +875,12 @@ class AddBookmarkViewTestCase(APITestCase):
         )
 
 
-class PublishAuctionViewTests(APITestCase):
+class CreateLiveAuctionViewTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = MockUser(user_id=uuid4())
         self.client.force_authenticate(user=self.user)
-        self.url = reverse("publish-auction")
+        self.url = reverse("create-live-auction")
 
         self.category = CategoryFactory(name="Collectibles & Art")
         self.tag1 = TagFactory(name="Luxury")
@@ -1064,3 +1065,57 @@ class PublishAuctionViewTests(APITestCase):
         date = Auction.objects.last().end_date
         self.assertIsNotNone(date.tzinfo)
         self.assertTrue(timezone.is_aware(date))
+
+    @patch("auction.views.CreateLiveAuctionView.notify_auction")
+    def test_notification_sent_on_successful_auction_creation(self, mock_notify):
+        data = self.frequently_used_data
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mock_notify.assert_called_once_with(response.data)
+
+    @patch("auction.views.CreateLiveAuctionView.notify_auction")
+    def test_notification_error_handling(self, mock_notify):
+        mock_notify.side_effect = Exception("Notification error")
+        data = self.frequently_used_data
+
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn(
+            "Auction created successfully, but failed to send notifications: Notification error",
+            response.data.get("warning"),
+        )
+
+    def test_create_auction_sets_correct_status(self):
+        data = self.frequently_used_data
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["status"], "Upcoming")  # Start date is in future
+
+    def test_get_auction_status_raises_error_for_base_class(self):
+        view = BaseAuctionView()
+        with self.assertRaises(NotImplementedError):
+            view.get_auction_status()
+
+    def test_get_auction_status_returns_live_for_create_live_auction_view(self):
+        view = CreateLiveAuctionView()
+        self.assertEqual(view.get_auction_status(), StatusChoices.LIVE)
+
+    def test_get_notifications_returns_correct_values_for_live_auction_view(self):
+        view = CreateLiveAuctionView()
+        data_to_compare = {
+            "buyer": True,
+            "sellers": True,
+        }
+        self.assertEqual(view.get_notifications(), data_to_compare)
+
+    def test_get_auction_status_returns_draft_for_create_draft_auction_view(self):
+        view = CreateDraftAuctionView()
+        self.assertEqual(view.get_auction_status(), StatusChoices.DRAFT)
+
+    def test_get_notifications_returns_correct_values_for_draft_view(self):
+        view = CreateDraftAuctionView()
+        data_to_compare = {
+            "buyer": True,
+            "sellers": False,
+        }
+        self.assertEqual(view.get_notifications(), data_to_compare)

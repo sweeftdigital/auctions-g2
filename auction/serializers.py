@@ -4,7 +4,6 @@ from django_countries.serializers import CountryFieldMixin
 from rest_framework import serializers
 
 from auction.models import Auction, Bookmark, Category, Tag
-from auction.models.auction import StatusChoices
 from auction.models.category import CategoryChoices
 
 
@@ -134,7 +133,7 @@ class BookmarkCreateSerializer(serializers.ModelSerializer):
         return bookmark
 
 
-class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
+class AuctionSaveSerializer(CountryFieldMixin, serializers.ModelSerializer):
     tags = TagSerializer(many=True)
     category = serializers.CharField()
 
@@ -227,12 +226,13 @@ class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
 
         try:
             with transaction.atomic():
-                category, created = Category.objects.get_or_create(name=category_data)
-                auction = Auction.objects.create(
-                    category=category, status=StatusChoices.LIVE, **validated_data
-                )
                 tags = {tag_data["name"] for tag_data in tags_data}
                 tag_objects = [Tag.objects.get_or_create(name=name)[0] for name in tags]
+                category, created = Category.objects.get_or_create(name=category_data)
+                auction = Auction.objects.create(
+                    category=category,
+                    **validated_data,
+                )
                 auction.tags.set(tag_objects)
         except IntegrityError:
             raise serializers.ValidationError(
@@ -250,8 +250,9 @@ class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
         )
         representation["tags"] = [tag.name for tag in instance.tags.all()]
         # Check if the auction's start_date is in the future
-        # and set status to "Upcoming"
-        if instance.start_date > timezone.now():
+        # and set status to "Upcoming", if status is Draft
+        # leave it as it is
+        if instance.start_date > timezone.now() and instance.status != "Draft":
             representation["status"] = "Upcoming"
 
         return representation
