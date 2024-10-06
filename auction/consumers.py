@@ -28,12 +28,9 @@ class AuctionConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def _create_auction(self, data, user_id):
-        data["author"] = user_id
-
         serializer = AuctionPublishSerializer(data=data)
         serializer.is_valid(raise_exception=True)
-
-        return serializer.save()
+        return serializer.save(author=user_id)
 
     async def create_auction(self, message):
         data = message.get("data")
@@ -87,10 +84,22 @@ class AuctionConsumer(AsyncJsonWebsocketConsumer):
 
     async def receive_json(self, content, **kwargs):
         message_type = content.get("type")
+        user = self.scope["user"]
         if message_type == "create.auction":
+            if not user.is_seller:
+                await self.send_json({"error": "Only sellers can create auctions."})
+                return
+            elif not user.country:
+                await self.send_json(
+                    {
+                        "error": "User must set a country in their profile before proceeding."
+                    }
+                )
+                return
+
+            # Proceed with auction creation if both checks pass
             await self.create_auction(content)
         elif message_type == "load.new.auctions":
-            user = self.scope["user"]
             if user.is_buyer:
                 await self.send_json({"error": "Buyers cannot load new auctions."})
             else:
