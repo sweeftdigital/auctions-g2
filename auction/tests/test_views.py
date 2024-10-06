@@ -288,7 +288,7 @@ class SellerAuctionListViewTests(APITestCase):
         self.auction2 = AuctionFactory(
             author=uuid4(),
             category=self.category2,
-            status=StatusChoices.UPCOMING,
+            status=StatusChoices.LIVE,
             accepted_bidders=AcceptedBiddersChoices.BOTH,
             start_date=datetime.now() + timedelta(days=1),
             end_date=datetime.now() + timedelta(days=5),
@@ -317,9 +317,12 @@ class SellerAuctionListViewTests(APITestCase):
     def test_filter_by_status(self):
         response = self.client.get(self.url, {"status": StatusChoices.LIVE})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(len(response.data.get("results")), 2)
         self.assertEqual(
-            response.data["results"][0]["product"], self.auction1.auction_name
+            response.data["results"][0]["product"], self.auction2.auction_name
+        )
+        self.assertEqual(
+            response.data["results"][1]["product"], self.auction1.auction_name
         )
 
     def test_search_by_tag(self):
@@ -378,6 +381,17 @@ class SellerAuctionListViewTests(APITestCase):
         self.assertEqual(len(response.data.get("results")), 2)
         self.assertEqual(response.data["results"][0]["tags"][0], "Rare")
         self.assertEqual(response.data["results"][1]["tags"][0], "Expensive")
+
+    def test_auction_with_another_status(self):
+        self.auction2.status = StatusChoices.COMPLETED
+        self.auction2.save()
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
 
 
 class AuctionRetrieveViewTests(APITestCase):

@@ -132,7 +132,7 @@ class SellerAuctionListView(ListAPIView):
     )
 
     def get_queryset(self):
-        queryset = Auction.objects.all()
+        queryset = Auction.objects.filter(status="Live")
 
         # Override ordering if 'tags' or 'category' is in the query params
         ordering = self.request.query_params.get("ordering", None)
