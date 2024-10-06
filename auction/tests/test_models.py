@@ -13,6 +13,7 @@ from auction.factories import (
     TagFactory,
 )
 from auction.models import Auction, Bid, BidImage, Bookmark, Category, Tag
+from auction.models.bid import StatusChoices
 
 
 class CategoryModelTest(TestCase):
@@ -121,29 +122,44 @@ class BidModelTest(TestCase):
         self.assertEqual(str(bid), expected_str)
 
     def test_bid_default_description(self):
+        # Testing that a bid is created with a non-empty description
         bid = BidFactory()
         self.assertIsNotNone(bid.description)
+        self.assertNotEqual(
+            bid.description.strip(), "", "Description should not be an empty string."
+        )
 
     def test_bid_delivery_fee(self):
+        # Ensures that delivery_fee is set correctly
         bid = BidFactory(delivery_fee=Decimal("25.00"))
         self.assertEqual(bid.delivery_fee, Decimal("25.00"))
 
     def test_bid_status_default(self):
-        bid = BidFactory(status="Pending")
-        self.assertEqual(bid.status, "Pending")
+        # Ensure the default status is 'Pending'
+        bid = BidFactory()
+        self.assertEqual(bid.status, StatusChoices.PENDING)
 
     def test_bid_status_approved(self):
-        bid = BidFactory(status="Approved")
-        self.assertEqual(bid.status, "Approved")
+        # Test that 'Approved' status can be assigned
+        bid = BidFactory(status=StatusChoices.APPROVED)
+        self.assertEqual(bid.status, StatusChoices.APPROVED)
 
     def test_bid_status_rejected(self):
-        bid = BidFactory(status="Rejected")
-        self.assertEqual(bid.status, "Rejected")
+        # Test that 'Rejected' status can be assigned
+        bid = BidFactory(status=StatusChoices.REJECTED)
+        self.assertEqual(bid.status, StatusChoices.REJECTED)
+
+    def test_bid_author_field(self):
+        # Ensure that an author UUID is set for each bid
+        bid = BidFactory()
+        self.assertIsNotNone(bid.author)
+        self.assertIsInstance(bid.author, uuid.UUID)
 
 
 class BidImageModelTest(TestCase):
 
     def test_bid_image_creation(self):
+        # Test that a BidImage is correctly created and linked to a Bid
         bid_image = BidImageFactory()
         self.assertTrue(isinstance(bid_image, BidImage))
         self.assertIsNotNone(bid_image.image_url)
@@ -151,6 +167,7 @@ class BidImageModelTest(TestCase):
         self.assertTrue(isinstance(bid_image.bid, Bid))
 
     def test_multiple_images_for_single_bid(self):
+        # Ensure multiple images can be associated with a single bid
         bid = BidFactory()
         image1 = BidImageFactory(bid=bid)
         image2 = BidImageFactory(bid=bid)
@@ -160,6 +177,7 @@ class BidImageModelTest(TestCase):
         self.assertIn(image2, bid.images.all())
 
     def test_bid_image_str_representation(self):
+        # Test the string representation of a BidImage
         bid = BidFactory(offer=Decimal("99.99"), description="Another test bid")
         bid_image = BidImageFactory(bid=bid)
         expected_str = f"Image for Bid ID: {bid.id}"
