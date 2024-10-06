@@ -4,27 +4,22 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from auction.serializers import AuctionPublishSerializer
 
 
-class AuctionConsumer(AsyncJsonWebsocketConsumer):
+class SellerAuctionConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         user = self.scope["user"]
         if user.is_anonymous:
             await self.close()
-        else:
-            await self.accept()
+            return
 
-            # Initialize user-specific auction counter
-            self.new_auction_count = 0
-
-            # Add user to a group for broadcasting new auctions
-            await self.channel_layer.group_add("auctions_for_bidders", self.channel_name)
-
-            # Send the initial count (which should be 0) to the user
-            await self.send_json(
-                {
-                    "type": "initial_auction_count",
-                    "new_auction_count": self.new_auction_count,
-                }
-            )
+        await self.accept()
+        self.new_auction_count = 0
+        await self.channel_layer.group_add("auctions_for_bidders", self.channel_name)
+        await self.send_json(
+            {
+                "type": "initial_auction_count",
+                "new_auction_count": self.new_auction_count,
+            }
+        )
 
     @database_sync_to_async
     def _create_auction(self, data, user_id):
@@ -42,7 +37,7 @@ class AuctionConsumer(AsyncJsonWebsocketConsumer):
 
         auction = await self._create_auction(data, user.id)
 
-        # Broadcast to all connected users that a new auction has been created
+        # Notify the auctions_for_bidders group about the new auction
         await self.channel_layer.group_send(
             "auctions_for_bidders",
             {
@@ -52,10 +47,7 @@ class AuctionConsumer(AsyncJsonWebsocketConsumer):
         )
 
     async def new_auction_notification(self, event):
-        # Increment the new auction count for this user
         self.new_auction_count += 1
-
-        # Send the new auction ID and updated count to all connected users
         await self.send_json(
             {
                 "type": "new_auction_notification",
@@ -65,10 +57,7 @@ class AuctionConsumer(AsyncJsonWebsocketConsumer):
         )
 
     async def reset_user_counter(self):
-        # Reset the user's new auction count to 0
         self.new_auction_count = 0
-
-        # Send a message to the user confirming the reset
         await self.send_json(
             {
                 "type": "reset_auction_count",
@@ -110,19 +99,18 @@ class BuyerAuctionConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         user = self.scope["user"]
         if user.is_anonymous:
-            await self.close(code=1001)
+            await self.close()
         elif user.is_seller:
-            await self.close(code=1003)
+            await self.close()
             return
         else:
             await self.accept()
-
-            # Add user to a group for broadcasting new auctions
             await self.channel_layer.group_add(f"buyer_{user.id}", self.channel_name)
-
-            # Optionally send an initial message or just skip
             await self.send_json(
-                {"type": "connection_success", "message": "Connected to Buyer Dashboard."}
+                {
+                    "type": "connection_success",
+                    "message": "Connected to Buyer Dashboard.",
+                }
             )
 
     @database_sync_to_async
@@ -141,7 +129,7 @@ class BuyerAuctionConsumer(AsyncJsonWebsocketConsumer):
 
         auction = await self._create_auction(data, user.id)
 
-        # Broadcast to the user's specific group that a new auction has been created
+        # Broadcast to the user's specific group
         await self.channel_layer.group_send(
             f"buyer_{user.id}",
             {
@@ -166,6 +154,5 @@ class BuyerAuctionConsumer(AsyncJsonWebsocketConsumer):
 
     async def receive_json(self, content, **kwargs):
         message_type = content.get("type")
-
         if message_type == "create.auction":
             await self.create_auction(content)

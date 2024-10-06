@@ -274,19 +274,23 @@ class PublishAuctionView(CreateAPIView):
         serializer.save(author=self.request.user.id)
         self.notify_new_auction(serializer.data)
 
-    def notify_new_auction(self, auction):
+    def notify_new_auction(self, auction_data):
         channel_layer = get_channel_layer()
+
+        # Notify the auctions_for_bidders group
         async_to_sync(channel_layer.group_send)(
             "auctions_for_bidders",
             {
                 "type": "new_auction_notification",
-                "new_auction_id": str(auction.get("id")),
+                "new_auction_id": str(auction_data.get("id")),
             },
         )
+
+        # Notify the specific buyer's group
         async_to_sync(channel_layer.group_send)(
             f"buyer_{self.request.user.id}",
             {
                 "type": "new_auction_notification",
-                "new_auction_data": auction,
+                "new_auction_data": auction_data,
             },
         )
