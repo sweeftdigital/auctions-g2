@@ -146,7 +146,9 @@ class CustomJWTAuthenticationTest(TestCase):
 
         with self.assertRaises(AuthenticationFailed) as context:
             self.auth.authenticate(request)
-        self.assertEqual(str(context.exception), "Invalid token.")
+        self.assertEqual(
+            str(context.exception), "Invalid token type. Expected access token."
+        )
 
     @mock.patch("jwt.decode")
     def test_missing_user_id_in_token(self, mock_decode):

@@ -28,7 +28,9 @@ class CustomJWTAuthentication(BaseJWTAuth, authentication.BaseAuthentication):
         except jwt.ExpiredSignatureError:
             raise exceptions.AuthenticationFailed("Token has expired.")
         except jwt.InvalidTokenError:
-            raise exceptions.AuthenticationFailed("Invalid token.")
+            raise exceptions.AuthenticationFailed(
+                "Invalid token type. Expected access token."
+            )
 
         user = self.get_user_proxy(payload)
         return user, None
