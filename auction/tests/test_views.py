@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from unittest.mock import patch
 from uuid import uuid4
 
+from django.db import IntegrityError
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -801,7 +802,7 @@ class AddBookmarkViewTestCase(APITestCase):
         )
 
 
-class CreateAuctionViewTests(APITestCase):
+class PublishAuctionViewTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = MockUser(user_id=uuid4())
@@ -956,3 +957,16 @@ class CreateAuctionViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn("accepted_locations", response.data)
         self.assertEqual(response.data.get("accepted_locations"), ["International"])
+
+    @patch("auction.serializers.transaction.atomic")
+    def test_transaction_atomic_on_error(self, mock_atomic):
+        mock_atomic.side_effect = IntegrityError()
+        data = self.frequently_used_data
+
+        response = self.client.post(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "There was an error during the creation of an auction", response.data[0]
+        )
+        self.assertEqual(Auction.objects.count(), 0)

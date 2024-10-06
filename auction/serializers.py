@@ -1,3 +1,4 @@
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django_countries.serializers import CountryFieldMixin
 from rest_framework import serializers
@@ -219,13 +220,19 @@ class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
         tags_data = validated_data.pop("tags", [])
         category_data = validated_data.pop("category")
 
-        category, created = Category.objects.get_or_create(name=category_data)
-        auction = Auction.objects.create(
-            category=category, status=StatusChoices.LIVE, **validated_data
-        )
-        tags = {tag_data["name"] for tag_data in tags_data}
-        tag_objects = [Tag.objects.get_or_create(name=name)[0] for name in tags]
-        auction.tags.set(tag_objects)
+        try:
+            with transaction.atomic():
+                category, created = Category.objects.get_or_create(name=category_data)
+                auction = Auction.objects.create(
+                    category=category, status=StatusChoices.LIVE, **validated_data
+                )
+                tags = {tag_data["name"] for tag_data in tags_data}
+                tag_objects = [Tag.objects.get_or_create(name=name)[0] for name in tags]
+                auction.tags.set(tag_objects)
+        except IntegrityError:
+            raise serializers.ValidationError(
+                "There was an error during the creation of an auction. Please try again."
+            )
 
         return auction
 
