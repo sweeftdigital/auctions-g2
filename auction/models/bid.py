@@ -1,27 +1,34 @@
+import uuid
+
 from django.db import models
+
+from auction.models.auction import Auction
+
+
+class StatusChoices(models.TextChoices):
+    PENDING = "Pending", "Pending"
+    APPROVED = "Approved", "Approved"
+    REJECTED = "Rejected", "Rejected"
 
 
 class Bid(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    author = models.UUIDField()
+    auction = models.ForeignKey(Auction, null=True, on_delete=models.CASCADE)
     offer = models.DecimalField(max_digits=20, decimal_places=2)
     description = models.TextField(
         blank=True, null=True, help_text="Enter a detailed description of the bid"
     )
-
     delivery_fee = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         default=0.00,
         help_text="Enter the delivery fee for the bid",
     )
-
-    STATUS_CHOICES = [
-        ("Pending", "Pending"),
-        ("Approved", "Approved"),
-        ("Rejected", "Rejected"),
-    ]
     status = models.CharField(
-        choices=STATUS_CHOICES,
-        default="pending",
+        choices=StatusChoices.choices,
+        default=StatusChoices.PENDING,
+        max_length=20,
         help_text="Status of the bid",
     )
 
