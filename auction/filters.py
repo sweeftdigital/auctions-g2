@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django_filters import rest_framework as filters
 
 from auction.models.auction import (
@@ -12,7 +13,10 @@ from auction.models.category import CategoryChoices
 
 
 class BaseAuctionFilterSet(filters.FilterSet):
-    status = filters.ChoiceFilter(choices=StatusChoices.choices, field_name="status")
+    status = filters.ChoiceFilter(
+        choices=StatusChoices.choices + [("Upcoming", "Upcoming")],
+        method="filter_by_status",
+    )
 
     class Meta:
         model = Auction
@@ -20,12 +24,28 @@ class BaseAuctionFilterSet(filters.FilterSet):
             "status",
         ]
 
+    def filter_by_status(self, queryset, name, value):
+        current_time = timezone.now()
+        if value == "Upcoming":
+            return queryset.filter(start_date__gt=current_time)
+        elif value == "Live":
+            return queryset.filter(start_date__lte=current_time, status="Live")
+        else:
+            return queryset.filter(status=value)
+
 
 class BuyerAuctionFilterSet(BaseAuctionFilterSet):
     pass
 
 
 class SellerAuctionFilterSet(BaseAuctionFilterSet):
+    status = filters.ChoiceFilter(
+        choices=[
+            ("Live", "Live"),
+            ("Upcoming", "Upcoming"),
+        ],
+        method="filter_by_status",
+    )
     start_date = filters.DateFilter(field_name="start_date", lookup_expr="gte")
     end_date = filters.DateFilter(field_name="end_date", lookup_expr="lte")
     category = filters.ChoiceFilter(
@@ -42,6 +62,13 @@ class SellerAuctionFilterSet(BaseAuctionFilterSet):
             "max_price",
             "min_price",
         ]
+
+    def filter_by_status(self, queryset, name, value):
+        current_time = timezone.now()
+        if value == "Upcoming":
+            return queryset.filter(start_date__gt=current_time)
+        elif value == "Live":
+            return queryset.filter(start_date__lte=current_time, status="Live")
 
 
 class BookmarkFilterSet(filters.FilterSet):

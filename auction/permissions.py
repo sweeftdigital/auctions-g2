@@ -42,3 +42,10 @@ class IsSeller(BasePermission):
     def has_permission(self, request, view):
         # Check if the user is a seller
         return not request.user.is_buyer
+
+
+class HasCountryInProfile(BasePermission):
+    message = "User must set a country in their profile before proceeding."
+
+    def has_permission(self, request, view):
+        return bool(request.user.country)
