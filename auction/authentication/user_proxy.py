@@ -15,6 +15,7 @@ class UserProxy:
         self.is_verified = payload.get("is_verified", False)
         self._user_type = payload.get("user_type", "")
         self._user_profile_type = payload.get("user_profile_type", "")
+        self.country = payload.get("country")
         self.email = payload.get("email")
         self.phone_number = payload.get("phone_number")
         self.two_factor_authentication_activated = payload.get(
@@ -23,18 +24,20 @@ class UserProxy:
         self.is_social_account = payload.get("is_social_account", False)
         self.first_name = payload.get("first_name", "")
         self.last_name = payload.get("last_name", "")
-        self.theme = payload.get("theme", "")  # Added theme
-        self.language = payload.get("language", "")  # Added language
+        self.theme = payload.get("theme", "")
+        self.language = payload.get("language", "")
 
     @property
     def full_name(self) -> str:
         """Return the full name of the user."""
         return f"{self.first_name} {self.last_name}".strip()
 
+    @property
     def is_buyer(self) -> bool:
         """Check if the user is a buyer."""
         return self._user_type == self.USER_TYPE_BUYER
 
+    @property
     def is_seller(self) -> bool:
         """Check if the user is a seller."""
         return self._user_type == self.USER_TYPE_SELLER

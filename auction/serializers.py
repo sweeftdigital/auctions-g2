@@ -1,7 +1,11 @@
+from django.db import IntegrityError, transaction
+from django.utils import timezone
 from django_countries.serializers import CountryFieldMixin
 from rest_framework import serializers
 
 from auction.models import Auction, Bookmark, Category, Tag
+from auction.models.auction import StatusChoices
+from auction.models.category import CategoryChoices
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -16,7 +20,7 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ["name"]
 
 
-class AuctionListSerializer(serializers.ModelSerializer):
+class BaseAuctionListSerializer(serializers.ModelSerializer):
     category = CategorySerializer()
     product = serializers.CharField(source="auction_name")
 
@@ -24,6 +28,7 @@ class AuctionListSerializer(serializers.ModelSerializer):
         model = Auction
         fields = [
             "id",
+            "author",
             "product",
             "status",
             "category",
@@ -33,6 +38,35 @@ class AuctionListSerializer(serializers.ModelSerializer):
             "start_date",
             "end_date",
         ]
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        # Check if the auction's start_date is in the future
+        # and set status to "Upcoming"
+        if instance.start_date > timezone.now():
+            representation["status"] = "Upcoming"
+
+        return representation
+
+
+class BuyerAuctionListSerializer(BaseAuctionListSerializer):
+    pass
+
+
+class SellerAuctionListSerializer(BaseAuctionListSerializer):
+    tags = serializers.SerializerMethodField()
+
+    class Meta(BaseAuctionListSerializer.Meta):
+        fields = BaseAuctionListSerializer.Meta.fields + ["tags"]
+
+    def get_tags(self, obj):
+        """
+        Returns tags as a list of strings instead of returning
+        them as a list of dictionaries containing (name: tag) pairs.
+        """
+
+        return [tag.name for tag in obj.tags.all()]
 
 
 class BookmarkListSerializer(serializers.ModelSerializer):
@@ -100,9 +134,9 @@ class BookmarkCreateSerializer(serializers.ModelSerializer):
         return bookmark
 
 
-class AuctionCreateSerializer(CountryFieldMixin, serializers.ModelSerializer):
+class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
     tags = TagSerializer(many=True)
-    category = CategorySerializer()
+    category = serializers.CharField()
 
     class Meta:
         model = Auction
@@ -124,31 +158,100 @@ class AuctionCreateSerializer(CountryFieldMixin, serializers.ModelSerializer):
             "custom_fields",
             "condition",
         ]
-        read_only_fields = ["id", "status"]
+        read_only_fields = ["id", "status", "author"]
+
+    def validate(self, data):
+        for field in self.Meta.read_only_fields:
+            if field in self.initial_data:
+                raise serializers.ValidationError({field: "This field is read-only."})
+        return data
+
+    def validate_start_date(self, value):
+        if value.tzinfo is None:
+            # If value is naive, convert it to aware
+            value = timezone.make_aware(
+                value, timezone.get_default_timezone()
+            )  # pragma: no cover
+
+        if value <= timezone.now():
+            raise serializers.ValidationError("Start date cannot be in the past.")
+        return value
 
     def validate_end_date(self, value):
-        start_date = self.initial_data.get("start_date")
-        if isinstance(start_date, str):
-            start_date = serializers.DateField().to_internal_value(start_date)
+        # Make sure the value is timezone-aware
+        if value.tzinfo is None:
+            # If value is naive, convert it to aware
+            value = timezone.make_aware(
+                value, timezone.get_default_timezone()
+            )  # pragma: no cover
 
-        if value <= start_date:
-            raise serializers.ValidationError("End date must be after the start date.")
+        start_date_str = self.initial_data.get("start_date")
+
+        if start_date_str:
+            start_date = timezone.datetime.fromisoformat(
+                start_date_str.replace("Z", "+00:00")
+            )
+            if start_date.tzinfo is None:
+                start_date = timezone.make_aware(
+                    start_date, timezone.get_default_timezone()
+                )
+
+            if value <= start_date:
+                raise serializers.ValidationError(
+                    "End date must be after the start date."
+                )
+
+        return value
+
+    def validate_max_price(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Max price must be greater than 0.")
+
+        return value
+
+    def validate_category(self, value):
+        if value not in CategoryChoices.values:
+            raise serializers.ValidationError(f"{value} is not a valid category.")
+        return value
+
+    def validate_tags(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                "Tags are required, make sure to include them."
+            )
         return value
 
     def create(self, validated_data):
         tags_data = validated_data.pop("tags", [])
         category_data = validated_data.pop("category")
 
-        # Get or create the category directly in the create method
-        category_name = category_data["name"]
-        category, created = Category.objects.get_or_create(name=category_name)
-
-        # Create the auction instance
-        auction = Auction.objects.create(category=category, **validated_data)
-
-        # Handle tags
-        tags = {tag_data["name"] for tag_data in tags_data}
-        tag_objects = [Tag.objects.get_or_create(name=name)[0] for name in tags]
-        auction.tags.set(tag_objects)
+        try:
+            with transaction.atomic():
+                category, created = Category.objects.get_or_create(name=category_data)
+                auction = Auction.objects.create(
+                    category=category, status=StatusChoices.LIVE, **validated_data
+                )
+                tags = {tag_data["name"] for tag_data in tags_data}
+                tag_objects = [Tag.objects.get_or_create(name=name)[0] for name in tags]
+                auction.tags.set(tag_objects)
+        except IntegrityError:
+            raise serializers.ValidationError(
+                "There was an error during the creation of an auction. Please try again."
+            )
 
         return auction
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation["accepted_locations"] = (
+            [country.name for country in instance.accepted_locations]
+            if len(representation["accepted_locations"]) > 0
+            else ["International"]
+        )
+        representation["tags"] = [tag.name for tag in instance.tags.all()]
+        # Check if the auction's start_date is in the future
+        # and set status to "Upcoming"
+        if instance.start_date > timezone.now():
+            representation["status"] = "Upcoming"
+
+        return representation

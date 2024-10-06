@@ -58,9 +58,9 @@ class CustomJWTAuthenticationTest(TestCase):
 
         self.assertIsInstance(user, UserProxy)
         self.assertEqual(user.id, mock_payload["user_id"])
-        self.assertTrue(user.is_buyer())
+        self.assertTrue(user.is_buyer)
         self.assertTrue(user.is_individual())
-        self.assertFalse(user.is_seller())
+        self.assertFalse(user.is_seller)
         self.assertFalse(user.is_company())
         self.assertEqual(user.full_name, "John Doe")
         self.assertTrue(user.has_verified_account())
@@ -82,6 +82,7 @@ class CustomJWTAuthenticationTest(TestCase):
             f"<UserProxy id={user.id}"
             f" email=john.doe@example.com type=Buyer profile=Individual verified=True>",
         )
+        self.assertFalse(user.is_anonymous)
 
     def test_no_authorization_header(self):
         """Test that no authorization header returns None."""
@@ -146,7 +147,39 @@ class CustomJWTAuthenticationTest(TestCase):
 
         with self.assertRaises(AuthenticationFailed) as context:
             self.auth.authenticate(request)
-        self.assertEqual(str(context.exception), "Invalid token.")
+        self.assertEqual(
+            str(context.exception), "Invalid token type. Expected access token."
+        )
+
+    @mock.patch("jwt.decode")
+    def test_refresh_token_provided(self, mock_decode):
+        mock_payload = {
+            "user_id": str(uuid.uuid4()),
+            "token_type": "refresh",
+            "exp": 1700000000,
+            "user_type": UserProxy.USER_TYPE_BUYER,
+            "user_profile_type": UserProxy.PROFILE_TYPE_INDIVIDUAL,
+            "first_name": "John",
+            "last_name": "Doe",
+            "is_verified": True,
+            "two_factor_authentication_activated": True,
+            "email": "john.doe@example.com",
+            "phone_number": "1234567890",
+            "theme": "dark",
+            "language": "en",
+        }
+        mock_decode.return_value = mock_payload
+        """Test that an invalid token raises AuthenticationFailed."""
+        self.auth.ACCOUNTS_SERVICE_CACHE.get.return_value = None
+
+        request = self.factory.get("/")
+        request.headers = {"Authorization": "Bearer valid_token"}
+
+        with self.assertRaises(AuthenticationFailed) as context:
+            self.auth.authenticate(request)
+        self.assertEqual(
+            str(context.exception), "Invalid token type. Expected access token."
+        )
 
     @mock.patch("jwt.decode")
     def test_missing_user_id_in_token(self, mock_decode):

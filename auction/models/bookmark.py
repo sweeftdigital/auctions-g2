@@ -11,6 +11,14 @@ class Bookmark(models.Model):
     )
     user_id = models.UUIDField()
     auction = models.ForeignKey(Auction, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="Bookmark Created At"
+    )
+
+    class Meta:
+        ordering = [
+            "-created_at",
+        ]
 
     def __str__(self):
         return f"User: {self.user_id} - Auction: {self.auction.auction_name}"
