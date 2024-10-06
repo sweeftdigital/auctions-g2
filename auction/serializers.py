@@ -28,6 +28,7 @@ class BaseAuctionListSerializer(serializers.ModelSerializer):
         model = Auction
         fields = [
             "id",
+            "author",
             "product",
             "status",
             "category",
