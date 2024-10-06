@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -970,3 +970,25 @@ class PublishAuctionViewTests(APITestCase):
             "There was an error during the creation of an auction", response.data[0]
         )
         self.assertEqual(Auction.objects.count(), 0)
+
+    def test_validate_start_date_naive_date(self):
+        data = self.frequently_used_data
+        data["start_date"] = datetime.now() + timedelta(days=1)
+        self.assertIsNone(data["start_date"].tzinfo)
+        response = self.client.post(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        date = Auction.objects.last().start_date
+        self.assertIsNotNone(date.tzinfo)
+        self.assertTrue(timezone.is_aware(date))
+
+    def test_validate_end_date_naive_date(self):
+        data = self.frequently_used_data
+        data["end_date"] = datetime.now() + timedelta(days=1)
+        self.assertIsNone(data["end_date"].tzinfo)
+        response = self.client.post(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        date = Auction.objects.last().end_date
+        self.assertIsNotNone(date.tzinfo)
+        self.assertTrue(timezone.is_aware(date))

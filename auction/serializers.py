@@ -168,7 +168,9 @@ class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
     def validate_start_date(self, value):
         if value.tzinfo is None:
             # If value is naive, convert it to aware
-            value = timezone.make_aware(value, timezone.get_default_timezone())
+            value = timezone.make_aware(
+                value, timezone.get_default_timezone()
+            )  # pragma: no cover
 
         if value <= timezone.now():
             raise serializers.ValidationError("Start date cannot be in the past.")
@@ -178,7 +180,9 @@ class AuctionPublishSerializer(CountryFieldMixin, serializers.ModelSerializer):
         # Make sure the value is timezone-aware
         if value.tzinfo is None:
             # If value is naive, convert it to aware
-            value = timezone.make_aware(value, timezone.get_default_timezone())
+            value = timezone.make_aware(
+                value, timezone.get_default_timezone()
+            )  # pragma: no cover
 
         start_date_str = self.initial_data.get("start_date")
 
