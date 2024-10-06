@@ -19,7 +19,10 @@ class BaseJWTAuth:
         options = {
             "verify_exp": True,
         }
-        return jwt.decode(token, self.public_key, algorithms=["RS256"], options=options)
+        token = jwt.decode(token, self.public_key, algorithms=["RS256"], options=options)
+        if token.get("token_type") != "access":
+            raise jwt.InvalidTokenError()
+        return token
 
     def check_blacklist(self, token):
         if self.ACCOUNTS_SERVICE_CACHE.get(token):
