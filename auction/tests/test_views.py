@@ -110,6 +110,37 @@ class BuyerAuctionListViewTests(APITestCase):
             response.data["results"][1]["product"], self.auction1.auction_name
         )
 
+    def test_filter_by_live_status(self):
+        self.auction2.status = StatusChoices.COMPLETED
+        self.auction2.save()
+        response = self.client.get(self.url, {"status": StatusChoices.LIVE})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
+
+    def test_filter_by_upcoming_status(self):
+        self.auction1.start_date = timezone.now() + timedelta(days=1)
+        self.auction1.end_date = timezone.now() + timedelta(days=2)
+        self.auction1.save()
+        response = self.client.get(self.url, {"status": "Upcoming"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
+
+    def test_filter_by_status_other_than_live_or_upcoming(self):
+        self.auction1.status = StatusChoices.COMPLETED
+        self.auction1.save()
+        response = self.client.get(self.url, {"status": self.auction1.status})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
+
     def test_filter_by_invalid_status(self):
         response = self.client.get(self.url, {"status": "invalid_status"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -436,7 +467,6 @@ class SellerAuctionListViewTests(APITestCase):
         self.auction1.status = StatusChoices.COMPLETED
         self.auction1.save()
         response = self.client.get(self.url, {"status": "Completed"})
-        print(response.data, "*" * 500)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn(
             "Select a valid choice. Completed is not one of the available choices.",
