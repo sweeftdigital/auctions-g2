@@ -17,6 +17,7 @@ class StatusChoices(models.TextChoices):
     DRAFT = "Draft", "Draft"
     COMPLETED = "Completed", "Completed"
     CANCELED = "Canceled", "Canceled"
+    DELETED = "Deleted", "Deleted"
 
 
 class AcceptedBiddersChoices(models.TextChoices):
@@ -29,6 +30,11 @@ class CurrencyChoices(models.TextChoices):
     GEL = "GEL", "GEL"
     USD = "USD", "USD"
     EUR = "EUR", "EUR"
+
+
+class AuctionManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().exclude(status=StatusChoices.DELETED)
 
 
 class Auction(models.Model):
@@ -68,6 +74,8 @@ class Auction(models.Model):
         auto_now_add=True, verbose_name="Auction Created At"
     )
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Auction Updated At")
+
+    objects = AuctionManager()
 
     class Meta:
         ordering = [

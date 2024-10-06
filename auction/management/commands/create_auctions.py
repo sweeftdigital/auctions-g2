@@ -36,7 +36,13 @@ class Command(BaseCommand):
 
         for _ in range(number_of_auctions):
             condition = random.choice([choice[0] for choice in ConditionChoices.choices])
-            status = random.choice([choice[0] for choice in StatusChoices.choices])
+            status = random.choice(
+                [
+                    choice[0]
+                    for choice in StatusChoices.choices
+                    if choice[0] != StatusChoices.DELETED
+                ]
+            )
             accepted_bidders = random.choice(
                 [choice[0] for choice in AcceptedBiddersChoices.choices]
             )

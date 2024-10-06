@@ -310,6 +310,17 @@ class BuyerAuctionListViewTests(APITestCase):
         self.assertEqual(response.data["results"][0]["status"], "Upcoming")
         self.assertEqual(response.data["results"][1]["status"], StatusChoices.LIVE)
 
+    def test_auction_with_deleted_status(self):
+        self.auction2.status = StatusChoices.DELETED
+        self.auction2.save()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(response.data["results"][0]["status"], StatusChoices.LIVE)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
+
 
 class SellerAuctionListViewTests(APITestCase):
     def setUp(self):
@@ -473,6 +484,17 @@ class SellerAuctionListViewTests(APITestCase):
             response.data.get("status"),
         )
 
+    def test_auction_with_deleted_status(self):
+        self.auction2.status = StatusChoices.DELETED
+        self.auction2.save()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(response.data["results"][0]["status"], StatusChoices.LIVE)
+        self.assertEqual(
+            response.data["results"][0]["product"], self.auction1.auction_name
+        )
+
 
 class AuctionRetrieveViewTests(APITestCase):
     def setUp(self):
@@ -523,6 +545,13 @@ class AuctionRetrieveViewTests(APITestCase):
         self.auction.save()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_retrieve_auction_with_deleted_status(self):
+        self.auction.status = StatusChoices.DELETED
+        self.auction.save()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("No Auction matches the given query.", response.data.get("detail"))
 
 
 class AuctionDeleteViewTests(APITestCase):
@@ -586,6 +615,7 @@ class BookmarkListViewTests(APITestCase):
             quantity=1,
             auction_name="Awesome Pet Supplies Auction",
             description="Bid on the best pet supplies.",
+            condition=ConditionChoices.NEW,
         )
         self.auction1.tags.add(self.tag1, self.tag2)
 
@@ -601,6 +631,7 @@ class BookmarkListViewTests(APITestCase):
             quantity=2,
             auction_name="Old Electronics Auction",
             description="Bidding for various old electronics.",
+            condition=ConditionChoices.NEW,
         )
         self.auction2.tags.add(self.tag1)
 
@@ -633,8 +664,12 @@ class BookmarkListViewTests(APITestCase):
         self.auction1.condition = ConditionChoices.USED_GOOD
         self.auction1.save()
 
+        print(self.auction1.condition)
+        print(self.auction2.condition)
+
         response = self.client.get(self.url, {"condition": ConditionChoices.USED_GOOD})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        print(response.data)
         self.assertEqual(len(response.data.get("results")), 1)
         self.assertEqual(
             response.data["results"][0]["auction"]["product"], self.auction1.auction_name
