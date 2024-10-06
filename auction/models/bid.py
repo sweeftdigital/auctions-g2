@@ -7,6 +7,24 @@ class Bid(models.Model):
         blank=True, null=True, help_text="Enter a detailed description of the bid"
     )
 
+    delivery_fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        help_text="Enter the delivery fee for the bid",
+    )
+
+    STATUS_CHOICES = [
+        ("Pending", "Pending"),
+        ("Approved", "Approved"),
+        ("Rejected", "Rejected"),
+    ]
+    status = models.CharField(
+        choices=STATUS_CHOICES,
+        default="pending",
+        help_text="Status of the bid",
+    )
+
     def __str__(self):
         return f"Bid of ${self.offer} - {self.description[:50]}"
 
