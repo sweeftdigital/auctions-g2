@@ -664,12 +664,8 @@ class BookmarkListViewTests(APITestCase):
         self.auction1.condition = ConditionChoices.USED_GOOD
         self.auction1.save()
 
-        print(self.auction1.condition)
-        print(self.auction2.condition)
-
         response = self.client.get(self.url, {"condition": ConditionChoices.USED_GOOD})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        print(response.data)
         self.assertEqual(len(response.data.get("results")), 1)
         self.assertEqual(
             response.data["results"][0]["auction"]["product"], self.auction1.auction_name

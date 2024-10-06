@@ -1,6 +1,7 @@
 import random
 
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 from auction.factories import AuctionFactory
 from auction.models import Category, Tag
@@ -48,6 +49,11 @@ class Command(BaseCommand):
             )
             currency = random.choice([choice[0] for choice in CurrencyChoices.choices])
             category = random.choice(categories)
+            # Generate timezone-aware datetime objects
+            # Ensure start_date is in the future
+            start_date = timezone.now() + timezone.timedelta(days=random.randint(1, 30))
+            # Ensure end_date is after start_date (at least 1 day later)
+            end_date = start_date + timezone.timedelta(days=random.randint(1, 7))
 
             auction = AuctionFactory(
                 category=category,
@@ -55,6 +61,8 @@ class Command(BaseCommand):
                 status=status,
                 accepted_bidders=accepted_bidders,
                 currency=currency,
+                start_date=start_date,
+                end_date=end_date,
             )
 
             random_tags = random.sample(tags, tags_per_auction)
