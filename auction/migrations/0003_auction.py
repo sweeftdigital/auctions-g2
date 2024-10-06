@@ -63,7 +63,6 @@ class Migration(migrations.Migration):
                             ("Draft", "Draft"),
                             ("Completed", "Completed"),
                             ("Canceled", "Canceled"),
-                            ("Upcoming", "Upcoming"),
                         ],
                         default="Draft",
                         max_length=20,

@@ -334,15 +334,20 @@ class SellerAuctionListViewTests(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_filter_by_status(self):
+    def test_filter_by_LIVE_status(self):
         response = self.client.get(self.url, {"status": StatusChoices.LIVE})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data.get("results")), 2)
+        self.assertEqual(len(response.data.get("results")), 1)
         self.assertEqual(
-            response.data["results"][0]["product"], self.auction2.auction_name
+            response.data["results"][0]["product"], self.auction1.auction_name
         )
-        self.assertEqual(
-            response.data["results"][1]["product"], self.auction1.auction_name
+
+    def test_filter_by_UPCOMING_status(self):
+        response = self.client.get(self.url, {"status": "Upcoming"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(  # It is upcoming because the start_date is in future
+            response.data["results"][0]["product"], self.auction2.auction_name
         )
 
     def test_search_by_tag(self):

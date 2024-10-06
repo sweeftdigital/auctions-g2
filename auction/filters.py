@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django_filters import rest_framework as filters
 
 from auction.models.auction import (
@@ -12,13 +13,26 @@ from auction.models.category import CategoryChoices
 
 
 class BaseAuctionFilterSet(filters.FilterSet):
-    status = filters.ChoiceFilter(choices=StatusChoices.choices, field_name="status")
+    status = filters.ChoiceFilter(
+        choices=StatusChoices.choices + [("Upcoming", "Upcoming")],
+        method="filter_by_status",
+    )
 
     class Meta:
         model = Auction
         fields = [
             "status",
         ]
+
+    def filter_by_status(self, queryset, name, value):
+        current_time = timezone.now()
+
+        if value == "Upcoming":
+            return queryset.filter(start_date__gt=current_time)
+        elif value == "Live":
+            return queryset.filter(start_date__lte=current_time, status="Live")
+        else:
+            return queryset.filter(**{name: value})
 
 
 class BuyerAuctionFilterSet(BaseAuctionFilterSet):

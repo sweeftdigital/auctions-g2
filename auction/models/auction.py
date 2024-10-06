@@ -17,7 +17,6 @@ class StatusChoices(models.TextChoices):
     DRAFT = "Draft", "Draft"
     COMPLETED = "Completed", "Completed"
     CANCELED = "Canceled", "Canceled"
-    UPCOMING = "Upcoming", "Upcoming"
 
 
 class AcceptedBiddersChoices(models.TextChoices):
