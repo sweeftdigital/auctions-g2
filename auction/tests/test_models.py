@@ -124,6 +124,22 @@ class BidModelTest(TestCase):
         bid = BidFactory()
         self.assertIsNotNone(bid.description)
 
+    def test_bid_delivery_fee(self):
+        bid = BidFactory(delivery_fee=Decimal("25.00"))
+        self.assertEqual(bid.delivery_fee, Decimal("25.00"))
+
+    def test_bid_status_default(self):
+        bid = BidFactory(status="Pending")
+        self.assertEqual(bid.status, "Pending")
+
+    def test_bid_status_approved(self):
+        bid = BidFactory(status="Approved")
+        self.assertEqual(bid.status, "Approved")
+
+    def test_bid_status_rejected(self):
+        bid = BidFactory(status="Rejected")
+        self.assertEqual(bid.status, "Rejected")
+
 
 class BidImageModelTest(TestCase):
 

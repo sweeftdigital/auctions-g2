@@ -68,6 +68,10 @@ class BidFactory(factory.django.DjangoModelFactory):
 
     offer = factory.Faker("pydecimal", left_digits=5, right_digits=2, positive=True)
     description = factory.Faker("sentence")
+    delivery_fee = factory.Faker(
+        "pydecimal", left_digits=3, right_digits=2, positive=True
+    )
+    status = factory.Iterator(["Pending", "Approved", "Rejected"])
 
 
 class BidImageFactory(factory.django.DjangoModelFactory):
