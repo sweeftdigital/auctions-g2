@@ -18,6 +18,7 @@ from auction.models.auction import StatusChoices
 from auction.openapi import (
     auction_retrieve_openapi_examples,
     bookmark_create_openapi_examples,
+    bookmark_delete_openapi_examples,
     bookmark_list_openapi_examples,
     buyer_dashboard_list_openapi_examples,
     seller_dashboard_list_openapi_examples,
@@ -426,8 +427,33 @@ class CreateBookmarkView(CreateAPIView):
 
 @extend_schema(
     tags=["Bookmarks"],
+    responses={
+        204: None,
+        401: BookmarkCreateSerializer,
+        403: BookmarkCreateSerializer,
+        404: BookmarkCreateSerializer,
+    },
+    examples=bookmark_delete_openapi_examples.examples(),
 )
 class DeleteBookmarkView(DestroyAPIView):
+    """
+    Delete an existing bookmark.
+
+    This view allows authorized users to delete their own bookmarks.
+
+    **Permissions:**
+
+    - IsAuthenticated: Requires the user to be authenticated.
+    - IsOwner: Requires the user to be the owner of the bookmark.
+
+    **Response:**
+
+    - 204 (No Content): Bookmark deleted successfully.
+    - 401 (Unauthorized): Authentication credentials are missing or invalid.
+    - 403 (Forbidden): Bookmark does not belong to the user.
+    - 404 (Not Found): The requested bookmark does not exist.
+    """
+
     queryset = Bookmark.objects.all()
     permission_classes = (IsAuthenticated, IsOwner)
 
