@@ -918,7 +918,7 @@ class CreateLiveAuctionViewTests(APITestCase):
         data.pop("auction_name")
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("auction_name", response.data)
+        self.assertIn("auction_name", response.data["errors"][0]["field_name"])
 
     def test_end_date_before_start_date(self):
         data = self.frequently_used_data
@@ -926,45 +926,52 @@ class CreateLiveAuctionViewTests(APITestCase):
         data["end_date"] = timezone.now() + timedelta(days=1)
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("end_date", response.data)
-        self.assertIn("End date must be after the start date.", response.data["end_date"])
+        self.assertIn("end_date", response.data["errors"][0]["field_name"])
+        self.assertIn(
+            "End date must be after the start date.",
+            response.data["errors"][0]["message"],
+        )
 
     def test_start_date_in_past(self):
         data = self.frequently_used_data
         data["start_date"] = timezone.now() - timedelta(days=1)
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("start_date", response.data)
-        self.assertIn("Start date cannot be in the past.", response.data["start_date"])
+        self.assertIn("start_date", response.data["errors"][0]["field_name"])
+        self.assertIn(
+            "Start date cannot be in the past.", response.data["errors"][0]["message"]
+        )
 
     def test_invalid_max_price(self):
         data = self.frequently_used_data
         data["max_price"] = -1
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("max_price", response.data)
-        self.assertIn("Max price must be greater than 0.", response.data["max_price"])
+        self.assertIn("max_price", response.data["errors"][0]["field_name"])
+        self.assertIn(
+            "Max price must be greater than 0.", response.data["errors"][0]["message"]
+        )
 
     def test_invalid_accepted_bidders_choice(self):
         data = self.frequently_used_data
         data["accepted_bidders"] = "Invalid"
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("accepted_bidders", response.data)
+        self.assertIn("accepted_bidders", response.data["errors"][0]["field_name"])
 
     def test_create_auction_with_invalid_tag(self):
         data = self.frequently_used_data
         data["tags"] = [{"name": "invalid"}]
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("tags", response.data)
+        self.assertIn("tags", response.data["errors"][0]["field_name"])
 
     def test_create_auction_with_invalid_category(self):
         data = self.frequently_used_data
         data["category"] = "invalid"
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("category", response.data)
+        self.assertIn("category", response.data["errors"][0]["field_name"])
 
     def test_user_has_no_country_in_profile(self):
         self.user.country = ""
@@ -973,7 +980,7 @@ class CreateLiveAuctionViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertIn(
             "User must set a country in their profile before proceeding.",
-            response.data.get("detail"),
+            response.data["errors"][0]["message"],
         )
 
     def test_quantity_negative_value(self):
@@ -982,7 +989,7 @@ class CreateLiveAuctionViewTests(APITestCase):
         response = self.client.post(self.url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("quantity", response.data)
+        self.assertIn("quantity", response.data["errors"][0]["field_name"])
 
     def test_read_only_fields(self):
         data = self.frequently_used_data
@@ -1005,7 +1012,7 @@ class CreateLiveAuctionViewTests(APITestCase):
         data["condition"] = "Invalid"
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("condition", response.data)
+        self.assertIn("condition", response.data["errors"][0]["field_name"])
 
     def test_invalid_date(self):
         data = self.frequently_used_data
@@ -1020,7 +1027,8 @@ class CreateLiveAuctionViewTests(APITestCase):
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn(
-            "Tags are required, make sure to include them.", response.data.get("tags")
+            "Tags are required, make sure to include them.",
+            response.data["errors"][0]["message"],
         )
 
     def test_create_auction_with_empty_accepted_locations(self):
@@ -1040,7 +1048,8 @@ class CreateLiveAuctionViewTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn(
-            "There was an error during the creation of an auction", response.data[0]
+            "There was an error during the creation of an auction",
+            response.data["errors"][0]["message"],
         )
         self.assertEqual(Auction.objects.count(), 0)
 
