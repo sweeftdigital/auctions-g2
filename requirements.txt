@@ -20,3 +20,4 @@ django-countries==7.6.1
 channels[daphne]==4.1.0
 channels-redis==4.2.0
 drf-standardized-errors[openapi]==0.14.1
+django-cors-headers==4.4.0

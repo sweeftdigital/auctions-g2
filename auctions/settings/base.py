@@ -22,12 +22,14 @@ INSTALLED_APPS = [
     "django_countries",
     "channels",
     "drf_standardized_errors",
+    "corsheaders",
     # Local
     "auction.apps.AuctionConfig",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -157,3 +159,9 @@ SPECTACULAR_SETTINGS = {
 DRF_STANDARDIZED_ERRORS = {
     "EXCEPTION_FORMATTER_CLASS": "auction.exceptions.CustomExceptionFormatter",
 }
+
+# Cors Headers
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]
