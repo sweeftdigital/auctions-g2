@@ -133,6 +133,7 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "DEFAULT_PAGINATION_CLASS": "auction.pagination.CustomPageNumberPagination",
+    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
 }
 
 SPECTACULAR_SETTINGS = {
@@ -146,4 +147,10 @@ SPECTACULAR_SETTINGS = {
     "SECURITY": [
         {"BearerAuth": []},  # Enable Bearer token input in Swagger
     ],
+}
+
+# def-standardized-errors settings
+
+DRF_STANDARDIZED_ERRORS = {
+    "EXCEPTION_FORMATTER_CLASS": "auction.exceptions.CustomExceptionFormatter",
 }
