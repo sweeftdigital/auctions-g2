@@ -15,6 +15,7 @@ from auction.filters import (
 )
 from auction.models import Auction, Bookmark
 from auction.models.auction import StatusChoices
+from auction.openapi import buyer_dashboard_list_openapi_examples
 from auction.permissions import (
     HasCountryInProfile,
     IsBuyer,
@@ -58,8 +59,40 @@ from auction.serializers import (
             type={"oneOf": [{"type": "integer"}, {"type": "string"}]},
         ),
     ],
+    responses={
+        200: BuyerAuctionListSerializer,
+        401: BuyerAuctionListSerializer,
+        403: BuyerAuctionListSerializer,
+        404: SellerAuctionListSerializer,
+    },
+    examples=buyer_dashboard_list_openapi_examples.examples(),
 )
 class BuyerAuctionListView(ListAPIView):
+    """
+    Retrieves a list of auctions that belong to the user, this includes
+    auctions with statuses: `Live`, `Draft`, `Completed`, `Canceled`, `Upcoming`.
+    **Auctions with Deleted status will not be included**.
+
+    **Permissions**:
+
+    - IsAuthenticated: Requires the user to be authenticated.
+    - IsBuyer: Requires the user to have the 'Buyer' role.
+
+    **Query Parameters**:
+
+    - `search` (optional, str): Search term to filter auctions by auction name, description, or tags.
+    - `ordering` (optional, str): Comma-separated list of fields to order the results by.
+        Prepend with **“-“** for descending order. Valid fields are: **start_date**, **end_date**,
+        **max_price**, **quantity**, **category**, **status**.
+    - `page` (optional, int or str): The page number to retrieve (integer). If 'last', retrieves the last page.
+
+    **Returns**:
+    - 200 (OK): A paginated list of auctions.
+    - 401 (Unauthorized): If the user is not authenticated.
+    - 403 (Forbidden): If the user does not have the 'Buyer' role.
+    - 404 (Not Found): If invalid value is passed to page query parameter.
+    """
+
     permission_classes = (IsAuthenticated, IsBuyer)
     serializer_class = BuyerAuctionListSerializer
     filterset_class = BuyerAuctionFilterSet
