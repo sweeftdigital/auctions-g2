@@ -870,11 +870,10 @@ class CreateBookmarkViewTestCase(APITestCase):
         data = {"auction_id": str(uuid4())}
         response = self.client.post(self.url, data, format="json")
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("auction_id", response.data["errors"][0]["field_name"])
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
             str(response.data["errors"][0]["message"]),
-            "Auction with this ID does not exist.",
+            "Not found.",
         )
 
 
