@@ -482,7 +482,7 @@ class SellerAuctionListViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn(
             "Select a valid choice. Completed is not one of the available choices.",
-            response.data.get("status"),
+            response.data["errors"][0]["message"],
         )
 
     def test_auction_with_deleted_status(self):
@@ -552,7 +552,7 @@ class AuctionRetrieveViewTests(APITestCase):
         self.auction.save()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertIn("No Auction matches the given query.", response.data.get("detail"))
+        self.assertIn("Not found.", response.data["errors"][0]["message"])
 
 
 class AuctionDeleteViewTests(APITestCase):
@@ -862,16 +862,19 @@ class AddBookmarkViewTestCase(APITestCase):
         response = self.client.post(self.url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(str(response.data[0]), "This auction is already bookmarked.")
+        self.assertEqual(
+            response.data["errors"][0]["message"], "This auction is already bookmarked."
+        )
 
     def test_create_bookmark_invalid_auction(self):
         data = {"auction_id": str(uuid4())}
         response = self.client.post(self.url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("auction_id", response.data)
+        self.assertIn("auction_id", response.data["errors"][0]["field_name"])
         self.assertEqual(
-            str(response.data["auction_id"][0]), "Auction with this ID does not exist."
+            str(response.data["errors"][0]["message"]),
+            "Auction with this ID does not exist.",
         )
 
 
