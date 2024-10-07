@@ -16,6 +16,7 @@ from auction.filters import (
 from auction.models import Auction, Bookmark
 from auction.models.auction import StatusChoices
 from auction.openapi import (
+    auction_retrieve_openapi_examples,
     bookmark_list_openapi_examples,
     buyer_dashboard_list_openapi_examples,
     seller_dashboard_list_openapi_examples,
@@ -314,8 +315,31 @@ class BookmarkListView(ListAPIView):
 
 @extend_schema(
     tags=["Auctions"],
+    responses={
+        200: AuctionRetrieveSerializer,
+        401: AuctionRetrieveSerializer,
+        403: AuctionRetrieveSerializer,
+        404: AuctionRetrieveSerializer,
+    },
+    examples=auction_retrieve_openapi_examples.examples(),
 )
 class RetrieveAuctionView(generics.RetrieveAPIView):
+    """
+    Retrieve details of a specific auction by its ID.
+
+    This view allows authorized users to retrieve information about an existing auction.
+    Permissions are checked to ensure only the following users can access an auction:
+    - **Authenticated** user (for published auctions)
+    - **Author** of the auction (for draft auctions)
+
+    **Response:**
+
+    - 200 (OK): Successful retrieval of the auction details.
+    - 401 (Unauthorized): Authentication credentials are missing or invalid.
+    - 403 (Forbidden): User does not have permission to access the auction (draft or seller attempting access).
+    - 404 (Not Found): The requested auction does not exist.
+    """
+
     permission_classes = (IsAuthenticated,)
     queryset = Auction.objects.all()
     serializer_class = AuctionRetrieveSerializer
@@ -326,7 +350,9 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
 
         if auction.status == "Draft":
             # Deny access if the user is a seller or not the author of the draft
-            if self.request.user.is_seller or auction.author != self.request.user.id:
+            if self.request.user.is_seller or str(auction.author) != str(
+                self.request.user.id
+            ):
                 self.permission_denied(self.request)
 
         return auction
