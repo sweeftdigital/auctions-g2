@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     "django_filters",
     "django_countries",
     "channels",
+    "drf_standardized_errors",
     # Local
     "auction.apps.AuctionConfig",
 ]
