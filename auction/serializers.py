@@ -2,6 +2,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django_countries.serializers import CountryFieldMixin
 from rest_framework import serializers
+from rest_framework.exceptions import NotFound
 
 from auction.models import Auction, Bookmark, Category, Tag
 from auction.models.category import CategoryChoices
@@ -125,7 +126,7 @@ class BookmarkCreateSerializer(serializers.ModelSerializer):
         try:
             Auction.objects.get(id=value)
         except Auction.DoesNotExist:
-            raise serializers.ValidationError("Auction with this ID does not exist.")
+            raise NotFound()
         return value
 
     def create(self, validated_data):
