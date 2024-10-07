@@ -21,7 +21,7 @@ class IsNotSellerAndIsOwner(BasePermission):
         if request.user.is_seller:
             return False
 
-        return obj.author == request.user
+        return str(obj.author) == str(request.user.id)
 
 
 class IsBuyer(BasePermission):
