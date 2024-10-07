@@ -16,6 +16,7 @@ from auction.filters import (
 from auction.models import Auction, Bookmark
 from auction.models.auction import StatusChoices
 from auction.openapi import (
+    auction_create_openapi_examples,
     auction_retrieve_openapi_examples,
     bookmark_create_openapi_examples,
     bookmark_delete_openapi_examples,
@@ -458,7 +459,50 @@ class DeleteBookmarkView(DestroyAPIView):
     permission_classes = (IsAuthenticated, IsOwner)
 
 
+@extend_schema(
+    tags=["Auctions"],
+    responses={
+        201: AuctionSaveSerializer,
+        400: AuctionSaveSerializer,
+        401: AuctionSaveSerializer,
+        403: AuctionSaveSerializer,
+    },
+    examples=auction_create_openapi_examples.examples(),
+)
 class BaseAuctionView(CreateAPIView):
+    """
+    Create a new auction.
+
+    This view allows authenticated users with `IsBuyer` and `HasCountryInProfile` permissions to
+    create a new auction.
+
+    **Permissions:**
+
+    - IsAuthenticated: Requires the user to be authenticated.
+    - IsBuyer: Requires the user to be a buyer.
+    - HasCountryInProfile: Requires the user to have a country specified in their profile.
+
+    **Response:**
+
+    - 201 (Created): Auction created successfully. The response body contains the serialized auction
+    data (see `AuctionSaveSerializer`).
+    - 400 (Bad Request): Invalid request data. The response body contains a list of validation errors.
+     (see example in OpenAPI documentation)
+    - 401 (Unauthorized): Authentication credentials are missing or invalid.
+    - 403 (Forbidden): User does not have permission to create an auction.
+
+    **Examples:**
+
+    Refer to the OpenAPI documentation for examples of valid and invalid request and response bodies.
+
+    **Notes:**
+
+    - Upon successful creation, the auction will be saved with a status of either `LIVE` or `DRAFT`
+    depending on if user sent the request to the `create/draft` or `create/auction` endpoints.
+    - If an error occurs during notification sending after a successful creation, a warning message will
+    be included in the response data.
+    """
+
     queryset = Auction.objects.all()
     serializer_class = AuctionSaveSerializer
     permission_classes = [IsAuthenticated, IsBuyer, HasCountryInProfile]
@@ -517,9 +561,6 @@ class BaseAuctionView(CreateAPIView):
         return response
 
 
-@extend_schema(
-    tags=["Auctions"],
-)
 class CreateLiveAuctionView(BaseAuctionView):
     def get_auction_status(self):
         return StatusChoices.LIVE
@@ -531,9 +572,6 @@ class CreateLiveAuctionView(BaseAuctionView):
         }
 
 
-@extend_schema(
-    tags=["Auctions"],
-)
 class CreateDraftAuctionView(BaseAuctionView):
     def get_auction_status(self):
         return StatusChoices.DRAFT

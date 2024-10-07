@@ -24,7 +24,7 @@ def examples():
         ),
         OpenApiExample(
             "Response example 6 (POST)",
-            summary="Unauthenticated tries to create a bookmark..",
+            summary="Unauthenticated tries to create a bookmark.",
             description="This example demonstrates the response for a "
             "scenario where non authenticated  user tries to "
             "create bookmark.",
