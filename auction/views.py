@@ -14,6 +14,7 @@ from auction.filters import (
     SellerAuctionFilterSet,
 )
 from auction.models import Auction, Bookmark
+from auction.models.auction import StatusChoices
 from auction.permissions import (
     HasCountryInProfile,
     IsBuyer,
@@ -22,8 +23,8 @@ from auction.permissions import (
     IsSeller,
 )
 from auction.serializers import (
-    AuctionPublishSerializer,
     AuctionRetrieveSerializer,
+    AuctionSaveSerializer,
     BookmarkCreateSerializer,
     BookmarkListSerializer,
     BuyerAuctionListSerializer,
@@ -262,27 +263,82 @@ class DeleteBookmarkView(DestroyAPIView):
     permission_classes = (IsAuthenticated, IsOwner)
 
 
-@extend_schema(
-    tags=["Auctions"],
-)
-class PublishAuctionView(CreateAPIView):
+class BaseAuctionView(CreateAPIView):
     queryset = Auction.objects.all()
-    serializer_class = AuctionPublishSerializer
+    serializer_class = AuctionSaveSerializer
     permission_classes = [IsAuthenticated, IsBuyer, HasCountryInProfile]
 
     def perform_create(self, serializer):
-        auction = serializer.save(author=self.request.user.id)
+        serializer.save(author=self.request.user.id, status=self.get_auction_status())
+        try:
+            self.notify_auction(serializer.data)
+        except Exception as e:
+            self.warning_message = f"Auction created successfully, but failed to send notifications: {str(e)}"
 
-        # Notify the WebSocket consumer about the new auction
-        self.notify_new_auction(auction.id)
+    def get_auction_status(self):
+        raise NotImplementedError("Subclasses must implement get_auction_status()")
 
-    def notify_new_auction(self, auction_id):
+    def notify_auction(self, auction_data):
         channel_layer = get_channel_layer()
-        # Send a message to the group notifying that a new auction has been created
-        async_to_sync(channel_layer.group_send)(
-            "auctions_for_bidders",  # This is the group name in your consumer
-            {
-                "type": "new_auction_notification",  # The type of message to handle
-                "new_auction_id": str(auction_id),  # Include the auction ID
-            },
+        notifications = self.get_notifications()
+
+        for group, should_notify in notifications.items():
+            if should_notify:
+                group_name = self.get_group_name(group)
+                async_to_sync(channel_layer.group_send)(
+                    group_name,
+                    {
+                        "type": "new_auction_notification",
+                        "data": self.get_notification_data(auction_data, group),
+                    },
+                )
+
+    def get_group_name(self, group):
+        """Get the group name based on the recipient type."""
+        if group == "buyer":
+            return f"buyer_{self.request.user.id}"
+        return "auctions_for_bidders"
+
+    def get_notifications(self):
+        """Define which groups should be notified."""
+        return {
+            "buyer": True,  # Always notify the buyer who created the auction
+            "sellers": False,  # By default, don't notify sellers
+        }
+
+    def get_notification_data(self, auction_data, group):
+        """Customize notification data based on the recipient group."""
+        return (
+            auction_data if group == "buyer" else {"auction_id": auction_data.get("id")}
         )
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        # If there's a warning message, add it to the response data
+        if hasattr(self, "warning_message"):
+            if not isinstance(response.data, dict):
+                response.data = {"data": response.data}  # pragma: no cover
+            response.data["warning"] = self.warning_message
+        return response
+
+
+@extend_schema(
+    tags=["Auctions"],
+)
+class CreateLiveAuctionView(BaseAuctionView):
+    def get_auction_status(self):
+        return StatusChoices.LIVE
+
+    def get_notifications(self):
+        return {
+            "buyer": True,  # Notify the buyer who created the auction
+            "sellers": True,  # Notify all sellers
+        }
+
+
+@extend_schema(
+    tags=["Auctions"],
+)
+class CreateDraftAuctionView(BaseAuctionView):
+    def get_auction_status(self):
+        return StatusChoices.DRAFT
