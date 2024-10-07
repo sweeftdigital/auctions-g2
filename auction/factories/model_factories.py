@@ -11,6 +11,7 @@ from auction.models.auction import (
     CurrencyChoices,
     StatusChoices,
 )
+from auction.models.bid import StatusChoices as BidStatusChoices
 from auction.models.bookmark import Bookmark
 from auction.models.category import Category
 from auction.models.tags import Tag
@@ -66,12 +67,14 @@ class BidFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Bid
 
+    author = factory.LazyFunction(uuid.uuid4)
+    auction = factory.SubFactory("auction.factories.AuctionFactory")
     offer = factory.Faker("pydecimal", left_digits=5, right_digits=2, positive=True)
     description = factory.Faker("sentence")
     delivery_fee = factory.Faker(
         "pydecimal", left_digits=3, right_digits=2, positive=True
     )
-    status = factory.Iterator(["Pending", "Approved", "Rejected"])
+    status = factory.Iterator(BidStatusChoices.values)
 
 
 class BidImageFactory(factory.django.DjangoModelFactory):
