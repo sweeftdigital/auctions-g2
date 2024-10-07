@@ -370,7 +370,7 @@ class DeleteAuctionView(generics.DestroyAPIView):
 @extend_schema(
     tags=["Bookmarks"],
 )
-class AddBookmarkView(CreateAPIView):
+class CreateBookmarkView(CreateAPIView):
     """
     View to handle the creation of bookmarks for auctions.
     """

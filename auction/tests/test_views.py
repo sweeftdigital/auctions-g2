@@ -597,7 +597,7 @@ class BookmarkListViewTests(APITestCase):
         self.client = APIClient()
         self.user = MockUser(user_id=uuid4())
         self.client.force_authenticate(user=self.user)
-        self.url = reverse("bookmark-list")
+        self.url = reverse("list-bookmark")
 
         self.category1 = CategoryFactory(name="Pet Supplies")
         self.category2 = CategoryFactory(name="Electronics")
@@ -807,7 +807,7 @@ class BookmarkListViewTests(APITestCase):
         )
 
 
-class AddBookmarkViewTestCase(APITestCase):
+class CreateBookmarkViewTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.user_payload = {
@@ -843,7 +843,7 @@ class AddBookmarkViewTestCase(APITestCase):
         self.mock_authenticate.return_value = (self.user_proxy, None)
         self.addCleanup(patcher.stop)
 
-        self.url = reverse("add-bookmark")
+        self.url = reverse("create-bookmark")
 
     def test_create_bookmark_success(self):
         data = {"auction_id": str(self.auction.id)}
