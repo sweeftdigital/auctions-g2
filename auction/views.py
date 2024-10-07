@@ -15,7 +15,10 @@ from auction.filters import (
 )
 from auction.models import Auction, Bookmark
 from auction.models.auction import StatusChoices
-from auction.openapi import buyer_dashboard_list_openapi_examples
+from auction.openapi import (
+    buyer_dashboard_list_openapi_examples,
+    seller_dashboard_list_openapi_examples,
+)
 from auction.permissions import (
     HasCountryInProfile,
     IsBuyer,
@@ -63,7 +66,7 @@ from auction.serializers import (
         200: BuyerAuctionListSerializer,
         401: BuyerAuctionListSerializer,
         403: BuyerAuctionListSerializer,
-        404: SellerAuctionListSerializer,
+        404: BuyerAuctionListSerializer,
     },
     examples=buyer_dashboard_list_openapi_examples.examples(),
 )
@@ -150,8 +153,44 @@ class BuyerAuctionListView(ListAPIView):
             type={"oneOf": [{"type": "integer"}, {"type": "string"}]},
         ),
     ],
+    responses={
+        200: SellerAuctionListSerializer,
+        401: SellerAuctionListSerializer,
+        403: SellerAuctionListSerializer,
+        404: SellerAuctionListSerializer,
+    },
+    examples=seller_dashboard_list_openapi_examples.examples(),
 )
 class SellerAuctionListView(ListAPIView):
+    """
+    Retrieves a list of auctions created by buyers, this auctions will have
+    `Live` or `Upcoming` statuses.
+
+    **Permissions**:
+    - IsAuthenticated: Requires the user to be authenticated.
+    - IsSeller: Requires the user to have the 'Seller' role.
+
+    **Query Parameters**:
+    - `search` (optional, str): Search term to filter auctions by auction name, description, or tags.
+    - `ordering` (optional, str): Comma-separated list of fields to order the results by. Prepend with **"-"**
+        for descending order. Valid fields are: **start_date**, **end_date**, **max_price**, **quantity**,
+        **category**, **status**, **tags__name**.
+    - `start_date` (optional, str): Filter auctions by start date.
+    - `end_date` (optional, str): Filter auctions by end date.
+    - `max_price` (optional, float): Filter auctions by maximum price.
+    - `min_price` (optional, float): Filter auctions by minimum price.
+    - `status` (optional, str): Filter auctions by status. Possible values are: **Live**, **Upcoming**.
+    - `category` (optional, str): Filter auctions by category.
+    - `page` (optional, int or str): The page number to retrieve (integer). If 'last', retrieves the last page.
+
+    **Returns**:
+    - 200 (OK): A paginated list of auctions created by the seller, including their status, category, tags,
+    and other details.
+    - 401 (Unauthorized): If the user is not authenticated.
+    - 403 (Forbidden): If the user does not have the 'Seller' role.
+    - 404 (Not Found): If invalid value is passed to page query parameter.
+    """
+
     permission_classes = (IsAuthenticated, IsSeller)
     serializer_class = SellerAuctionListSerializer
     filterset_class = SellerAuctionFilterSet
