@@ -16,6 +16,7 @@ from auction.filters import (
 from auction.models import Auction, Bookmark
 from auction.models.auction import StatusChoices
 from auction.openapi import (
+    bookmark_list_openapi_examples,
     buyer_dashboard_list_openapi_examples,
     seller_dashboard_list_openapi_examples,
 )
@@ -249,8 +250,47 @@ class SellerAuctionListView(ListAPIView):
             type={"oneOf": [{"type": "integer"}, {"type": "string"}]},
         ),
     ],
+    responses={
+        200: BookmarkListSerializer,
+        401: BookmarkListSerializer,
+        404: BookmarkListSerializer,
+    },
+    examples=bookmark_list_openapi_examples.examples(),
 )
 class BookmarkListView(ListAPIView):
+    """
+    Retrieves a list of auctions bookmarked by the authenticated user.
+
+    **Permissions**:
+    - IsAuthenticated: Requires the user to be authenticated.
+
+    **Query Parameters**:
+    - `search` (optional, str): Search term to filter bookmarks by **auction name**,
+        **description**, or **tags**.
+    - `ordering` (optional, str): Comma-separated list of fields to order the results by. Prepend with
+        "-" for descending order. Valid fields are: **start_date**, **end_date**, **max_price**, **quantity**.
+    - `status` (optional, str): Filter bookmarks by auction status. Possible values are: **Live**,
+        **Draft**, **Completed**, **Canceled**, **Upcoming**.
+    - `condition` (optional, str): Filter bookmarks by auction condition. Possible values are:
+        **New**, **Used - Like New**, **Used - Very Good**, **Used - Like New**, **Used - Good**,
+        **Used - Acceptable**.
+    - `accepted_bidders` (optional, str): Filter bookmarks by auction accepted bidders. Possible
+        values are: **Both**, **Company**, **Individual**.
+    - `accepted_locations` (optional, str): Filter bookmarks by auction accepted locations.
+    - `currency` (optional, str): Filter bookmarks by auction currency. Possible values are:
+        **USD**, **GEL**, **EUR**.
+    - `max_price` (optional, decimal): Filter bookmarks by maximum auction price.
+    - `min_price` (optional, decimal): Filter bookmarks by minimum auction price.
+    - `start_date` (optional, date-time): Filter bookmarks by auction start date.
+    - `end_date` (optional, date-time): Filter bookmarks by auction end date.
+    - `category` (optional, str): Filter bookmarks by auction category.
+
+    **Returns**:
+    - 200 (OK): A paginated list of bookmarked auctions, including their details.
+    - 401 (Unauthorized): If the user is not authenticated.
+    - 404 (Not Found): If invalid value is passed to page query parameter.
+    """
+
     permission_classes = (IsAuthenticated,)
     queryset = Bookmark.objects.all()
     serializer_class = BookmarkListSerializer
