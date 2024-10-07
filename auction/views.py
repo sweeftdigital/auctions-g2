@@ -84,6 +84,8 @@ class BuyerAuctionListView(ListAPIView):
     - `ordering` (optional, str): Comma-separated list of fields to order the results by.
         Prepend with **“-“** for descending order. Valid fields are: **start_date**, **end_date**,
         **max_price**, **quantity**, **category**, **status**.
+    - ` status` (optional, str): The status of the auctions. possible values are: **Live**,
+    **Draft**, **Completed**, **Canceled**, **Upcoming**.
     - `page` (optional, int or str): The page number to retrieve (integer). If 'last', retrieves the last page.
 
     **Returns**:

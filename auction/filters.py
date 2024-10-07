@@ -14,7 +14,8 @@ from auction.models.category import CategoryChoices
 
 class BaseAuctionFilterSet(filters.FilterSet):
     status = filters.ChoiceFilter(
-        choices=StatusChoices.choices + [("Upcoming", "Upcoming")],
+        choices=[choice for choice in StatusChoices.choices if choice[0] != "Deleted"]
+        + [("Upcoming", "Upcoming")],
         method="filter_by_status",
     )
 
