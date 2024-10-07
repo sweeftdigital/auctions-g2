@@ -17,6 +17,7 @@ from auction.models import Auction, Bookmark
 from auction.models.auction import StatusChoices
 from auction.openapi import (
     auction_retrieve_openapi_examples,
+    bookmark_create_openapi_examples,
     bookmark_list_openapi_examples,
     buyer_dashboard_list_openapi_examples,
     seller_dashboard_list_openapi_examples,
@@ -369,10 +370,38 @@ class DeleteAuctionView(generics.DestroyAPIView):
 
 @extend_schema(
     tags=["Bookmarks"],
+    responses={
+        201: BookmarkCreateSerializer,
+        400: BookmarkCreateSerializer,
+        401: BookmarkCreateSerializer,
+        404: BookmarkCreateSerializer,
+    },
+    examples=bookmark_create_openapi_examples.examples(),
 )
 class CreateBookmarkView(CreateAPIView):
     """
-    View to handle the creation of bookmarks for auctions.
+    Create a bookmark for an auction.
+
+    This view allows authenticated users to bookmark existing auctions.
+
+    **Permissions:**
+
+    - IsAuthenticated
+
+    **Request Body:**
+
+    - `auction_id` (required): Unique identifier of the auction to bookmark (UUID format).
+
+    **Response:**
+    - 201 (Created): Successful creation of the bookmark. Response includes details of the created bookmark.
+    - 400 (Bad Request): User has already bookmarked the auction (duplicate entry).
+    - 401 (Unauthorized): Authentication credentials are missing or invalid.
+    - 404 (Not Found): The requested auction does not exist.
+
+    **Examples:**
+
+    Refer to the `examples` attribute for detailed examples of request and response structures
+    for various scenarios.
     """
 
     serializer_class = BookmarkCreateSerializer
