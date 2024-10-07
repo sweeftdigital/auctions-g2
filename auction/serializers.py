@@ -93,6 +93,7 @@ class BookmarkListSerializer(serializers.ModelSerializer):
 class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):
     accepted_locations = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
+    category = serializers.SerializerMethodField()
 
     class Meta:
         model = Auction
@@ -103,6 +104,11 @@ class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):
 
     def get_tags(self, obj):
         return [tag.name for tag in obj.tags.all()]
+
+    # Option 1 implementation (uncomment if using)
+    def get_category(self, obj):
+        category = obj.category
+        return category.name if category else None
 
 
 class BookmarkCreateSerializer(serializers.ModelSerializer):
