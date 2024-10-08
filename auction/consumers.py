@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from django.utils.translation import gettext_lazy as _
 
 
 class BaseAuctionConsumer(AsyncJsonWebsocketConsumer, ABC):
@@ -32,7 +33,7 @@ class BaseAuctionConsumer(AsyncJsonWebsocketConsumer, ABC):
         """
         data = event.get("data")
         destination = self.get_destination()
-        message = "New auction was successfully created"
+        message = str(_("New auction was successfully created."))
         data = {**data}
         if additional_data:
             data.update(additional_data)
@@ -40,7 +41,7 @@ class BaseAuctionConsumer(AsyncJsonWebsocketConsumer, ABC):
         await self.send_json(
             {
                 "type": "new_auction_notification",
-                "message": message,
+                "message": _(message),
                 "destination": destination,
                 "data": data,
             }
@@ -115,7 +116,9 @@ class SellerAuctionConsumer(BaseAuctionConsumer):
         user = self.scope["user"]
         if message_type == "load.new.auctions":
             if user.is_buyer:
-                await self.send_json({"error": "Buyers cannot load new auctions."})
+                await self.send_json(
+                    {"error": str(_("Buyers cannot load new auctions."))}
+                )
             else:
                 await self.reset_user_counter()
 

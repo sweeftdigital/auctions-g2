@@ -1,5 +1,6 @@
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django_countries.serializers import CountryFieldMixin
 from rest_framework import serializers
 from rest_framework.exceptions import NotFound
@@ -134,7 +135,7 @@ class BookmarkCreateSerializer(serializers.ModelSerializer):
         auction_id = validated_data["auction_id"]
 
         if Bookmark.objects.filter(user_id=user_id, auction_id=auction_id).exists():
-            raise serializers.ValidationError("This auction is already bookmarked.")
+            raise serializers.ValidationError(_("This auction is already bookmarked."))
 
         bookmark = Bookmark.objects.create(user_id=user_id, auction_id=auction_id)
         return bookmark
@@ -169,7 +170,7 @@ class AuctionSaveSerializer(CountryFieldMixin, serializers.ModelSerializer):
     def validate(self, data):
         for field in self.Meta.read_only_fields:
             if field in self.initial_data:
-                raise serializers.ValidationError({field: "This field is read-only."})
+                raise serializers.ValidationError({field: _("This field is read-only.")})
         return data
 
     def validate_start_date(self, value):
@@ -180,7 +181,7 @@ class AuctionSaveSerializer(CountryFieldMixin, serializers.ModelSerializer):
             )  # pragma: no cover
 
         if value <= timezone.now():
-            raise serializers.ValidationError("Start date cannot be in the past.")
+            raise serializers.ValidationError(_("Start date cannot be in the past."))
         return value
 
     def validate_end_date(self, value):
@@ -204,26 +205,26 @@ class AuctionSaveSerializer(CountryFieldMixin, serializers.ModelSerializer):
 
             if value <= start_date:
                 raise serializers.ValidationError(
-                    "End date must be after the start date."
+                    _("End date must be after the start date.")
                 )
 
         return value
 
     def validate_max_price(self, value):
         if value <= 0:
-            raise serializers.ValidationError("Max price must be greater than 0.")
+            raise serializers.ValidationError(_("Max price must be greater than 0."))
 
         return value
 
     def validate_category(self, value):
         if value not in CategoryChoices.values:
-            raise serializers.ValidationError(f"{value} is not a valid category.")
+            raise serializers.ValidationError(_("Invalid category."))
         return value
 
     def validate_tags(self, value):
         if not value:
             raise serializers.ValidationError(
-                "Tags are required, make sure to include them."
+                _("Tags are required, make sure to include them.")
             )
         return value
 
@@ -243,7 +244,9 @@ class AuctionSaveSerializer(CountryFieldMixin, serializers.ModelSerializer):
                 auction.tags.set(tag_objects)
         except IntegrityError:
             raise serializers.ValidationError(
-                "There was an error during the creation of an auction. Please try again."
+                _(
+                    "There was an error during the creation of an auction. Please try again."
+                )
             )
 
         return auction

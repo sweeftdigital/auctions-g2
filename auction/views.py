@@ -1,5 +1,6 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.openapi import OpenApiParameter
 from drf_spectacular.utils import extend_schema
@@ -379,7 +380,8 @@ class DeleteAuctionView(generics.DestroyAPIView):
             auction.save()
 
         return Response(
-            {"detail": "Auction deleted successfully."}, status=status.HTTP_204_NO_CONTENT
+            {"detail": _("Auction deleted successfully.")},
+            status=status.HTTP_204_NO_CONTENT,
         )
 
 
