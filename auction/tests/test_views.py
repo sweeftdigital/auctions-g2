@@ -565,7 +565,7 @@ class AuctionDeleteViewTests(APITestCase):
         self.tag1 = TagFactory(name="Animals")
 
         self.auction1 = AuctionFactory(
-            author=uuid4(),
+            author=self.user.id,
             category=self.category1,
             status=StatusChoices.LIVE,
             accepted_bidders=AcceptedBiddersChoices.BOTH,
@@ -580,16 +580,44 @@ class AuctionDeleteViewTests(APITestCase):
         self.auction1.tags.add(self.tag1)
         self.url = reverse("delete-auction", kwargs={"id": self.auction1.id})
 
+        self.auction2 = AuctionFactory(
+            author=self.user.id,
+            category=self.category1,
+            status=StatusChoices.DRAFT,
+            accepted_bidders=AcceptedBiddersChoices.BOTH,
+            accepted_locations="AL",
+            start_date=timezone.now() - timedelta(days=5),
+            end_date=timezone.now() + timedelta(days=1),
+            max_price=200,
+            quantity=2,
+            auction_name="Another Awesome Pet Supplies Auction",
+            description="Bid on more pet supplies.",
+        )
+        self.auction2.tags.add(self.tag1)
+        self.url2 = reverse("delete-auction", kwargs={"id": self.auction2.id})
+
     def test_delete_with_non_author_user(self):
+        self.client.force_authenticate(user=MockUser(user_id=uuid4()))
         response = self.client.delete(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(Auction.objects.last().id, self.auction1.id)
+        self.assertTrue(Auction.objects.filter(id=self.auction1.id).exists())
 
     def test_delete_with_seller_user_type(self):
         self.user.is_seller = True
         response = self.client.delete(self.url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(Auction.objects.last().id, self.auction1.id)
+        self.assertTrue(Auction.objects.filter(id=self.auction1.id).exists())
+
+    def test_delete_draft_auction(self):
+        response = self.client.delete(self.url2)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Auction.objects.filter(id=self.auction2.id).exists())
+
+    def test_delete_live_auction(self):
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.auction1.refresh_from_db()
+        self.assertEqual(self.auction1.status, StatusChoices.DELETED)
 
 
 class BookmarkListViewTests(APITestCase):

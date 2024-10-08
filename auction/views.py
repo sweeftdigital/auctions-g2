@@ -369,6 +369,19 @@ class DeleteAuctionView(generics.DestroyAPIView):
     lookup_field = "id"
     permission_classes = (IsAuthenticated, IsNotSellerAndIsOwner)
 
+    def delete(self, request, *args, **kwargs):
+        auction = self.get_object()
+
+        if auction.status == StatusChoices.DRAFT:
+            auction.delete()
+        else:
+            auction.status = StatusChoices.DELETED
+            auction.save()
+
+        return Response(
+            {"detail": "Auction deleted successfully."}, status=status.HTTP_204_NO_CONTENT
+        )
+
 
 @extend_schema(
     tags=["Bookmarks"],
