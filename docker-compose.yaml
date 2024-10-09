@@ -5,6 +5,8 @@ services:
     command: >
       sh -c "python3 manage.py wait_for_db &&
              python3 manage.py migrate &&
+             python3 manage.py makemessages -l ka &&
+             python3 manage.py compilemessages -l ka &&
              python3 manage.py runserver 0.0.0.0:8001"
     restart: always
     ports:
