@@ -155,7 +155,7 @@ SPECTACULAR_SETTINGS = {
         "persistAuthorization": True,  # Keeps authorization across page reloads
     },
     "SECURITY": [
-        {"BearerAuth": []},  # Enable Bearer token input in Swagger
+        {"jwtAuth": []},
     ],
 }
 
