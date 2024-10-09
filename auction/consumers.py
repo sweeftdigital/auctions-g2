@@ -41,7 +41,7 @@ class BaseAuctionConsumer(AsyncJsonWebsocketConsumer, ABC):
         await self.send_json(
             {
                 "type": "new_auction_notification",
-                "message": _(message),
+                "message": message,
                 "destination": destination,
                 "data": data,
             }
