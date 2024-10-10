@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-09 19:16+0000\n"
+"POT-Creation-Date: 2024-10-10 12:19+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n!=1);\n"
 
-#: auction/consumers.py:36
+#: auction/consumers.py:76
 msgid "New auction was successfully created."
 msgstr "ახალი აუქციონი წარმატებით შეიქმნა."
 
-#: auction/consumers.py:120
+#: auction/consumers.py:161
 msgid "Buyers cannot load new auctions."
 msgstr ""
 "Buyer პროფილის ტიპის მქონე მომხმარებლებს არ შეუძლიათ ამ ოპერაციის "
