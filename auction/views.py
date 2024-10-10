@@ -18,6 +18,7 @@ from auction.models import Auction, Bookmark
 from auction.models.auction import StatusChoices
 from auction.openapi import (
     auction_create_openapi_examples,
+    auction_delete_openapi_examples,
     auction_retrieve_openapi_examples,
     bookmark_create_openapi_examples,
     bookmark_delete_openapi_examples,
@@ -364,8 +365,36 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
 
 @extend_schema(
     tags=["Auctions"],
+    responses={
+        204: AuctionRetrieveSerializer,
+        401: AuctionRetrieveSerializer,
+        403: AuctionRetrieveSerializer,
+        404: AuctionRetrieveSerializer,
+    },
+    examples=auction_delete_openapi_examples.examples(),
 )
 class DeleteAuctionView(generics.DestroyAPIView):
+    """
+    Delete a specific auction by its ID.
+
+    This view allows authenticated users to delete an auction they own, with
+    permission checks to ensure that only authorized users can perform this action.
+
+    **Deletion Behavior:**
+    - If the auction is in "DRAFT" status, it is permanently deleted from the database.
+    - For other statuses, the auction is marked as "DELETED" but remains in the database.
+
+    **Permissions:**
+    - The user must be authenticated.
+    - Only users who are not sellers or who own the auction are permitted to delete it.
+
+    **Response:**
+    - 204 (No Content): The auction was successfully deleted or marked as deleted.
+    - 401 (Unauthorized): Authentication credentials are missing or invalid.
+    - 403 (Forbidden): User does not have permission to delete the auction.
+    - 404 (Not Found): The auction does not exist or is inaccessible.
+    """
+
     queryset = Auction.objects.all()
     lookup_field = "id"
     permission_classes = (IsAuthenticated, IsNotSellerAndIsOwner)
