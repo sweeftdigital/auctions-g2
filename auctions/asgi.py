@@ -15,6 +15,8 @@ from django.core.asgi import get_asgi_application
 from auction.authentication.jwt_auth_middleware import JWTAuthMiddlewareStack
 from auction.routing import websocket_urlpatterns
 
+# from bid.routing import websocket_urlpatterns
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "auctions.settings")
 
 application = ProtocolTypeRouter(
