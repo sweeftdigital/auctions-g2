@@ -1,10 +1,12 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from rest_framework import generics
+from rest_framework import generics, mixins
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from auction.models import Auction
+from bid.models import Bid
 from bid.serializers import BidSerializer
 
 
@@ -89,6 +91,67 @@ class CreateBidView(generics.CreateAPIView):
             f"auction_{str(auction_id)}",
             {
                 "type": "new_bid_notification",
+                "message": bid_data,
+            },
+        )
+
+
+class UpdateBidView(generics.GenericAPIView, mixins.UpdateModelMixin):
+    """
+    View for updating a bid in an auction.
+
+    **Permissions:**
+    - IsAuthenticated: Requires the user to be authenticated.
+    """
+
+    serializer_class = BidSerializer
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, *args, **kwargs):
+        """Allow partial update, specifically for the offer"""
+        auction_id = self.kwargs.get("auction_id")
+        bid_id = self.kwargs.get("bid_id")
+
+        auction = Auction.objects.filter(id=auction_id).first()
+        if auction is None:
+            raise ValidationError({"detail": "Auction not found."})
+
+        bid = Bid.objects.filter(
+            id=bid_id, auction_id=auction_id, author=self.request.user.id
+        ).first()
+        if bid is None:
+            raise ValidationError({"detail": "Bid not found or you are not the author."})
+
+        serializer = self.get_serializer(
+            bid,
+            data=request.data,
+            context={"auction": auction, "request": request},
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
+
+    def perform_update(self, serializer):
+        """Send WebSocket notification after bid update"""
+        bid = serializer.save()
+        self.notify_auction_group(bid.auction.id, bid)
+
+    @staticmethod
+    def notify_auction_group(auction_id, bid):
+        """Notify WebSocket group of updated bid"""
+        channel_layer = get_channel_layer()
+        bid_data = BidSerializer(bid).data
+
+        bid_data["id"] = str(bid_data["id"])
+        bid_data["auction"] = str(bid_data["auction"])
+
+        async_to_sync(channel_layer.group_send)(
+            f"auction_{auction_id}",
+            {
+                "type": "updated_bid_notification",
                 "message": bid_data,
             },
         )
