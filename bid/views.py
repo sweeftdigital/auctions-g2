@@ -1,5 +1,6 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from drf_spectacular.utils import extend_schema
 from rest_framework import generics, mixins
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import RetrieveAPIView
@@ -8,6 +9,7 @@ from rest_framework.response import Response
 
 from auction.models import Auction
 from bid.models import Bid
+from bid.openapi.bid_retrive_openapi_examples import retrieve_bid_examples
 from bid.serializers import BidSerializer
 
 
@@ -172,6 +174,15 @@ class UpdateBidView(generics.GenericAPIView, mixins.UpdateModelMixin):
         )
 
 
+@extend_schema(
+    tags=["Bids"],
+    responses={
+        200: BidSerializer,
+        401: BidSerializer,
+        404: BidSerializer,
+    },
+    examples=retrieve_bid_examples(),
+)
 class RetrieveBidView(RetrieveAPIView):
     """
     View for retrieving a bid by its ID.
