@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from auction.models import Auction
 from bid.models import Bid
 from bid.openapi.bid_retrive_openapi_examples import retrieve_bid_examples
+from bid.openapi.bid_update_openapi_examples import update_bid_examples
 from bid.serializers import BidSerializer
 
 
@@ -99,6 +100,16 @@ class CreateBidView(generics.CreateAPIView):
         )
 
 
+@extend_schema(
+    tags=["Bids"],
+    responses={
+        200: BidSerializer,
+        400: BidSerializer,
+        401: BidSerializer,
+        404: BidSerializer,
+    },
+    examples=update_bid_examples(),
+)
 class UpdateBidView(generics.GenericAPIView, mixins.UpdateModelMixin):
     """
     View for partially updating a bid in an auction.
