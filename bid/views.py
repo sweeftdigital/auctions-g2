@@ -2,6 +2,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from rest_framework import generics, mixins
 from rest_framework.exceptions import ValidationError
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -169,3 +170,38 @@ class UpdateBidView(generics.GenericAPIView, mixins.UpdateModelMixin):
                 "message": bid_data,
             },
         )
+
+
+class RetrieveBidView(RetrieveAPIView):
+    """
+    View for retrieving a bid by its ID.
+
+    **Permissions**:
+    - IsAuthenticated: Requires the user to be authenticated.
+
+    **Response**:
+    - Returns the bid data if found.
+    - Raises a validation error if the bid is not found.
+    """
+
+    serializer_class = BidSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Override to fetch the bid by the ID.
+        """
+        return Bid.objects.filter(
+            id=self.kwargs.get("bid_id"), author=self.request.user.id
+        )
+
+    def get_object(self):
+        """
+        Retrieves the bid instance using the bid_id from the URL and ensures
+        the user is the author of the bid.
+        """
+        queryset = self.get_queryset()
+        bid = queryset.first()
+        if not bid:
+            raise ValidationError({"detail": "Bid not found or you are not the author."})
+        return bid
