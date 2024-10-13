@@ -9,11 +9,22 @@ from rest_framework.response import Response
 
 from auction.models import Auction
 from bid.models import Bid
+from bid.openapi.bid_create_openapi_examples import create_bid_examples
 from bid.openapi.bid_retrive_openapi_examples import retrieve_bid_examples
 from bid.openapi.bid_update_openapi_examples import update_bid_examples
 from bid.serializers import BidSerializer
 
 
+@extend_schema(
+    tags=["Bids"],
+    responses={
+        201: BidSerializer,
+        400: BidSerializer,
+        401: BidSerializer,
+        404: BidSerializer,
+    },
+    examples=create_bid_examples(),
+)
 class CreateBidView(generics.CreateAPIView):
     """
     Create a new bid for an auction.
