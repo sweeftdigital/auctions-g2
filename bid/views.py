@@ -98,10 +98,24 @@ class CreateBidView(generics.CreateAPIView):
 
 class UpdateBidView(generics.GenericAPIView, mixins.UpdateModelMixin):
     """
-    View for updating a bid in an auction.
+    View for partially updating a bid in an auction.
 
-    **Permissions:**
-    - IsAuthenticated: Requires the user to be authenticated.
+    **Functionality**:
+    - Allows authenticated users to update their own bids in a specific auction.
+    - Validates that the auction exists and the bid belongs to the user.
+    - Sends a WebSocket notification to inform other users about the updated bid.
+
+    **Permissions**:
+    - The user must be authenticated (IsAuthenticated).
+    - Only the bid's author is allowed to make updates.
+
+    **Request Parameters**:
+    - `auction_id`: UUID of the auction.
+    - `bid_id`: UUID of the bid to be updated.
+
+    **Response**:
+    - Returns the updated bid data if successful.
+    - Raises validation errors if the auction or bid is not found, or if the user is unauthorized.
     """
 
     serializer_class = BidSerializer
