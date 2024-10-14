@@ -2,9 +2,9 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, mixins
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import RetrieveAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from auction.models import Auction
@@ -243,3 +243,51 @@ class RetrieveBidView(RetrieveAPIView):
         if not bid:
             raise ValidationError({"detail": "Bid not found or you are not the author."})
         return bid
+
+
+class RejectBidView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        bid_id = self.kwargs.get("bid_id")
+
+        try:
+            bid = Bid.objects.get(id=bid_id)
+        except Bid.DoesNotExist:
+            raise ValidationError({"detail": "Bid not found."})
+
+        if bid.status == "Rejected":
+            raise ValidationError({"detail": "This bid has already been rejected."})
+
+        auction = Auction.objects.get(id=bid.auction_id)
+
+        if str(auction.author) != str(request.user.id):
+            raise PermissionDenied("You are not the owner of this auction.")
+
+        bid.status = "Rejected"
+        bid.save()
+
+        self.notify_bid_status_change(bid)
+
+        return Response({"detail": "Bid has been rejected.", "bid_id": str(bid.id)})
+
+    @staticmethod
+    def notify_bid_status_change(bid):
+        """Notify WebSocket group of updated bid status with full bid data"""
+        from bid.serializers import BaseBidSerializer
+
+        channel_layer = get_channel_layer()
+
+        bid_data = BaseBidSerializer(bid).data
+
+        bid_data["id"] = str(bid_data["id"])
+        bid_data["auction"] = str(bid_data["auction"])
+        bid_data["author"] = str(bid_data["author"])
+
+        async_to_sync(channel_layer.group_send)(
+            f"auction_{bid.auction.id}",
+            {
+                "type": "updated_bid_status_notification",
+                "message": bid_data,
+            },
+        )

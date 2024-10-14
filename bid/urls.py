@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import CreateBidView, RetrieveBidView, UpdateBidView
+from .views import CreateBidView, RejectBidView, RetrieveBidView, UpdateBidView
 
 urlpatterns = [
     path(
@@ -14,4 +14,5 @@ urlpatterns = [
         name="update-bid",
     ),
     path("auction/bid/<uuid:bid_id>/", RetrieveBidView.as_view(), name="retrieve-bid"),
+    path("bids/<uuid:bid_id>/reject/", RejectBidView.as_view(), name="reject-bid"),
 ]

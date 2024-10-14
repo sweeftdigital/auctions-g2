@@ -44,3 +44,14 @@ class BidConsumer(AsyncJsonWebsocketConsumer):
                 "bid": event["message"],
             }
         )
+
+    async def updated_bid_status_notification(self, event):
+        """
+        Handles real-time notifications of updated bid status (e.g., when a bid is rejected).
+        """
+        await self.send_json(
+            {
+                "type": "updated_bid_status_notification",
+                "bid": event["message"],
+            }
+        )
