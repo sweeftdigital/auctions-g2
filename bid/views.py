@@ -12,16 +12,16 @@ from bid.models import Bid
 from bid.openapi.bid_create_openapi_examples import create_bid_examples
 from bid.openapi.bid_retrive_openapi_examples import retrieve_bid_examples
 from bid.openapi.bid_update_openapi_examples import update_bid_examples
-from bid.serializers import BidSerializer
+from bid.serializers import BaseBidSerializer, CreateBidSerializer, UpdateBidSerializer
 
 
 @extend_schema(
     tags=["Bids"],
     responses={
-        201: BidSerializer,
-        400: BidSerializer,
-        401: BidSerializer,
-        404: BidSerializer,
+        201: CreateBidSerializer,
+        400: CreateBidSerializer,
+        401: CreateBidSerializer,
+        404: CreateBidSerializer,
     },
     examples=create_bid_examples(),
 )
@@ -54,7 +54,7 @@ class CreateBidView(generics.CreateAPIView):
     user eligibility to bid.
     """
 
-    serializer_class = BidSerializer
+    serializer_class = CreateBidSerializer
     permission_classes = (IsAuthenticated,)
 
     def get_auction(self):
@@ -93,7 +93,7 @@ class CreateBidView(generics.CreateAPIView):
         """
         channel_layer = get_channel_layer()
 
-        bid_data = BidSerializer(bid).data
+        bid_data = CreateBidSerializer(bid).data
 
         bid_data["id"] = str(bid_data["id"])
         bid_data["auction"] = str(bid_data["auction"])
@@ -114,10 +114,10 @@ class CreateBidView(generics.CreateAPIView):
 @extend_schema(
     tags=["Bids"],
     responses={
-        200: BidSerializer,
-        400: BidSerializer,
-        401: BidSerializer,
-        404: BidSerializer,
+        200: UpdateBidSerializer,
+        400: UpdateBidSerializer,
+        401: UpdateBidSerializer,
+        404: UpdateBidSerializer,
     },
     examples=update_bid_examples(),
 )
@@ -143,7 +143,7 @@ class UpdateBidView(generics.GenericAPIView, mixins.UpdateModelMixin):
     - Raises validation errors if the auction or bid is not found, or if the user is unauthorized.
     """
 
-    serializer_class = BidSerializer
+    serializer_class = UpdateBidSerializer
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, *args, **kwargs):
@@ -160,6 +160,11 @@ class UpdateBidView(generics.GenericAPIView, mixins.UpdateModelMixin):
         ).first()
         if bid is None:
             raise ValidationError({"detail": "Bid not found or you are not the author."})
+
+        if len(request.data) > 1 or "offer" not in request.data:
+            raise ValidationError(
+                "Offer not provided or more that one field was provided."
+            )
 
         serializer = self.get_serializer(
             bid,
@@ -180,12 +185,12 @@ class UpdateBidView(generics.GenericAPIView, mixins.UpdateModelMixin):
 
     @staticmethod
     def notify_auction_group(auction_id, bid):
-        """Notify WebSocket group of updated bid"""
+        """Notify WebSocket group of updated bid with full fields"""
         channel_layer = get_channel_layer()
-        bid_data = BidSerializer(bid).data
+        bid_data = BaseBidSerializer(bid).data
 
-        bid_data["id"] = str(bid_data["id"])
-        bid_data["auction"] = str(bid_data["auction"])
+        bid_data["id"] = str(bid.id)
+        bid_data["auction"] = str(bid.auction.id)
 
         async_to_sync(channel_layer.group_send)(
             f"auction_{auction_id}",
@@ -199,9 +204,9 @@ class UpdateBidView(generics.GenericAPIView, mixins.UpdateModelMixin):
 @extend_schema(
     tags=["Bids"],
     responses={
-        200: BidSerializer,
-        401: BidSerializer,
-        404: BidSerializer,
+        200: BaseBidSerializer,
+        401: BaseBidSerializer,
+        404: BaseBidSerializer,
     },
     examples=retrieve_bid_examples(),
 )
@@ -217,7 +222,7 @@ class RetrieveBidView(RetrieveAPIView):
     - Raises a validation error if the bid is not found.
     """
 
-    serializer_class = BidSerializer
+    serializer_class = BaseBidSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):

@@ -7,7 +7,7 @@ from rest_framework.test import APITestCase
 from auction.models import Auction, Category
 from auction.models.auction import AcceptedBiddersChoices, StatusChoices
 from bid.models import BidImage
-from bid.serializers import BidSerializer
+from bid.serializers import BaseBidSerializer, CreateBidSerializer
 
 
 class MockUser:
@@ -27,7 +27,7 @@ class MockUser:
         return self._is_company
 
 
-class BidSerializerTests(APITestCase):
+class BaseBidSerializerTests(APITestCase):
 
     def setUp(self):
         self.category = Category.objects.create(name="Electronics")
@@ -60,7 +60,7 @@ class BidSerializerTests(APITestCase):
         context = {"request": MagicMock(user=self.user_seller), "auction": self.auction}
         data = {"offer": 500}
 
-        serializer = BidSerializer(data=data, context=context)
+        serializer = BaseBidSerializer(data=data, context=context)
 
         with self.assertRaises(serializers.ValidationError) as e:
             serializer.is_valid(raise_exception=True)
@@ -77,7 +77,7 @@ class BidSerializerTests(APITestCase):
         }
         data = {"offer": 500}
 
-        serializer = BidSerializer(data=data, context=context)
+        serializer = BaseBidSerializer(data=data, context=context)
 
         with self.assertRaises(serializers.ValidationError) as e:
             serializer.is_valid(raise_exception=True)
@@ -92,7 +92,7 @@ class BidSerializerTests(APITestCase):
         context = {"request": MagicMock(user=self.user_seller), "auction": self.auction}
         data = {"offer": 500}
 
-        serializer = BidSerializer(data=data, context=context)
+        serializer = BaseBidSerializer(data=data, context=context)
 
         with self.assertRaises(serializers.ValidationError) as e:
             serializer.is_valid(raise_exception=True)
@@ -111,7 +111,7 @@ class BidSerializerTests(APITestCase):
         }
         data = {"offer": 500}
 
-        serializer = BidSerializer(data=data, context=context)
+        serializer = BaseBidSerializer(data=data, context=context)
 
         with self.assertRaises(serializers.ValidationError) as e:
             serializer.is_valid(raise_exception=True)
@@ -127,7 +127,7 @@ class BidSerializerTests(APITestCase):
         context = {"request": MagicMock(user=self.user_neither), "auction": self.auction}
         data = {"offer": 500}
 
-        serializer = BidSerializer(data=data, context=context)
+        serializer = BaseBidSerializer(data=data, context=context)
 
         with self.assertRaises(serializers.ValidationError) as e:
             serializer.is_valid(raise_exception=True)
@@ -150,7 +150,7 @@ class BidSerializerTests(APITestCase):
             ],
         }
 
-        serializer = BidSerializer(data=data, context=context)
+        serializer = CreateBidSerializer(data=data, context=context)
         self.assertTrue(serializer.is_valid(), serializer.errors)
         bid = serializer.save()
 

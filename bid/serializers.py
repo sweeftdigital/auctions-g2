@@ -10,7 +10,7 @@ class BidImageSerializer(serializers.ModelSerializer):
         fields = ["image_url"]
 
 
-class BidSerializer(serializers.ModelSerializer):
+class BaseBidSerializer(serializers.ModelSerializer):
     images = BidImageSerializer(many=True, required=False)
     auction_name = serializers.CharField(source="auction.auction_name", read_only=True)
     author_name = serializers.CharField(source="author.full_name", read_only=True)
@@ -70,30 +70,8 @@ class BidSerializer(serializers.ModelSerializer):
 
         return data
 
-    def update(self, instance, validated_data):
-        """Handle updates based on the status of the bid"""
-        status = instance.status
 
-        if status == StatusChoices.REJECTED:
-            raise serializers.ValidationError("Rejected bids cannot be updated.")
-
-        if status == StatusChoices.APPROVED:
-            if "offer" in validated_data:
-                new_offer = validated_data["offer"]
-                if new_offer >= instance.offer:
-                    raise serializers.ValidationError(
-                        "For approved bids, the offer can only be reduced."
-                    )
-            else:
-                raise serializers.ValidationError(
-                    "For approved bids, only the offer can be changed."
-                )
-
-        if status == StatusChoices.PENDING:
-            return super().update(instance, validated_data)
-
-        return super().update(instance, validated_data)
-
+class CreateBidSerializer(BaseBidSerializer):
     def create(self, validated_data):
         images_data = validated_data.pop("images", [])
 
@@ -106,3 +84,23 @@ class BidSerializer(serializers.ModelSerializer):
             BidImage.objects.create(bid=bid, **image_data)
 
         return bid
+
+
+class UpdateBidSerializer(BaseBidSerializer):
+    class Meta(BaseBidSerializer.Meta):
+        fields = ["offer"]
+
+    def update(self, instance, validated_data):
+        status = instance.status
+
+        if status == StatusChoices.REJECTED:
+            raise serializers.ValidationError("Rejected bids cannot be updated.")
+
+        if status == StatusChoices.APPROVED and validated_data["offer"] >= instance.offer:
+            raise serializers.ValidationError(
+                "For approved bids, the offer can only be reduced."
+            )
+
+        instance.offer = validated_data["offer"]
+        instance.save()
+        return instance
