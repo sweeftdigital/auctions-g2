@@ -4,10 +4,11 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import generics, mixins
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import RetrieveAPIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from auction.models import Auction
+from auction.permissions import IsBuyer, IsOwner
 from bid.models import Bid
 from bid.openapi.bid_create_openapi_examples import create_bid_examples
 from bid.openapi.bid_retrive_openapi_examples import retrieve_bid_examples
@@ -246,7 +247,7 @@ class RetrieveBidView(RetrieveAPIView):
 
 
 class RejectBidView(generics.GenericAPIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated, IsOwner, IsBuyer]
 
     def post(self, request, *args, **kwargs):
         bid_id = self.kwargs.get("bid_id")
@@ -294,7 +295,7 @@ class RejectBidView(generics.GenericAPIView):
 
 
 class ApproveBidView(generics.GenericAPIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated, IsOwner, IsBuyer]
 
     def post(self, request, *args, **kwargs):
         bid_id = self.kwargs.get("bid_id")
