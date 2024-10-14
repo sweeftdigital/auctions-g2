@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from auction.models import Auction
 from auction.permissions import IsBuyer, IsOwner
 from bid.models import Bid
+from bid.openapi.bid_approve_openapi_examples import approve_bid_examples
 from bid.openapi.bid_create_openapi_examples import create_bid_examples
 from bid.openapi.bid_reject_openapi_examples import reject_bid_examples
 from bid.openapi.bid_retrive_openapi_examples import retrieve_bid_examples
@@ -248,7 +249,7 @@ class RetrieveBidView(RetrieveAPIView):
 
 
 @extend_schema(
-    tags=["Bids"],
+    tags=["Bids_Status"],
     examples=reject_bid_examples(),
     responses={
         200: "Bid has been successfully rejected.",
@@ -306,13 +307,23 @@ class RejectBidView(generics.GenericAPIView):
         )
 
 
+@extend_schema(
+    tags=["Bids_Status"],
+    examples=approve_bid_examples(),
+    responses={
+        200: "Bid has been successfully approved.",
+        400: "Validation error (bid already approved or other issues)",
+        401: "Unauthorized",
+        403: "Permission denied (not auction owner)",
+        404: "Bid not found",
+    },
+)
 class ApproveBidView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, IsOwner, IsBuyer]
 
     def post(self, request, *args, **kwargs):
         bid_id = self.kwargs.get("bid_id")
 
-        # Fetch the bid
         try:
             bid = Bid.objects.get(id=bid_id)
         except Bid.DoesNotExist:
