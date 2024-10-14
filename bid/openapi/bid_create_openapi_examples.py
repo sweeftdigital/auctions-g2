@@ -55,6 +55,24 @@ def create_bid_examples():
             status_codes=[404],
         ),
         OpenApiExample(
+            "Error: More than one field provided or offer missing (PATCH)",
+            summary="Invalid update payload: More than one field or no offer",
+            description="This example shows an error response when a user attempts to "
+            "update a bid but either provides multiple fields or omits the `offer` field.",
+            value={
+                "type": "validation_error",
+                "errors": [
+                    {
+                        "code": "invalid",
+                        "message": "Offer not provided or more than one field was provided.",
+                        "field_name": "offer",
+                    }
+                ],
+            },
+            response_only=True,
+            status_codes=[400],
+        ),
+        OpenApiExample(
             "Error: Auction is not live (POST)",
             summary="Cannot bid on auction that is not live",
             description="This example shows an error response when a user tries to bid"
