@@ -291,3 +291,52 @@ class RejectBidView(generics.GenericAPIView):
                 "message": bid_data,
             },
         )
+
+
+class ApproveBidView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        bid_id = self.kwargs.get("bid_id")
+
+        # Fetch the bid
+        try:
+            bid = Bid.objects.get(id=bid_id)
+        except Bid.DoesNotExist:
+            raise ValidationError({"detail": "Bid not found."})
+
+        if bid.status == "Approved":
+            raise ValidationError({"detail": "This bid has already been approved."})
+
+        auction = Auction.objects.get(id=bid.auction_id)
+
+        if str(auction.author) != str(request.user.id):
+            raise PermissionDenied("You are not the owner of this auction.")
+
+        bid.status = "Approved"
+        bid.save()
+
+        self.notify_bid_status_change(bid)
+
+        return Response({"detail": "Bid has been approved.", "bid_id": str(bid.id)})
+
+    @staticmethod
+    def notify_bid_status_change(bid):
+        """Notify WebSocket group of updated bid status with full bid data"""
+        from bid.serializers import BaseBidSerializer
+
+        channel_layer = get_channel_layer()
+
+        bid_data = BaseBidSerializer(bid).data
+
+        bid_data["id"] = str(bid_data["id"])
+        bid_data["auction"] = str(bid_data["auction"])
+        bid_data["author"] = str(bid_data["author"])
+
+        async_to_sync(channel_layer.group_send)(
+            f"auction_{bid.auction.id}",
+            {
+                "type": "updated_bid_status_notification",
+                "message": bid_data,
+            },
+        )
