@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "corsheaders",
     # Local
     "auction.apps.AuctionConfig",
+    "bid.apps.BidConfig",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

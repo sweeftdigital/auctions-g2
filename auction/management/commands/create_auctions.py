@@ -13,9 +13,9 @@ from auction.models.auction import (
     CurrencyChoices,
     StatusChoices,
 )
-from auction.models.bid import StatusChoices as BidStatusChoices
 from auction.models.category import CategoryChoices
 from auction.models.tags import TagChoices
+from bid.models.bid import StatusChoices as BidStatusChoices
 
 
 class Command(BaseCommand):

@@ -3,7 +3,6 @@ import uuid
 import factory
 from django.utils import timezone
 
-from auction.models import Bid, BidImage
 from auction.models.auction import (
     AcceptedBiddersChoices,
     Auction,
@@ -11,10 +10,11 @@ from auction.models.auction import (
     CurrencyChoices,
     StatusChoices,
 )
-from auction.models.bid import StatusChoices as BidStatusChoices
 from auction.models.bookmark import Bookmark
 from auction.models.category import Category
 from auction.models.tags import Tag
+from bid.models import Bid, BidImage
+from bid.models.bid import StatusChoices as BidStatusChoices
 
 
 class CategoryFactory(factory.django.DjangoModelFactory):
