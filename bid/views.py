@@ -11,6 +11,7 @@ from auction.models import Auction
 from auction.permissions import IsBuyer, IsOwner
 from bid.models import Bid
 from bid.openapi.bid_create_openapi_examples import create_bid_examples
+from bid.openapi.bid_reject_openapi_examples import reject_bid_examples
 from bid.openapi.bid_retrive_openapi_examples import retrieve_bid_examples
 from bid.openapi.bid_update_openapi_examples import update_bid_examples
 from bid.serializers import BaseBidSerializer, CreateBidSerializer, UpdateBidSerializer
@@ -246,6 +247,17 @@ class RetrieveBidView(RetrieveAPIView):
         return bid
 
 
+@extend_schema(
+    tags=["Bids"],
+    examples=reject_bid_examples(),
+    responses={
+        200: "Bid has been successfully rejected.",
+        400: "Validation error (bid already rejected)",
+        401: "Unauthorized",
+        403: "Permission denied (not auction owner)",
+        404: "Bid not found",
+    },
+)
 class RejectBidView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, IsOwner, IsBuyer]
 
