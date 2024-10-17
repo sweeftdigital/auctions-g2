@@ -17,7 +17,11 @@ class BidImageSerializer(serializers.ModelSerializer):
 
 
 class BaseBidSerializer(serializers.ModelSerializer):
-    images = BidImageSerializer(many=True, required=False)
+    images = serializers.ListField(
+        child=serializers.ImageField(allow_empty_file=False, use_url=False),
+        write_only=True,
+        required=False,
+    )
     auction_name = serializers.CharField(source="auction.auction_name", read_only=True)
     author_name = serializers.CharField(source="author.full_name", read_only=True)
 
@@ -79,15 +83,18 @@ class BaseBidSerializer(serializers.ModelSerializer):
 
 class CreateBidSerializer(BaseBidSerializer):
     def create(self, validated_data):
-        images_data = validated_data.pop("images", [])
+        image_data = validated_data.pop("images", [])
 
         user = self.context["request"].user
         validated_data["author"] = user.id
 
         bid = Bid.objects.create(**validated_data)
 
-        for image_data in images_data:
-            BidImage.objects.create(bid=bid, **image_data)
+        for index, image_array in enumerate(image_data, start=1):
+            image_file = image_array
+            image_name = f"{bid.id}-image_{index}"
+            image_file.name = image_name
+            BidImage.objects.create(bid=bid, image_url=image_file)
 
         return bid
 
