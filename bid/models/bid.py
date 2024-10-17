@@ -1,8 +1,13 @@
 import uuid
 
+from django.core.files.storage import storages
 from django.db import models
 
 from auction.models.auction import Auction
+
+
+def get_big_images_storage():
+    return storages["big_images"]
 
 
 class StatusChoices(models.TextChoices):
@@ -40,8 +45,11 @@ class Bid(models.Model):
 
 class BidImage(models.Model):
     bid = models.ForeignKey(Bid, on_delete=models.CASCADE, related_name="images")
-    image_url = models.URLField(
-        blank=True, null=True, help_text="URL of the uploaded image"
+    image_url = models.ImageField(
+        storage=get_big_images_storage(),
+        blank=True,
+        null=True,
+        verbose_name="Bid Image",
     )
 
     def __str__(self):
