@@ -7,6 +7,7 @@ from rest_framework.exceptions import NotFound
 
 from auction.models import Auction, Bookmark, Category, Tag
 from auction.models.category import CategoryChoices
+from bid.serializers import BidSerializer
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -96,6 +97,7 @@ class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):
     accepted_locations = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
+    bids = serializers.SerializerMethodField()
 
     class Meta:
         model = Auction
@@ -111,6 +113,11 @@ class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):
     def get_category(self, obj):
         category = obj.category
         return category.name if category else None
+
+    def get_bids(self, obj):
+        # Fetch and serialize related bids
+        bids = obj.bids.all()
+        return BidSerializer(bids, many=True).data
 
 
 class BookmarkCreateSerializer(serializers.ModelSerializer):

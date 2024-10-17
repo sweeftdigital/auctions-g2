@@ -4,6 +4,12 @@ from auction.models.auction import AcceptedBiddersChoices
 from bid.models.bid import Bid, BidImage, StatusChoices
 
 
+class BidSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bid
+        fields = "__all__"
+
+
 class BidImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = BidImage

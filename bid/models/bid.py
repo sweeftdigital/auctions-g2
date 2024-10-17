@@ -14,7 +14,9 @@ class StatusChoices(models.TextChoices):
 class Bid(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     author = models.UUIDField()
-    auction = models.ForeignKey(Auction, null=True, on_delete=models.CASCADE)
+    auction = models.ForeignKey(
+        Auction, related_name="bids", null=True, on_delete=models.CASCADE
+    )
     offer = models.DecimalField(max_digits=20, decimal_places=2)
     description = models.TextField(
         blank=True, null=True, help_text="Enter a detailed description of the bid"
