@@ -13,3 +13,5 @@ RUN pip install -r requirements.txt
 COPY . .
 
 EXPOSE 8001
+
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8001", "auctions.asgi:application"]
