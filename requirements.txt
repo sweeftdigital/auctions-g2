@@ -21,4 +21,8 @@ channels[daphne]==4.1.0
 channels-redis==4.2.0
 drf-standardized-errors[openapi]==0.14.1
 django-cors-headers==4.4.0
+django-storages==1.14.4
+boto3==1.34.162
+pillow==9.0.1
+pika==1.3.2
 daphne==4.1.2

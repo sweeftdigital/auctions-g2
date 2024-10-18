@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "channels",
     "drf_standardized_errors",
     "corsheaders",
+    "storages",
     # Local
     "auction.apps.AuctionConfig",
     "bid.apps.BidConfig",
@@ -158,6 +159,7 @@ SPECTACULAR_SETTINGS = {
     "SECURITY": [
         {"jwtAuth": []},
     ],
+    "COMPONENT_SPLIT_REQUEST": True,
 }
 
 # def-standardized-errors settings
@@ -171,3 +173,30 @@ DRF_STANDARDIZED_ERRORS = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
 ]
+
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
+AWS_BID_IMAGES_BUCKET_NAME = os.environ.get("AWS_BID_IMAGES_BUCKET_NAME")
+
+# AWS S3 settings
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+    "big_images": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "bucket_name": AWS_BID_IMAGES_BUCKET_NAME,
+            "region_name": AWS_S3_REGION_NAME,
+            "object_parameters": {
+                "CacheControl": "max-age=86400",
+            },
+            "querystring_auth": False,
+            "location": "big_images",
+        },
+    },
+}

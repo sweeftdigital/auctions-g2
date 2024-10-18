@@ -346,7 +346,7 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
     """
 
     permission_classes = (IsAuthenticated,)
-    queryset = Auction.objects.all()
+    queryset = Auction.objects.prefetch_related("bids").all()
     serializer_class = AuctionRetrieveSerializer
     lookup_field = "id"
 
