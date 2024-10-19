@@ -11,7 +11,7 @@ class BaseJWTAuth:
     ACCOUNTS_SERVICE_CACHE = caches["accounts_redis"]
 
     def __init__(self):
-        self.public_key = os.environ.get("RSA_PUBLIC_KEY")
+        self.public_key = os.environ.get("RSA_PUBLIC_KEY").replace("\\n", "\n")
         if not self.public_key:
             raise ValueError("RSA_PUBLIC_KEY environment variable is not set")
 
