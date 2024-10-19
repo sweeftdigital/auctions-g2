@@ -9,6 +9,11 @@ https://docs.djangoproject.com/en/5.0/howto/deployment/asgi/
 
 import os
 
+import django
+
+django.setup()  # Ensures that Django's app
+
+
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
 
