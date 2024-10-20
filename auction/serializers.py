@@ -6,6 +6,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import NotFound
 
 from auction.models import Auction, Bookmark, Category, Tag
+from auction.models.auction import StatusChoices
 from auction.models.category import CategoryChoices
 from auction.utils import get_currency_symbol
 from bid.serializers import BidSerializer
@@ -63,9 +64,7 @@ class AuctionListSerializer(serializers.ModelSerializer):
         # Attach currency symbol to max_price field
         currency = representation["currency"]
         max_price = representation["max_price"]
-        print(get_currency_symbol(currency))
         representation["max_price"] = f"{get_currency_symbol(currency)}{max_price}"
-        print(representation["max_price"])
 
         return representation
 
@@ -90,6 +89,26 @@ class BookmarkListSerializer(serializers.ModelSerializer):
             "start_date": auction.start_date,
             "end_date": auction.end_date,
         }
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        # Check if the auction's start_date is in the future
+        # and set status to "Upcoming"
+        if (
+            instance.auction.start_date > timezone.now()
+            and instance.auction.status == StatusChoices.LIVE
+        ):
+            representation["auction"]["status"] = "Upcoming"
+
+        # Attach currency symbol to max_price field
+        currency = representation["auction"]["currency"]
+        max_price = representation["auction"]["max_price"]
+        representation["auction"][
+            "max_price"
+        ] = f"{get_currency_symbol(currency)}{max_price}"
+
+        return representation
 
 
 class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):

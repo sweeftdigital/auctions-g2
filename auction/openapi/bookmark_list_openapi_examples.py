@@ -22,7 +22,7 @@ def examples():
                     "product": "High-Performance Laptop",
                     "status": "Upcoming",
                     "category": {"name": "Electronics"},
-                    "max_price": "2000.00",
+                    "max_price": "$2000.00",
                     "currency": "USD",
                     "quantity": 5,
                     "start_date": "2024-10-08T12:34:56.789012Z",
