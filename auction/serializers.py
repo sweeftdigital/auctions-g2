@@ -58,7 +58,7 @@ class AuctionListSerializer(serializers.ModelSerializer):
 
         # Check if the auction's start_date is in the future
         # and set status to "Upcoming"
-        if instance.start_date > timezone.now():
+        if instance.start_date > timezone.now() and instance.status == StatusChoices.LIVE:
             representation["status"] = "Upcoming"
 
         # Attach currency symbol to max_price field
@@ -67,6 +67,13 @@ class AuctionListSerializer(serializers.ModelSerializer):
         representation["max_price"] = f"{get_currency_symbol(currency)}{max_price}"
 
         return representation
+
+
+class SellerLiveAuctionListSerializer(AuctionListSerializer):
+    description = serializers.CharField()  # Add the description field here
+
+    class Meta(AuctionListSerializer.Meta):
+        fields = AuctionListSerializer.Meta.fields + ["description"]
 
 
 class BookmarkListSerializer(serializers.ModelSerializer):

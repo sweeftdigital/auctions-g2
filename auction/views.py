@@ -39,6 +39,7 @@ from auction.serializers import (
     AuctionSaveSerializer,
     BookmarkCreateSerializer,
     BookmarkListSerializer,
+    SellerLiveAuctionListSerializer,
 )
 
 
@@ -196,12 +197,12 @@ class BuyerDashboardListView(ListAPIView):
         ),
     ],
     responses={
-        200: AuctionListSerializer,
-        401: AuctionListSerializer,
-        403: AuctionListSerializer,
-        404: AuctionListSerializer,
+        200: SellerLiveAuctionListSerializer,
+        401: SellerLiveAuctionListSerializer,
+        403: SellerLiveAuctionListSerializer,
+        404: SellerLiveAuctionListSerializer,
     },
-    examples=seller_dashboard_list_openapi_examples.examples(),
+    examples=seller_dashboard_list_openapi_examples.examples(include_description=True),
 )
 class SellerAuctionListView(ListAPIView):
     """
@@ -234,7 +235,7 @@ class SellerAuctionListView(ListAPIView):
     """
 
     permission_classes = (IsAuthenticated, IsSeller)
-    serializer_class = AuctionListSerializer
+    serializer_class = SellerLiveAuctionListSerializer
     filterset_class = SellerAuctionFilterSet
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ("auction_name", "description", "tags__name")

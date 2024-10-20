@@ -1,32 +1,41 @@
 from drf_spectacular.openapi import OpenApiExample
 
 
-def examples():
+def examples(include_description=False):
     """
     Provides request and response examples for the SellerAuctionListView.
 
     Returns:
         List[OpenApiExample]: A list of request/response examples for the SellerAuctionListView.
     """
+    example_1_value = {
+        "id": "2ea3de7f-944b-44d6-919f-519130b7d583",
+        "author": "0a85c5dd-c896-4802-8fa6-426220c78cd9",
+        "product": "Strawberry",
+        "status": "Upcoming",
+        "category": {"name": "Food & Beverages"},
+        "max_price": "15000.00",
+        "currency": "GEL",
+        "quantity": 1000,
+        "start_date": "2024-10-08T12:34:56.789012Z",
+        "end_date": "2024-10-08T12:34:57.789012Z",
+        "tags": ["fruit", "food"],
+    }
+
+    # Add description if include_description is True
+    if include_description:
+        example_1_value["description"] = (
+            "Looking to purchase 1000 fresh strawberries for food production. "
+            "High-quality fruit required for immediate delivery."
+        )
+
     return [
         OpenApiExample(
             "Response example 1 (GET)",
             summary="Successful fetch of seller's auctions",
             description="This example demonstrates the response for a successful fetch of all "
             "seller's auctions.",
-            value={
-                "id": "2ea3de7f-944b-44d6-919f-519130b7d583",
-                "author": "0a85c5dd-c896-4802-8fa6-426220c78cd9",
-                "product": "Strawberry",
-                "status": "Upcoming",
-                "category": {"name": "Food & Beverages"},
-                "max_price": "€15000.00",
-                "currency": "EUR",
-                "quantity": 1000,
-                "start_date": "2024-10-08T12:34:56.789012Z",
-                "end_date": "2024-10-08T12:34:57.789012Z",
-                "tags": ["fruit", "food"],
-            },
+            value=example_1_value,
             response_only=True,
             status_codes=[200],
         ),
