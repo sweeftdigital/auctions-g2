@@ -137,6 +137,21 @@ class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):
         bids = obj.bids.all()
         return BidSerializer(bids, many=True).data
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        # Check if the auction's start_date is in the future
+        # and set status to "Upcoming"
+        if instance.start_date > timezone.now() and instance.status == StatusChoices.LIVE:
+            representation["status"] = "Upcoming"
+
+        # Attach currency symbol to max_price field
+        currency = representation["currency"]
+        max_price = representation["max_price"]
+        representation["max_price"] = f"{get_currency_symbol(currency)}{max_price}"
+
+        return representation
+
 
 class BookmarkCreateSerializer(serializers.ModelSerializer):
     auction_id = serializers.UUIDField(write_only=True)

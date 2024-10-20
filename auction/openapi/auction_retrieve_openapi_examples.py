@@ -24,7 +24,7 @@ def examples():
                 "description": "A rare and exquisite vintage luxury watch with intricate details and a rich history.",
                 "start_date": "2024-10-08T12:34:56.789012Z",
                 "end_date": "2024-10-09T12:34:56.789012Z",
-                "max_price": "5897.48",
+                "max_price": "₾5897.48",
                 "quantity": 1,
                 "accepted_bidders": "Company",
                 "status": "Live",
