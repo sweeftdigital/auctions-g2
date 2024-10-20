@@ -12,9 +12,9 @@ def retrieve_bid_examples():
                 "author": "e7f4b1f6-a759-4489-82ef-28fd5ff1d085",
                 "auction": "39bdccae-3506-4e18-951a-9fdfa1228a22",
                 "auction_name": "hp-Laptop",
-                "offer": "2800",
+                "offer": "€2800",
                 "description": "string",
-                "delivery_fee": "122",
+                "delivery_fee": "€122",
                 "status": "Pending",
                 "images": [
                     {

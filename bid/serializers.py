@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from auction.models.auction import AcceptedBiddersChoices
+from auction.utils import get_currency_symbol
 from bid.models.bid import Bid, BidImage, StatusChoices
 
 
@@ -79,6 +80,22 @@ class BaseBidSerializer(serializers.ModelSerializer):
             )
 
         return data
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        # Attach currency symbol to offer and delivery_fee fields
+        currency = instance.auction.currency
+        offer = representation["offer"]
+        representation["offer"] = f"{get_currency_symbol(currency)}{offer}"
+
+        delivery_fee = representation.get("delivery_fee")
+        if delivery_fee:
+            representation["delivery_fee"] = (
+                f"{get_currency_symbol(currency)}{delivery_fee}"
+            )
+
+        return representation
 
 
 class CreateBidSerializer(BaseBidSerializer):

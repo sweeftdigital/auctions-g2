@@ -8,8 +8,17 @@ def update_bid_examples():
             summary="Update an existing bid (Pending or Approved)",
             description="This example demonstrates a successful request to update a bid that"
             " is in a pending state or an approved bid with a reduced offer.",
-            value={"offer": 950},
+            value={"offer": "950"},
             request_only=True,
+            status_codes=[200],
+        ),
+        OpenApiExample(
+            "Successful bid update response (PATCH)",
+            summary="Response for successfully Updating an existing bid (Pending or Approved)",
+            description="This example demonstrates a successful response after updating a bid that"
+            " is in a pending state or an approved bid with a reduced offer.",
+            value={"offer": "$950"},
+            response_only=True,
             status_codes=[200],
         ),
         OpenApiExample(
