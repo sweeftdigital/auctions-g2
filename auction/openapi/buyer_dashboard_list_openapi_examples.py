@@ -22,6 +22,7 @@ def examples():
                 "product": "Strawberry",
                 "status": "Upcoming",
                 "category": {"name": "Food & Beverages"},
+                "tags": ["Sweet"],
                 "max_price": "15000.00",
                 "currency": "GEL",
                 "quantity": 1000,

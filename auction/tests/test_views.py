@@ -94,6 +94,8 @@ class BuyerAuctionListViewTests(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data.get("results")), 2)
+        self.assertIsNotNone(response.data["results"][0]["tags"])
+        self.assertIsNotNone(response.data["results"][1]["tags"])
 
     def test_unauthenticated_access(self):
         self.client.logout()

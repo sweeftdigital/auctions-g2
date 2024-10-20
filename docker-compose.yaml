@@ -7,7 +7,7 @@ services:
              python3 manage.py migrate &&
              python3 manage.py makemessages -l ka &&
              python3 manage.py compilemessages -l ka &&
-             daphne -b 0.0.0.0 -p 8001 auctions.asgi:application"
+             python3 manage.py runserver 0.0.0.0:8001"
     restart: always
     ports:
       - "8001:8001"
