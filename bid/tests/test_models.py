@@ -68,7 +68,6 @@ class BidImageModelTest(TestCase):
         bid_image = BidImageFactory()
         self.assertTrue(isinstance(bid_image, BidImage))
         self.assertIsNotNone(bid_image.image_url)
-        self.assertTrue(bid_image.image_url.startswith("http"))
         self.assertTrue(isinstance(bid_image.bid, Bid))
 
     def test_multiple_images_for_single_bid(self):

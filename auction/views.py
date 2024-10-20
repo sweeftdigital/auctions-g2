@@ -34,12 +34,11 @@ from auction.permissions import (
     IsSeller,
 )
 from auction.serializers import (
+    AuctionListSerializer,
     AuctionRetrieveSerializer,
     AuctionSaveSerializer,
     BookmarkCreateSerializer,
     BookmarkListSerializer,
-    BuyerAuctionListSerializer,
-    SellerAuctionListSerializer,
 )
 
 
@@ -70,10 +69,10 @@ from auction.serializers import (
         ),
     ],
     responses={
-        200: BuyerAuctionListSerializer,
-        401: BuyerAuctionListSerializer,
-        403: BuyerAuctionListSerializer,
-        404: BuyerAuctionListSerializer,
+        200: AuctionListSerializer,
+        401: AuctionListSerializer,
+        403: AuctionListSerializer,
+        404: AuctionListSerializer,
     },
     examples=buyer_dashboard_list_openapi_examples.examples(),
 )
@@ -106,7 +105,7 @@ class BuyerAuctionListView(ListAPIView):
     """
 
     permission_classes = (IsAuthenticated, IsBuyer)
-    serializer_class = BuyerAuctionListSerializer
+    serializer_class = AuctionListSerializer
     filterset_class = BuyerAuctionFilterSet
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ("auction_name", "description", "tags__name")
@@ -161,10 +160,10 @@ class BuyerAuctionListView(ListAPIView):
         ),
     ],
     responses={
-        200: SellerAuctionListSerializer,
-        401: SellerAuctionListSerializer,
-        403: SellerAuctionListSerializer,
-        404: SellerAuctionListSerializer,
+        200: AuctionListSerializer,
+        401: AuctionListSerializer,
+        403: AuctionListSerializer,
+        404: AuctionListSerializer,
     },
     examples=seller_dashboard_list_openapi_examples.examples(),
 )
@@ -199,7 +198,7 @@ class SellerAuctionListView(ListAPIView):
     """
 
     permission_classes = (IsAuthenticated, IsSeller)
-    serializer_class = SellerAuctionListSerializer
+    serializer_class = AuctionListSerializer
     filterset_class = SellerAuctionFilterSet
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ("auction_name", "description", "tags__name")

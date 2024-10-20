@@ -22,9 +22,10 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ["name"]
 
 
-class BaseAuctionListSerializer(serializers.ModelSerializer):
+class AuctionListSerializer(serializers.ModelSerializer):
     category = CategorySerializer()
     product = serializers.CharField(source="auction_name")
+    tags = serializers.SerializerMethodField()
 
     class Meta:
         model = Auction
@@ -34,12 +35,21 @@ class BaseAuctionListSerializer(serializers.ModelSerializer):
             "product",
             "status",
             "category",
+            "tags",
             "max_price",
             "currency",
             "quantity",
             "start_date",
             "end_date",
         ]
+
+    def get_tags(self, obj):
+        """
+        Returns tags as a list of strings instead of returning
+        them as a list of dictionaries containing (name: tag) pairs.
+        """
+
+        return [tag.name for tag in obj.tags.all()]
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -50,25 +60,6 @@ class BaseAuctionListSerializer(serializers.ModelSerializer):
             representation["status"] = "Upcoming"
 
         return representation
-
-
-class BuyerAuctionListSerializer(BaseAuctionListSerializer):
-    pass
-
-
-class SellerAuctionListSerializer(BaseAuctionListSerializer):
-    tags = serializers.SerializerMethodField()
-
-    class Meta(BaseAuctionListSerializer.Meta):
-        fields = BaseAuctionListSerializer.Meta.fields + ["tags"]
-
-    def get_tags(self, obj):
-        """
-        Returns tags as a list of strings instead of returning
-        them as a list of dictionaries containing (name: tag) pairs.
-        """
-
-        return [tag.name for tag in obj.tags.all()]
 
 
 class BookmarkListSerializer(serializers.ModelSerializer):

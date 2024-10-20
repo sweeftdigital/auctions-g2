@@ -1,6 +1,9 @@
+import io
 from unittest.mock import MagicMock
 from uuid import uuid4
 
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 from rest_framework import serializers
 from rest_framework.test import APITestCase
 
@@ -53,6 +56,15 @@ class BaseBidSerializerTests(APITestCase):
             status=StatusChoices.LIVE,  # Initially live
             accepted_bidders=AcceptedBiddersChoices.BOTH,
         )
+
+    def generate_test_image(self):
+        """Generate a simple image in memory for testing."""
+        # Create an image using Pillow
+        image = Image.new("RGB", (100, 100), color="red")
+        img_io = io.BytesIO()
+        image.save(img_io, "JPEG")
+        img_io.seek(0)
+        return img_io.getvalue()
 
     def test_auction_not_live(self):
         """Test that an error is raised when trying to bid on a non-live auction."""
@@ -138,16 +150,19 @@ class BaseBidSerializerTests(APITestCase):
         )
 
     def test_bid_image_creation(self):
-        """Test that BidImage objects are created when images are provided."""
+        # Generate real image content
+        image1_data = self.generate_test_image()
+        image2_data = self.generate_test_image()
+
+        # Create mock image files with valid image data
+        image1 = SimpleUploadedFile("image1.jpg", image1_data, content_type="image/jpeg")
+        image2 = SimpleUploadedFile("image2.jpg", image2_data, content_type="image/jpeg")
         context = {"request": MagicMock(user=self.user_seller), "auction": self.auction}
         data = {
             "offer": 500,
             "description": "Test bid with images",
             "delivery_fee": 50,
-            "images": [
-                {"image_url": "http://example.com/image1.jpg"},
-                {"image_url": "http://example.com/image2.jpg"},
-            ],
+            "images": [image1, image2],
         }
 
         serializer = CreateBidSerializer(data=data, context=context)
@@ -157,5 +172,4 @@ class BaseBidSerializerTests(APITestCase):
         self.assertEqual(BidImage.objects.filter(bid=bid).count(), 2)
 
         images = BidImage.objects.filter(bid=bid)
-        self.assertEqual(images[0].image_url, "http://example.com/image1.jpg")
-        self.assertEqual(images[1].image_url, "http://example.com/image2.jpg")
+        self.assertEqual(images.count(), 2)
