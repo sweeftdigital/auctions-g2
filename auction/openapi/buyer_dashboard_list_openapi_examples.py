@@ -14,7 +14,7 @@ def examples():
             summary="Successful fetch of auctions that belong to buyer(Paginated)",
             description="This example demonstrates the response for a "
             "successful fetch of auctions that belong to buyer, "
-            "only their auctions will be shown. This response also includes"
+            "only their auctions will be shown. This response also includes "
             "pagination.",
             value={
                 "id": "2ea3de7f-944b-44d6-919f-519130b7d583",

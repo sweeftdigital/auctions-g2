@@ -134,6 +134,42 @@ class BuyerAuctionListView(ListAPIView):
 
 
 @extend_schema(
+    tags=["Dashboards"],
+    responses={
+        200: AuctionListSerializer,
+        401: AuctionListSerializer,
+        403: AuctionListSerializer,
+        404: AuctionListSerializer,
+    },
+    examples=buyer_dashboard_list_openapi_examples.examples(),
+)
+class BuyerDashboardListView(ListAPIView):
+    """
+    Retrieves a list of auctions that belong to the user, this includes
+    auctions with statuses: `Live`, `Upcoming`. This view is intended to be
+    used for buyer's dashboard.
+
+    **Permissions**:
+
+    - IsAuthenticated: Requires the user to be authenticated.
+    - IsBuyer: Requires the user to have the 'Buyer' role.
+
+    **Returns**:
+    - 200 (OK): A paginated list of auctions.
+    - 401 (Unauthorized): If the user is not authenticated.
+    - 403 (Forbidden): If the user does not have the 'Buyer' role.
+    - 404 (Not Found): If invalid value is passed to page query parameter.
+    """
+
+    permission_classes = (IsAuthenticated, IsBuyer)
+    serializer_class = AuctionListSerializer
+
+    def get_queryset(self):
+        queryset = Auction.objects.filter(status="Live", author=self.request.user.id)
+        return queryset
+
+
+@extend_schema(
     tags=["Auctions"],
     parameters=[
         OpenApiParameter(

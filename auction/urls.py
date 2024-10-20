@@ -3,6 +3,7 @@ from django.urls import path
 from auction.views import (
     BookmarkListView,
     BuyerAuctionListView,
+    BuyerDashboardListView,
     CreateBookmarkView,
     CreateDraftAuctionView,
     CreateLiveAuctionView,
@@ -18,6 +19,7 @@ urlpatterns = [
         BuyerAuctionListView.as_view(),
         name="auction-list-buyer",
     ),
+    path("buyer/dashboard/", BuyerDashboardListView.as_view(), name="buyer-dashboard"),
     path(
         "seller/list/",
         SellerAuctionListView.as_view(),
