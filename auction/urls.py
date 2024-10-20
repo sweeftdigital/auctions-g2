@@ -11,6 +11,7 @@ from auction.views import (
     DeleteBookmarkView,
     RetrieveAuctionView,
     SellerAuctionListView,
+    SellerDashboardListView,
 )
 
 urlpatterns = [
@@ -25,6 +26,7 @@ urlpatterns = [
         SellerAuctionListView.as_view(),
         name="auction-list-seller",
     ),
+    path("seller/dashboard/", SellerDashboardListView.as_view(), name="seller-dashboard"),
     path(
         "retrieve/<uuid:id>/",
         RetrieveAuctionView.as_view(),

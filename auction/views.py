@@ -152,7 +152,7 @@ class BuyerDashboardListView(ListAPIView):
     **Permissions**:
 
     - IsAuthenticated: Requires the user to be authenticated.
-    - IsBuyer: Requires the user to have the 'Buyer' role.
+    - IsBuyer: Requires the user to have the `Buyer` role.
 
     **Returns**:
     - 200 (OK): A paginated list of auctions.
@@ -263,6 +263,42 @@ class SellerAuctionListView(ListAPIView):
             queryset = queryset.order_by(ordering)
 
         return queryset
+
+
+@extend_schema(
+    tags=["Dashboards"],
+    responses={
+        200: AuctionListSerializer,
+        401: AuctionListSerializer,
+        403: AuctionListSerializer,
+        404: AuctionListSerializer,
+    },
+    examples=seller_dashboard_list_openapi_examples.examples(),
+)
+class SellerDashboardListView(ListAPIView):
+    """
+    Retrieves a list of auctions that user is taking part in(user has
+    created bid on that auction), this includes auctions with statuses:
+    `Live`, `Upcoming`. This view is intended to be used for seller's dashboard.
+
+    **Permissions**:
+
+    - IsAuthenticated: Requires the user to be authenticated.
+    - IsSeller: Requires the user to have the `Seller` role.
+
+    **Returns**:
+    - 200 (OK): A paginated list of auctions.
+    - 401 (Unauthorized): If the user is not authenticated.
+    - 403 (Forbidden): If the user does not have the 'Seller' role.
+    - 404 (Not Found): If invalid value is passed to page query parameter.
+    """
+
+    permission_classes = (IsAuthenticated, IsSeller)
+    serializer_class = AuctionListSerializer
+
+    def get_queryset(self):
+        user = self.request.user.id
+        return Auction.objects.filter(bids__author=user).distinct()
 
 
 @extend_schema(

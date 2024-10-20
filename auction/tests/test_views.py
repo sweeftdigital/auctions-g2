@@ -22,6 +22,7 @@ from auction.models.auction import (
     StatusChoices,
 )
 from auction.views import BaseAuctionView, CreateDraftAuctionView, CreateLiveAuctionView
+from bid.models import Bid
 
 
 class MockUser:
@@ -573,6 +574,88 @@ class SellerAuctionListViewTests(APITestCase):
         self.assertEqual(
             response.data["results"][0]["product"], self.auction1.auction_name
         )
+
+
+class SellerDashboardListViewTests(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = MockUser(user_id=uuid4())
+        self.client.force_authenticate(user=self.user)
+        self.url = reverse("seller-dashboard")
+
+        self.category1 = CategoryFactory(name="Pet Supplies")
+        self.category2 = CategoryFactory(name="Electronics")
+        self.tag1 = TagFactory(name="Animals")
+        self.tag2 = TagFactory(name="Water Device")
+
+        self.auction1 = AuctionFactory(
+            author=self.user.id,
+            category=self.category1,
+            status=StatusChoices.LIVE,
+            accepted_bidders=AcceptedBiddersChoices.BOTH,
+            accepted_locations="AL",
+            start_date=timezone.now() - timedelta(days=5),
+            end_date=timezone.now() + timedelta(days=1),
+            max_price=100,
+            quantity=1,
+            auction_name="Awesome Pet Supplies Auction",
+            description="Bid on the best pet supplies.",
+        )
+        self.auction1.tags.add(self.tag1, self.tag2)
+
+        self.auction2 = AuctionFactory(
+            author=self.user.id,
+            category=self.category2,
+            status=StatusChoices.LIVE,
+            accepted_bidders=AcceptedBiddersChoices.COMPANY,
+            accepted_locations="HR",
+            start_date=timezone.now() - timedelta(days=2),
+            end_date=timezone.now() + timedelta(days=1),
+            max_price=200,
+            quantity=2,
+            auction_name="Old Electronics Auction",
+            description="Bidding for various old electronics.",
+        )
+        self.auction2.tags.add(self.tag1)
+
+        self.auction3 = AuctionFactory(
+            author=uuid4(),
+            category=self.category1,
+            status=StatusChoices.LIVE,
+            accepted_bidders=AcceptedBiddersChoices.COMPANY,
+            accepted_locations="HR",
+            start_date=timezone.now() - timedelta(days=2),
+            end_date=timezone.now() + timedelta(days=1),
+            max_price=300,
+            quantity=3,
+            auction_name="Auction from different user.",
+            description="Simple auction.",
+        )
+        self.auction3.tags.add(self.tag1)
+        self.bid = Bid.objects.create(
+            author=self.user.id, auction=self.auction1, offer=500
+        )
+
+    def test_dashboard_list_success(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], "Awesome Pet Supplies Auction"
+        )
+
+    def test_dashboard_list_distinct(self):
+        new_bid = Bid.objects.create(
+            author=self.user.id, auction=self.auction1, offer=600
+        )
+        new_bid.save()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data.get("results")), 1)
+        self.assertEqual(
+            response.data["results"][0]["product"], "Awesome Pet Supplies Auction"
+        )
+        self.assertEqual(Bid.objects.count(), 2)
 
 
 class AuctionRetrieveViewTests(APITestCase):
