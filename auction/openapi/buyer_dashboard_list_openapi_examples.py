@@ -23,7 +23,7 @@ def examples():
                 "status": "Upcoming",
                 "category": {"name": "Food & Beverages"},
                 "tags": ["Sweet"],
-                "max_price": "15000.00",
+                "max_price": "₾15000.00",
                 "currency": "GEL",
                 "quantity": 1000,
                 "start_date": "2024-10-08T12:34:56.789012Z",

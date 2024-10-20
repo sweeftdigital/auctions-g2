@@ -7,6 +7,7 @@ from rest_framework.exceptions import NotFound
 
 from auction.models import Auction, Bookmark, Category, Tag
 from auction.models.category import CategoryChoices
+from auction.utils import get_currency_symbol
 from bid.serializers import BidSerializer
 
 
@@ -58,6 +59,13 @@ class AuctionListSerializer(serializers.ModelSerializer):
         # and set status to "Upcoming"
         if instance.start_date > timezone.now():
             representation["status"] = "Upcoming"
+
+        # Attach currency symbol to max_price field
+        currency = representation["currency"]
+        max_price = representation["max_price"]
+        print(get_currency_symbol(currency))
+        representation["max_price"] = f"{get_currency_symbol(currency)}{max_price}"
+        print(representation["max_price"])
 
         return representation
 
