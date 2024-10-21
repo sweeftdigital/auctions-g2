@@ -1,5 +1,6 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.db.models import F
 from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.openapi import OpenApiParameter
@@ -14,7 +15,7 @@ from auction.filters import (
     BuyerAuctionFilterSet,
     SellerAuctionFilterSet,
 )
-from auction.models import Auction, Bookmark
+from auction.models import Auction, AuctionStatistics, Bookmark
 from auction.models.auction import StatusChoices
 from auction.openapi import (
     auction_create_openapi_examples,
@@ -424,6 +425,9 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
 
     def get_object(self):
         auction = super().get_object()
+        AuctionStatistics.objects.filter(auction=auction.id).update(
+            views_count=F("views_count") + 1
+        )
 
         if auction.status == "Draft":
             # Deny access if the user is a seller or not the author of the draft
@@ -431,8 +435,21 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
                 self.request.user.id
             ):
                 self.permission_denied(self.request)
+        else:
+            self.notify_auction_group(auction)
 
         return auction
+
+    def notify_auction_group(self, auction):
+        channel_layer = get_channel_layer()
+
+        async_to_sync(channel_layer.group_send)(
+            f"auction_{auction.id}",
+            {
+                "type": "auction_view_count_notification",
+                "message": auction.statistics.views_count,
+            },
+        )
 
 
 @extend_schema(

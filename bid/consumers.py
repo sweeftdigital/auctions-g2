@@ -56,3 +56,15 @@ class BidConsumer(AsyncJsonWebsocketConsumer):
                 "bid": event["message"],
             }
         )
+
+    async def auction_view_count_notification(self, event):
+        """
+        Handles real-time notifications about how many times users have
+        viewed specified auction.
+        """
+        await self.send_json(
+            {
+                "type": "auction_view_count_notification",
+                "auction_view_count": event["message"],
+            }
+        )
