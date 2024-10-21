@@ -62,11 +62,6 @@ class Auction(models.Model):
         max_length=3, choices=CurrencyChoices.choices, default=CurrencyChoices.GEL
     )
     custom_fields = models.JSONField(blank=True, null=True)
-    winner = models.UUIDField(null=True, blank=True)
-    winner_bid_amount = models.DecimalField(
-        max_digits=10, decimal_places=2, null=True, blank=True
-    )
-    top_bid = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     condition = models.CharField(
         max_length=50, choices=ConditionChoices.choices, default=ConditionChoices.NEW
     )

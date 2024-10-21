@@ -78,19 +78,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("custom_fields", models.JSONField(blank=True, null=True)),
-                ("winner", models.UUIDField(blank=True, null=True)),
-                (
-                    "winner_bid_amount",
-                    models.DecimalField(
-                        blank=True, decimal_places=2, max_digits=10, null=True
-                    ),
-                ),
-                (
-                    "top_bid",
-                    models.DecimalField(
-                        blank=True, decimal_places=2, max_digits=10, null=True
-                    ),
-                ),
                 (
                     "condition",
                     models.CharField(
