@@ -15,7 +15,7 @@ from auction.factories.model_factories import (
     CategoryFactory,
     TagFactory,
 )
-from auction.models import Auction, Bookmark, Category
+from auction.models import Auction, AuctionStatistics, Bookmark, Category
 from auction.models.auction import (
     AcceptedBiddersChoices,
     ConditionChoices,
@@ -681,6 +681,7 @@ class AuctionRetrieveViewTests(APITestCase):
             description="Bid on the best pet supplies.",
         )
         self.auction.tags.add(self.tag1, self.tag2)
+        self.auction_statistics = AuctionStatistics.objects.create(auction=self.auction)
 
         self.url = reverse("retrieve-auction", kwargs={"id": self.auction.id})
 
@@ -693,6 +694,7 @@ class AuctionRetrieveViewTests(APITestCase):
         self.assertEqual(
             response.data["accepted_locations"], ["Albania", "Georgia", "Croatia"]
         )
+        self.assertIn("statistics", response.data)
 
     def test_retrieve_draft_auction_with_seller(self):
         self.user.is_seller = True

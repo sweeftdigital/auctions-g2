@@ -9,7 +9,6 @@ from auction.models import Auction, AuctionStatistics, Bookmark, Category, Tag
 from auction.models.auction import StatusChoices
 from auction.models.category import CategoryChoices
 from auction.utils import get_currency_symbol
-from bid.serializers import BidSerializer
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -122,7 +121,6 @@ class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):
     accepted_locations = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
-    bids = serializers.SerializerMethodField()
     statistics = serializers.SerializerMethodField()
 
     class Meta:
@@ -140,30 +138,18 @@ class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):
         category = obj.category
         return category.name if category else None
 
-    def get_bids(self, obj):
-        return self.get_related_data(obj, "bids")
-
     def get_statistics(self, obj):
-        return self.get_related_data(obj, "statistics")
-
-    def get_related_data(self, obj, field_type):
-        """Helper method to get bids or statistics based on auction status."""
-
         if obj.status == StatusChoices.DRAFT:
             return None
-
-        if field_type == "bids":
-            bids = obj.bids.all()
-            return BidSerializer(bids, many=True).data
-        elif field_type == "statistics":
-            auction_statistics = AuctionStatistics.objects.filter(auction=obj.id).first()
-            return {
-                "winner_bid": auction_statistics.winner_bid,
-                "winner_bid_author": auction_statistics.winner_bid_author,
-                "top_bid": auction_statistics.top_bid,
-                "top_bid_author": auction_statistics.top_bid_author,
-                "total_bids_count": auction_statistics.total_bids_count,
-            }
+        auction_statistics = AuctionStatistics.objects.filter(auction=obj.id).first()
+        return {
+            "winner_bid": auction_statistics.winner_bid,
+            "winner_bid_author": auction_statistics.winner_bid_author,
+            "top_bid": auction_statistics.top_bid,
+            "top_bid_author": auction_statistics.top_bid_author,
+            "views_count": auction_statistics.views_count,
+            "total_bids_count": auction_statistics.total_bids_count,
+        }
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -178,10 +164,21 @@ class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):
         max_price = representation["max_price"]
         representation["max_price"] = f"{get_currency_symbol(currency)}{max_price}"
 
-        # Omit statistics and bids fields if the auction has status of draft
+        # Omit statistics field if the auction has status of draft
         if instance.status == StatusChoices.DRAFT:
             representation.pop("statistics", None)
-            representation.pop("bids", None)
+        else:
+            winner_bid = representation["statistics"]["winner_bid"]
+            top_bid = representation["statistics"]["top_bid"]
+
+            if winner_bid is not None:
+                representation["statistics"][
+                    "winner_bid"
+                ] = f"{get_currency_symbol(currency)}{winner_bid}"
+            if top_bid is not None:
+                representation["statistics"][
+                    "top_bid"
+                ] = f"{get_currency_symbol(currency)}{top_bid}"
 
         return representation
 
