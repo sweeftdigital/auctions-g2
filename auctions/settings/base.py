@@ -64,7 +64,9 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("auctions_redis", 6379)],
+            "hosts": [
+                os.getenv("AUCTIONS_SERVICE_REDIS_LOCATION", "redis://localhost:6379")
+            ],
         },
     },
 }
