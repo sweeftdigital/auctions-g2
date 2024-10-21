@@ -1,14 +1,18 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.db import IntegrityError, transaction
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, mixins
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from auction.models import Auction, AuctionStatistics
 from auction.permissions import IsBuyer, IsOwner
+from auction.utils import get_currency_symbol
 from bid.models import Bid
 from bid.openapi.bid_approve_openapi_examples import approve_bid_examples
 from bid.openapi.bid_create_openapi_examples import create_bid_examples
@@ -279,7 +283,7 @@ class RejectBidView(generics.GenericAPIView):
         try:
             bid = Bid.objects.get(id=bid_id)
         except Bid.DoesNotExist:
-            raise ValidationError({"detail": "Bid not found."})
+            raise NotFound("Bid not found.")
 
         if bid.status == "Rejected":
             raise ValidationError({"detail": "This bid has already been rejected."})
@@ -336,42 +340,81 @@ class ApproveBidView(generics.GenericAPIView):
         bid_id = self.kwargs.get("bid_id")
 
         try:
-            bid = Bid.objects.get(id=bid_id)
-        except Bid.DoesNotExist:
-            raise ValidationError({"detail": "Bid not found."})
+            with transaction.atomic():
+                bid = get_object_or_404(Bid, id=bid_id)
 
-        if bid.status == "Approved":
-            raise ValidationError({"detail": "This bid has already been approved."})
+                # Check if bid is already approved
+                if bid.status == "Approved":
+                    raise ValidationError(
+                        {"detail": "This bid has already been approved."}
+                    )
 
-        auction = Auction.objects.get(id=bid.auction_id)
+                # Fetch auction with related statistics
+                auction = Auction.objects.select_related("statistics").get(
+                    id=bid.auction_id
+                )
 
-        if str(auction.author) != str(request.user.id):
-            raise PermissionDenied("You are not the owner of this auction.")
+                # Ensure the user owns the auction
+                if str(auction.author) != str(request.user.id):
+                    raise PermissionDenied("You are not the owner of this auction.")
 
-        bid.status = "Approved"
-        bid.save()
+                # Approve the bid
+                bid.status = "Approved"
+                bid.save()
 
-        self.notify_bid_status_change(bid)
+                # Update the top bid in auction statistics if necessary
+                new_top_bid = self.update_top_bid(auction, bid.offer)
 
-        return Response({"detail": "Bid has been approved.", "bid_id": str(bid.id)})
+                # Notify about the bid status change
+                self.notify_bid_status_change(bid, new_top_bid)
+
+            return Response({"detail": "Bid has been approved.", "bid_id": str(bid.id)})
+
+        except IntegrityError:
+            raise ValidationError("A database error occurred. Please try again.")
+        except Http404:
+            raise NotFound("Bid not found.")
+
+    def update_top_bid(self, auction, bid_offer):
+        statistics = auction.statistics
+        top_bid = statistics.top_bid
+        new_top_bid = None
+
+        # If there's no top bid or the new offer is lower, update the top bid
+        if top_bid is None or bid_offer < top_bid:
+            statistics.top_bid = bid_offer
+            new_top_bid = statistics.top_bid
+            statistics.save()
+
+        return new_top_bid
 
     @staticmethod
-    def notify_bid_status_change(bid):
+    def notify_bid_status_change(bid, new_top_bid):
         """Notify WebSocket group of updated bid status with full bid data"""
+
         from bid.serializers import BaseBidSerializer
 
         channel_layer = get_channel_layer()
-
         bid_data = BaseBidSerializer(bid).data
 
         bid_data["id"] = str(bid_data["id"])
         bid_data["auction"] = str(bid_data["auction"])
         bid_data["author"] = str(bid_data["author"])
 
+        # Include top_bid field in response if user approved bid with the
+        # cheapest offer among other approved bids.
+        top_bid = f"{get_currency_symbol(bid.auction.currency)}{new_top_bid}"
+        additional_information = {"top_bid": str(top_bid)} if new_top_bid else None
+        print(
+            f"Sending WebSocket notification to auction_{str(bid.auction.id)} "
+            f"with data: {bid_data}, additional info: {additional_information}"
+        )
+
         async_to_sync(channel_layer.group_send)(
-            f"auction_{bid.auction.id}",
+            f"auction_{str(bid.auction.id)}",
             {
                 "type": "updated_bid_status_notification",
                 "message": bid_data,
+                "additional_information": additional_information,
             },
         )

@@ -1,3 +1,5 @@
+import json
+
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 
@@ -50,12 +52,14 @@ class BidConsumer(AsyncJsonWebsocketConsumer):
         """
         Handles real-time notifications of updated bid status (e.g., when a bid is rejected).
         """
-        await self.send_json(
-            {
-                "type": "updated_bid_status_notification",
-                "bid": event["message"],
-            }
-        )
+        data = {
+            "type": "updated_bid_status_notification",
+            "bid": event["message"],
+        }
+        if event.get("additional_information"):
+            data["additional_information"] = event["additional_information"]
+
+        await self.send(text_data=json.dumps(data, ensure_ascii=False))
 
     async def auction_view_count_notification(self, event):
         """
