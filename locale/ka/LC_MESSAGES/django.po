@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-20 16:20+0000\n"
+"POT-Creation-Date: 2024-10-20 19:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,39 +28,39 @@ msgstr ""
 "Buyer პროფილის ტიპის მქონე მომხმარებლებს არ შეუძლიათ ამ ოპერაციის "
 "განხორციელება."
 
-#: auction/serializers.py:136
+#: auction/serializers.py:185
 msgid "This auction is already bookmarked."
 msgstr "ეს აუქციონი უკვე დაბუქმარქებულია."
 
-#: auction/serializers.py:171
+#: auction/serializers.py:220
 msgid "This field is read-only."
 msgstr ""
 "ამ ველის ჩაწერა არ შეიძლება, რადგან ის მხოლოდ წაკითხვისთვისაა განკუთვნილი."
 
-#: auction/serializers.py:182
+#: auction/serializers.py:231
 msgid "Start date cannot be in the past."
 msgstr "აუქციონის საწყისი დრო არ შეიძლება იყოს ამჟამინდელ დროზე ნაკლები."
 
-#: auction/serializers.py:206
+#: auction/serializers.py:255
 msgid "End date must be after the start date."
 msgstr "აუქციონის დასასრულის დორ არ შეიძლება იყოს საწყის დროზე ნაკლები."
 
-#: auction/serializers.py:213
+#: auction/serializers.py:262
 msgid "Max price must be greater than 0."
 msgstr "აუქციონში განსაზღვრული მაქსიმალური ფასი უნდა იყოს 0-ზე მეტი."
 
-#: auction/serializers.py:219
+#: auction/serializers.py:268
 msgid "Invalid category."
 msgstr "კატეგორია არავალიდურია."
 
-#: auction/serializers.py:225
+#: auction/serializers.py:274
 msgid "Tags are required, make sure to include them."
 msgstr "თეგების გადმოცემა სავალდებულია."
 
-#: auction/serializers.py:246
+#: auction/serializers.py:295
 msgid "There was an error during the creation of an auction. Please try again."
 msgstr "აუქციონის შექმნისას პრობლემამ იჩინა თავი. გთხოვთ სცადოთ თავიდან."
 
-#: auction/views.py:482
+#: auction/views.py:484
 msgid "Auction deleted successfully."
 msgstr "აუქციონი წარმატებით წაიშალა."

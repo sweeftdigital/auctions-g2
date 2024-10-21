@@ -35,6 +35,10 @@ class AuctionAdmin(admin.ModelAdmin):
     ordering = ("-start_date",)
     autocomplete_fields = ["tags"]
 
+    def get_queryset(self, request):
+        # Bypass the custom manager to include all auctions
+        return Auction._base_manager.all()
+
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -45,14 +49,14 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ("name",)
+    list_display = ("name", "id")
     search_fields = ("name",)
     ordering = ("name",)
 
 
 @admin.register(Bookmark)
 class BookmarkAdmin(admin.ModelAdmin):
-    list_display = ("id", "user_id", "auction")
+    list_display = ("id", "user_id", "auction", "auction_id")
     search_fields = ("user_id", "auction__auction_name")
     ordering = ("-auction",)
 

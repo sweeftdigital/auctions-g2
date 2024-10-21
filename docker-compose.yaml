@@ -18,6 +18,8 @@ services:
     depends_on:
       - auctions_postgres
       - auctions_redis
+      - consumer_command
+
     networks:
       - micro-network
       - auctions-private-network
@@ -42,6 +44,17 @@ services:
     ports:
       - "6380:6379"
     networks:
+      - auctions-private-network
+
+  consumer_command:
+    container_name: auctions_consumer_command
+    restart: always
+    build: .
+    command: python3 manage.py rabbit_command
+    env_file:
+      - ./.env
+    networks:
+      - micro-network
       - auctions-private-network
 
 volumes:
