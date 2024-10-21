@@ -79,3 +79,26 @@ class Auction(models.Model):
 
     def __str__(self):
         return f"{self.auction_name} - Status: {self.status}"
+
+
+class AuctionStatistics(models.Model):
+    auction = models.OneToOneField(
+        "Auction", on_delete=models.CASCADE, related_name="statistics"
+    )
+
+    # Winning bid details
+    winner_bid = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    winner_bid_author = models.UUIDField(null=True, blank=True)
+
+    # Top bid details
+    top_bid = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    top_bid_author = models.UUIDField(null=True, blank=True)
+
+    # Viewing and bidding metrics
+    views_count = models.PositiveIntegerField(default=0)
+    total_bids_count = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"Statistics for {self.auction.auction_name}"

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from auction.models import Auction, Bookmark, Category, Tag
+from auction.models import Auction, AuctionStatistics, Bookmark, Category, Tag
 from bid.models import Bid, BidImage
 
 
@@ -90,3 +90,16 @@ class BidImageAdmin(admin.ModelAdmin):
         "image_url",
     )
     ordering = ("-id",)
+
+
+@admin.register(AuctionStatistics)
+class AuctionStatisticsAdmin(admin.ModelAdmin):
+    list_display = (
+        "auction",
+        "winner_bid",
+        "winner_bid_author",
+        "top_bid",
+        "top_bid_author",
+        "views_count",
+        "total_bids_count",
+    )

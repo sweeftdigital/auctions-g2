@@ -5,7 +5,7 @@ from django_countries.serializers import CountryFieldMixin
 from rest_framework import serializers
 from rest_framework.exceptions import NotFound
 
-from auction.models import Auction, Bookmark, Category, Tag
+from auction.models import Auction, AuctionStatistics, Bookmark, Category, Tag
 from auction.models.auction import StatusChoices
 from auction.models.category import CategoryChoices
 from auction.utils import get_currency_symbol
@@ -288,7 +288,9 @@ class AuctionSaveSerializer(CountryFieldMixin, serializers.ModelSerializer):
                     category=category,
                     **validated_data,
                 )
+                AuctionStatistics.objects.create(auction=auction)
                 auction.tags.set(tag_objects)
+
         except IntegrityError:
             raise serializers.ValidationError(
                 _(
