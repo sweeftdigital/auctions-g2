@@ -13,13 +13,14 @@ def examples(include_description=False):
         "author": "0a85c5dd-c896-4802-8fa6-426220c78cd9",
         "product": "Strawberry",
         "status": "Upcoming",
-        "category": {"name": "Food & Beverages"},
+        "category": "Food & Beverages",
         "max_price": "15000.00",
         "currency": "GEL",
         "quantity": 1000,
         "start_date": "2024-10-08T12:34:56.789012Z",
         "end_date": "2024-10-08T12:34:57.789012Z",
         "tags": ["fruit", "food"],
+        "bookmarked": False,
     }
 
     # Add description if include_description is True

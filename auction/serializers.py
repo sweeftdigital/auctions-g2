@@ -24,9 +24,10 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class AuctionListSerializer(serializers.ModelSerializer):
-    category = CategorySerializer()
+    category = serializers.SerializerMethodField()
     product = serializers.CharField(source="auction_name")
     tags = serializers.SerializerMethodField()
+    bookmarked = serializers.BooleanField(default=False)
 
     class Meta:
         model = Auction
@@ -42,6 +43,7 @@ class AuctionListSerializer(serializers.ModelSerializer):
             "quantity",
             "start_date",
             "end_date",
+            "bookmarked",
         ]
 
     def get_tags(self, obj):
@@ -51,6 +53,10 @@ class AuctionListSerializer(serializers.ModelSerializer):
         """
 
         return [tag.name for tag in obj.tags.all()]
+
+    def get_category(self, obj):
+        category = obj.category
+        return category.name if category else None
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -69,7 +75,7 @@ class AuctionListSerializer(serializers.ModelSerializer):
 
 
 class SellerLiveAuctionListSerializer(AuctionListSerializer):
-    description = serializers.CharField()  # Add the description field here
+    description = serializers.CharField()
 
     class Meta(AuctionListSerializer.Meta):
         fields = AuctionListSerializer.Meta.fields + ["description"]
@@ -83,38 +89,10 @@ class BookmarkListSerializer(serializers.ModelSerializer):
         fields = ["id", "user_id", "auction"]
 
     def get_auction(self, obj):
-        auction = obj.auction
-        return {
-            "id": auction.id,
-            "product": auction.auction_name,
-            "status": auction.status,
-            "category": CategorySerializer(auction.category).data,
-            "max_price": auction.max_price,
-            "currency": auction.currency,
-            "quantity": auction.quantity,
-            "start_date": auction.start_date,
-            "end_date": auction.end_date,
-        }
+        # Use the AuctionListSerializer to serialize the auction field
+        auction_data = AuctionListSerializer(obj.auction, context=self.context).data
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-
-        # Check if the auction's start_date is in the future
-        # and set status to "Upcoming"
-        if (
-            instance.auction.start_date > timezone.now()
-            and instance.auction.status == StatusChoices.LIVE
-        ):
-            representation["auction"]["status"] = "Upcoming"
-
-        # Attach currency symbol to max_price field
-        currency = representation["auction"]["currency"]
-        max_price = representation["auction"]["max_price"]
-        representation["auction"][
-            "max_price"
-        ] = f"{get_currency_symbol(currency)}{max_price}"
-
-        return representation
+        return auction_data
 
 
 class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):
@@ -122,6 +100,7 @@ class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):
     tags = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
     statistics = serializers.SerializerMethodField()
+    bookmarked = serializers.BooleanField(default=False)
 
     class Meta:
         model = Auction

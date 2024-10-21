@@ -1,11 +1,12 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.db.models import F
+from django.db.models import Exists, F, OuterRef
 from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.openapi import OpenApiParameter
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, generics, status
+from rest_framework.exceptions import NotFound
 from rest_framework.generics import CreateAPIView, DestroyAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -255,7 +256,14 @@ class SellerAuctionListView(ListAPIView):
         queryset = (
             Auction.objects.all() if status else Auction.objects.filter(status="Live")
         )
+
         ordering = self.request.query_params.get("ordering", None)
+
+        bookmarked_subquery = Bookmark.objects.filter(
+            user_id=self.request.user.id, auction_id=OuterRef("pk")
+        ).values("pk")
+
+        queryset = queryset.annotate(bookmarked=Exists(bookmarked_subquery))
 
         if ordering:
             if "category" in ordering:
@@ -299,8 +307,20 @@ class SellerDashboardListView(ListAPIView):
     serializer_class = AuctionListSerializer
 
     def get_queryset(self):
-        user = self.request.user.id
-        return Auction.objects.filter(bids__author=user).distinct()
+        user = self.request.user
+
+        # Get auctions where the user has placed bids
+        queryset = Auction.objects.filter(bids__author=user.id).distinct()
+
+        # Add bookmarked status
+        bookmarked_subquery = Bookmark.objects.filter(
+            user_id=user.id, auction_id=OuterRef("pk")
+        ).values("pk")
+
+        # Annotate auctions with bookmarked status
+        queryset = queryset.annotate(bookmarked=Exists(bookmarked_subquery))
+
+        return queryset
 
 
 @extend_schema(
@@ -419,26 +439,38 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
     """
 
     permission_classes = (IsAuthenticated,)
-    queryset = Auction.objects.prefetch_related("bids").all()
     serializer_class = AuctionRetrieveSerializer
     lookup_field = "id"
 
     def get_object(self):
-        auction = super().get_object()
-        AuctionStatistics.objects.filter(auction=auction.id).update(
-            views_count=F("views_count") + 1
-        )
+        try:
+            # This will exclude deleted auctions due to the AuctionManager
+            auction = Auction.objects.annotate(
+                bookmarked=Exists(
+                    Bookmark.objects.filter(
+                        user_id=self.request.user.id, auction_id=OuterRef("pk")
+                    )
+                )
+            ).get(id=self.kwargs["id"])
 
-        if auction.status == "Draft":
-            # Deny access if the user is a seller or not the author of the draft
-            if self.request.user.is_seller or str(auction.author) != str(
-                self.request.user.id
-            ):
-                self.permission_denied(self.request)
-        else:
-            self.notify_auction_group(auction)
+            # Increment views count for the auction
+            AuctionStatistics.objects.filter(auction=auction.id).update(
+                views_count=F("views_count") + 1
+            )
 
-        return auction
+            # Handle draft auction access based on user permissions
+            if auction.status == StatusChoices.DRAFT:
+                if self.request.user.is_seller or str(auction.author) != str(
+                    self.request.user.id
+                ):
+                    self.permission_denied(self.request)
+            else:
+                self.notify_auction_group(auction)
+
+            return auction
+
+        except Auction.DoesNotExist:
+            raise NotFound("Not found.")
 
     def notify_auction_group(self, auction):
         channel_layer = get_channel_layer()

@@ -45,6 +45,7 @@ def examples():
                     "views_count": 2000,
                     "total_bids_count": 259,
                 },
+                "bookmarked": True,
             },
             response_only=True,
             status_codes=[200],

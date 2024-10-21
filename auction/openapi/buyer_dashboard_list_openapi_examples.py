@@ -21,7 +21,7 @@ def examples():
                 "author": "0a85c5dd-c896-4802-8fa6-426220c78cd9",
                 "product": "Strawberry",
                 "status": "Upcoming",
-                "category": {"name": "Food & Beverages"},
+                "category": "Food & Beverages",
                 "tags": ["Sweet"],
                 "max_price": "₾15000.00",
                 "currency": "GEL",

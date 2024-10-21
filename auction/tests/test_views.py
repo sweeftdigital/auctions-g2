@@ -277,8 +277,8 @@ class BuyerAuctionListViewTests(APITestCase):
         response = self.client.get(self.url + "?ordering=-category")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data.get("results")), 2)
-        self.assertEqual(response.data["results"][0]["category"]["name"], "Pet Supplies")
-        self.assertEqual(response.data["results"][1]["category"]["name"], "Electronics")
+        self.assertEqual(response.data["results"][0]["category"], "Pet Supplies")
+        self.assertEqual(response.data["results"][1]["category"], "Electronics")
 
     def test_auction_list_returns_only_auctions_of_author(self):
         # Check that the view does not return auctions of different users.
@@ -509,10 +509,8 @@ class SellerAuctionListViewTests(APITestCase):
         response = self.client.get(self.url + "?ordering=-category")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data.get("results")), 2)
-        self.assertEqual(
-            response.data["results"][0]["category"]["name"], "Collectibles & Art"
-        )
-        self.assertEqual(response.data["results"][1]["category"]["name"], "Automobiles")
+        self.assertEqual(response.data["results"][0]["category"], "Collectibles & Art")
+        self.assertEqual(response.data["results"][1]["category"], "Automobiles")
 
     def test_order_by_tag_ascending(self):
         response = self.client.get(self.url + "?ordering=tags")
