@@ -31,6 +31,7 @@ class BidConsumer(AsyncJsonWebsocketConsumer):
             {
                 "type": "new_bid_notification",
                 "bid": event["message"],
+                "additional_information": event["additional_information"],
             }
         )
 

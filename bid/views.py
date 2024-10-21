@@ -7,7 +7,7 @@ from rest_framework.generics import RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from auction.models import Auction
+from auction.models import Auction, AuctionStatistics
 from auction.permissions import IsBuyer, IsOwner
 from bid.models import Bid
 from bid.openapi.bid_approve_openapi_examples import approve_bid_examples
@@ -100,9 +100,19 @@ class CreateBidView(generics.CreateAPIView):
 
         bid_data["id"] = str(bid_data["id"])
         bid_data["auction"] = str(bid_data["auction"])
+        auction_statistics = AuctionStatistics.objects.filter(auction=auction_id).first()
+
+        additional_information = {}
+        if auction_statistics:
+            additional_information["total_bids_count"] = (
+                auction_statistics.total_bids_count
+            )
+        else:
+            additional_information["total_bids_count"] = 0
 
         print(
-            f"Sending WebSocket notification to auction_{str(auction_id)} with data: {bid_data}"
+            f"Sending WebSocket notification to auction_{str(auction_id)} "
+            f"with data: {bid_data}, additional info: {additional_information}"
         )
 
         async_to_sync(channel_layer.group_send)(
@@ -110,6 +120,7 @@ class CreateBidView(generics.CreateAPIView):
             {
                 "type": "new_bid_notification",
                 "message": bid_data,
+                "additional_information": additional_information,
             },
         )
 

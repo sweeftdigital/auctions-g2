@@ -1,6 +1,8 @@
+from django.db import IntegrityError, transaction
+from django.db.models import F
 from rest_framework import serializers
 
-from auction.models.auction import AcceptedBiddersChoices
+from auction.models.auction import AcceptedBiddersChoices, AuctionStatistics
 from auction.utils import get_currency_symbol
 from bid.models.bid import Bid, BidImage, StatusChoices
 
@@ -101,19 +103,32 @@ class BaseBidSerializer(serializers.ModelSerializer):
 class CreateBidSerializer(BaseBidSerializer):
     def create(self, validated_data):
         image_data = validated_data.pop("images", [])
-
         user = self.context["request"].user
         validated_data["author"] = user.id
 
-        bid = Bid.objects.create(**validated_data)
+        try:
+            with transaction.atomic():  # Start the transaction
+                bid = Bid.objects.create(**validated_data)
 
-        for index, image_array in enumerate(image_data, start=1):
-            image_file = image_array
-            image_name = f"{bid.id}-image_{index}"
-            image_file.name = image_name
-            BidImage.objects.create(bid=bid, image_url=image_file)
+                for index, image_array in enumerate(image_data, start=1):
+                    image_file = image_array
+                    image_name = f"{bid.id}-image_{index}"
+                    image_file.name = image_name
+                    BidImage.objects.create(bid=bid, image_url=image_file)
 
-        return bid
+                AuctionStatistics.objects.filter(auction=bid.auction).update(
+                    total_bids_count=F("total_bids_count") + 1
+                )
+
+            return bid
+        except IntegrityError:
+            raise serializers.ValidationError(
+                "Failed to create bid. Please check your input."
+            )
+        except Exception:
+            raise serializers.ValidationError(
+                "An unexpected error occurred. Please try again."
+            )
 
 
 class UpdateBidSerializer(BaseBidSerializer):

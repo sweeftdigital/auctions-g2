@@ -65,6 +65,7 @@ class BookmarkAdmin(admin.ModelAdmin):
 class BidAdmin(admin.ModelAdmin):
     list_display = (
         "id",
+        "auction_id",
         "offer",
         "status",
         "delivery_fee",
