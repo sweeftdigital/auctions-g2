@@ -2,7 +2,7 @@ import os
 
 from django.core.management.base import BaseCommand
 
-from auctions.rabbitmq.handlers import UserDeletedHandler
+from auctions.rabbitmq.handlers import BuyerDeletedHandler, SellerDeletedHandler
 from auctions.rabbitmq.subscriber import EventSubscriber
 
 
@@ -19,8 +19,10 @@ class Command(BaseCommand):
             password=os.environ.get("RABBITMQ_DEFAULT_PASS", "guest"),
         )
 
-        event_subscriber.register_handler("buyer_deletion", UserDeletedHandler())
-        event_subscriber.subscribe_events("buyer_deletion")
+        event_subscriber.register_handler("Buyer_deletion", BuyerDeletedHandler())
+        event_subscriber.register_handler("Seller_deletion", SellerDeletedHandler())
+        event_subscriber.subscribe_events("Buyer_deletion")
+        event_subscriber.subscribe_events("Seller_deletion")
 
         # Start consuming events
         self.stdout.write(self.style.SUCCESS("Starting RabbitMQ event subscriber..."))
