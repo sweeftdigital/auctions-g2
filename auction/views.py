@@ -236,7 +236,7 @@ class SellerAuctionListView(ListAPIView):
     - 404 (Not Found): If invalid value is passed to page query parameter.
     """
 
-    permission_classes = (IsAuthenticated, IsSeller)
+    permission_classes = (IsAuthenticated,)
     serializer_class = SellerLiveAuctionListSerializer
     filterset_class = SellerAuctionFilterSet
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
