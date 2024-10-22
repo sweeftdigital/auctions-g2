@@ -19,7 +19,8 @@ class CustomJWTAuthMiddleware(BaseJWTAuth):
 
         try:
             headers = dict(scope["headers"])
-            auth_header = headers.get(b"authorization", None)
+            subprotocols = scope.get("subprotocols", None)
+            auth_header = headers.get(b"sec-websocket-protocol", None)
 
             if auth_header:
                 auth_token = auth_header.decode("utf-8")
@@ -32,6 +33,16 @@ class CustomJWTAuthMiddleware(BaseJWTAuth):
                     scope["user"] = AnonymousUser()
             else:
                 scope["user"] = AnonymousUser()
+
+            # Custom send function to include subprotocol during WebSocket handshake
+            async def new_send(message):
+                if message["type"] == "websocket.accept":
+                    # Include the subprotocol if provided by the client
+                    message["subprotocol"] = subprotocols[0] if subprotocols else None
+                await send(message)
+
+            # Proceed with the inner application, passing the new send function
+            return await self.app(scope, receive, new_send)
 
         except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, KeyError, IndexError):
             scope["user"] = AnonymousUser()
