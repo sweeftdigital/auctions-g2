@@ -150,7 +150,7 @@ class BuyerAuctionListView(ListAPIView):
 class BuyerDashboardListView(ListAPIView):
     """
     Retrieves a list of auctions that belong to the user, this includes
-    auctions with statuses: `Live`, `Upcoming`. This view is intended to be
+    auctions with status: `Live` only. This view is intended to be
     used for buyer's dashboard.
 
     **Permissions**:
@@ -169,7 +169,9 @@ class BuyerDashboardListView(ListAPIView):
     serializer_class = AuctionListSerializer
 
     def get_queryset(self):
-        queryset = Auction.objects.filter(status="Live", author=self.request.user.id)
+        queryset = Auction.objects.filter(
+            status="Live", start_date__lte=timezone.now(), author=self.request.user.id
+        )
         return queryset
 
 
