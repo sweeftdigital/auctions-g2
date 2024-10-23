@@ -1,6 +1,7 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db.models import Exists, F, OuterRef
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.openapi import OpenApiParameter
@@ -288,8 +289,8 @@ class SellerAuctionListView(ListAPIView):
 class SellerDashboardListView(ListAPIView):
     """
     Retrieves a list of auctions that user is taking part in(user has
-    created bid on that auction), this includes auctions with statuses:
-    `Live`, `Upcoming`. This view is intended to be used for seller's dashboard.
+    created bid on that auction), this includes auctions with status:
+    `Live` only. This view is intended to be used for seller's dashboard.
 
     **Permissions**:
 
@@ -310,7 +311,9 @@ class SellerDashboardListView(ListAPIView):
         user = self.request.user
 
         # Get auctions where the user has placed bids
-        queryset = Auction.objects.filter(bids__author=user.id).distinct()
+        queryset = Auction.objects.filter(
+            bids__author=user.id, start_date__lte=timezone.now()
+        ).distinct()
 
         # Add bookmarked status
         bookmarked_subquery = Bookmark.objects.filter(
