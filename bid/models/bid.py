@@ -14,6 +14,7 @@ class StatusChoices(models.TextChoices):
     PENDING = "Pending", "Pending"
     APPROVED = "Approved", "Approved"
     REJECTED = "Rejected", "Rejected"
+    DELETED = "Deleted", "Deleted"
 
 
 class Bid(models.Model):

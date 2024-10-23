@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from django.db import transaction
 
 from auction.models.auction import Auction
+from bid.models.bid import Bid
 
 
 class EventHandler(ABC):
@@ -11,7 +12,7 @@ class EventHandler(ABC):
         pass
 
 
-class UserDeletedHandler(EventHandler):
+class BuyerDeletedHandler(EventHandler):
     """
     Handles the 'user deleted' event that is published from accounts service.
 
@@ -34,3 +35,13 @@ class UserDeletedHandler(EventHandler):
 
             # Delete all auctions that have status of "Draft" for that user
             Auction.objects.filter(author=user_id, status="Draft").delete()
+
+
+class SellerDeletedHandler(EventHandler):
+    def handle(self, event_body):
+        print(f"Handling user deleted event: {event_body}")
+        user_id = event_body.get("user_id")
+
+        with transaction.atomic():
+            # Update all bid statuses to "Deleted" that belongs to the deleted user
+            Bid.objects.filter(author=user_id).update(status="Deleted")
