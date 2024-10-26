@@ -11,10 +11,11 @@ import os
 
 import django
 
-django.setup()  # Ensures that Django's app
+django.setup()
 
 
 from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.security.websocket import AllowedHostsOriginValidator
 from django.core.asgi import get_asgi_application
 
 from auction.authentication.jwt_auth_middleware import JWTAuthMiddlewareStack
@@ -31,6 +32,8 @@ application = ProtocolTypeRouter(
         # HTTP handling
         "http": get_asgi_application(),
         # WebSocket handling with JWT authentication
-        "websocket": JWTAuthMiddlewareStack(URLRouter(combined_websocket_urlpatterns)),
+        "websocket": AllowedHostsOriginValidator(
+            JWTAuthMiddlewareStack(URLRouter(combined_websocket_urlpatterns)),
+        ),
     }
 )
