@@ -8,7 +8,7 @@ class BidConsumer(AsyncJsonWebsocketConsumer):
         user = self.scope["user"]
         self.auction_id = self.scope["url_route"]["kwargs"]["auction_id"]
 
-        if not user.is_authenticated or not user.is_seller:
+        if not user.is_authenticated:
             await self.close()
             return
 
