@@ -1,6 +1,6 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.db.models import Exists, F, OuterRef
+from django.db.models import BooleanField, Case, Exists, F, OuterRef, Subquery, When
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
@@ -449,13 +449,18 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
 
     def get_object(self):
         try:
-            # This will exclude deleted auctions due to the AuctionManager
+            # Single annotation that gets both the bookmark status and ID for the current user
             auction = Auction.objects.annotate(
-                bookmarked=Exists(
+                bookmark_id=Subquery(
                     Bookmark.objects.filter(
                         user_id=self.request.user.id, auction_id=OuterRef("pk")
-                    )
-                )
+                    ).values("id")[:1]
+                ),
+                bookmarked=Case(
+                    When(bookmark_id__isnull=False, then=True),
+                    default=False,
+                    output_field=BooleanField(),
+                ),
             ).get(id=self.kwargs["id"])
 
             # Increment views count for the auction

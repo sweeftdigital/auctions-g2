@@ -101,6 +101,7 @@ class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):
     category = serializers.SerializerMethodField()
     statistics = serializers.SerializerMethodField()
     bookmarked = serializers.BooleanField(default=False)
+    bookmark_id = serializers.UUIDField(read_only=True, allow_null=True)
 
     class Meta:
         model = Auction
