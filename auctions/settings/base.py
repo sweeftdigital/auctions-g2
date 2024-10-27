@@ -189,7 +189,7 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
-    "big_images": {
+    "bid_images": {
         "BACKEND": "storages.backends.s3.S3Storage",
         "OPTIONS": {
             "bucket_name": AWS_BID_IMAGES_BUCKET_NAME,
@@ -198,7 +198,7 @@ STORAGES = {
                 "CacheControl": "max-age=86400",
             },
             "querystring_auth": False,
-            "location": "big_images",
+            "location": "bid_images",
         },
     },
 }

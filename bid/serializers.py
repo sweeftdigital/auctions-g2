@@ -18,6 +18,32 @@ class BidImageSerializer(serializers.ModelSerializer):
         model = BidImage
         fields = ["image_url"]
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        try:
+            if instance.image_url:
+                representation["image_url"] = instance.image_url.url
+        except Exception as e:
+            print(f"Error processing image URL for bid image {instance.id}: {e}")
+        return representation
+
+
+class BidListSerializer(serializers.ModelSerializer):
+    images = BidImageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Bid
+        fields = [
+            "id",
+            "author",
+            "auction",
+            "offer",
+            "description",
+            "delivery_fee",
+            "status",
+            "images",
+        ]
+
 
 class BaseBidSerializer(serializers.ModelSerializer):
     images = serializers.ListField(

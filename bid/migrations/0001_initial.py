@@ -91,7 +91,7 @@ class Migration(migrations.Migration):
                         null=True,
                         storage=storages.backends.s3.S3Storage(
                             bucket_name="reversello-bid-images",
-                            location="big_images",
+                            location="bid_images",
                             object_parameters={"CacheControl": "max-age=86400"},
                             querystring_auth=False,
                             region_name="eu-central-1",

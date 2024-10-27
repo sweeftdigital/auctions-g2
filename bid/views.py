@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, mixins
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
-from rest_framework.generics import RetrieveAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -14,12 +14,18 @@ from auction.models import Auction, AuctionStatistics
 from auction.permissions import HasCountryInProfile, IsBuyer, IsOwner, IsSeller
 from auction.utils import get_currency_symbol
 from bid.models import Bid
+from bid.models.bid import StatusChoices
 from bid.openapi.bid_approve_openapi_examples import approve_bid_examples
 from bid.openapi.bid_create_openapi_examples import create_bid_examples
 from bid.openapi.bid_reject_openapi_examples import reject_bid_examples
 from bid.openapi.bid_retrive_openapi_examples import retrieve_bid_examples
 from bid.openapi.bid_update_openapi_examples import update_bid_examples
-from bid.serializers import BaseBidSerializer, CreateBidSerializer, UpdateBidSerializer
+from bid.serializers import (
+    BaseBidSerializer,
+    BidListSerializer,
+    CreateBidSerializer,
+    UpdateBidSerializer,
+)
 
 
 @extend_schema(
@@ -418,3 +424,24 @@ class ApproveBidView(generics.GenericAPIView):
                 "additional_information": additional_information,
             },
         )
+
+
+@extend_schema(
+    tags=["Bids"],
+)
+class BidListView(ListAPIView):
+    serializer_class = BidListSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        auction_id = self.kwargs.get("auction_id")
+        auction = get_object_or_404(Auction, id=auction_id)
+
+        # Fetch bids with related images in one query
+        queryset = (
+            Bid.objects.filter(auction=auction)
+            .exclude(status=StatusChoices.DELETED)
+            .prefetch_related("images")
+        )
+
+        return queryset

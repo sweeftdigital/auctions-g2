@@ -7,7 +7,7 @@ from auction.models.auction import Auction
 
 
 def get_big_images_storage():
-    return storages["big_images"]
+    return storages["bid_images"]
 
 
 class StatusChoices(models.TextChoices):
