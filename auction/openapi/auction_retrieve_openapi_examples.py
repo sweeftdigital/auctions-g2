@@ -45,6 +45,7 @@ def examples():
                     "views_count": 2000,
                     "total_bids_count": 259,
                 },
+                "bookmark_id": "5df7gf12-c896-4802-8fa6-426220c78cd9",
                 "bookmarked": True,
             },
             response_only=True,

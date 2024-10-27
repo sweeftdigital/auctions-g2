@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from auction.models import Auction, AuctionStatistics
-from auction.permissions import IsBuyer, IsOwner
+from auction.permissions import HasCountryInProfile, IsBuyer, IsOwner, IsSeller
 from auction.utils import get_currency_symbol
 from bid.models import Bid
 from bid.openapi.bid_approve_openapi_examples import approve_bid_examples
@@ -62,7 +62,7 @@ class CreateBidView(generics.CreateAPIView):
     """
 
     serializer_class = CreateBidSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsSeller, HasCountryInProfile)
 
     def get_auction(self):
         """
