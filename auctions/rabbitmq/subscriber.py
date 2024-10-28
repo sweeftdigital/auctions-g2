@@ -26,7 +26,10 @@ class EventSubscriber:
         self._connection = pika.BlockingConnection(connection_params)
         self._channel = self._connection.channel()
         self._channel.exchange_declare(
-            exchange=self._exchange_name, exchange_type="direct"
+            exchange=self._exchange_name,
+            exchange_type="direct",
+            durable=True,
+            auto_delete=True,
         )
 
     def register_handler(self, event_type: str, handler: EventHandler):
@@ -36,7 +39,7 @@ class EventSubscriber:
         self._channel.queue_declare(queue=queue_name, durable=True, auto_delete=False)
         self._channel.queue_bind(exchange=self._exchange_name, queue=queue_name)
         self._channel.basic_consume(
-            queue=queue_name, on_message_callback=self._on_message, auto_ack=True
+            queue=queue_name, on_message_callback=self._on_message
         )
 
     def _on_message(self, channel, method, properties, body):
@@ -46,8 +49,11 @@ class EventSubscriber:
 
             if event_type in self._event_handlers:
                 self._event_handlers[event_type].handle(event_body)
+                channel.basic_ack(delivery_tag=method.delivery_tag)
+                print("*" * 200)
             else:
                 print(f"No handler registered for event type: {event_type}")
+                channel.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
         except json.JSONDecodeError:
             print(f"Failed to decode message body: {body}")
         except Exception as e:
