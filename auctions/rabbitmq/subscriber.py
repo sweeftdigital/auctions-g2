@@ -35,9 +35,11 @@ class EventSubscriber:
     def register_handler(self, event_type: str, handler: EventHandler):
         self._event_handlers[event_type] = handler
 
-    def subscribe_events(self, queue_name: str):
+    def subscribe_events(self, queue_name: str, routing_key: str):
         self._channel.queue_declare(queue=queue_name, durable=True, auto_delete=False)
-        self._channel.queue_bind(exchange=self._exchange_name, queue=queue_name)
+        self._channel.queue_bind(
+            exchange=self._exchange_name, queue=queue_name, routing_key=routing_key
+        )
         self._channel.basic_consume(
             queue=queue_name, on_message_callback=self._on_message
         )

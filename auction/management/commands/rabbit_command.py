@@ -21,8 +21,10 @@ class Command(BaseCommand):
 
         event_subscriber.register_handler("Buyer_deletion", BuyerDeletedHandler())
         event_subscriber.register_handler("Seller_deletion", SellerDeletedHandler())
-        event_subscriber.subscribe_events("Buyer_deletion")
-        event_subscriber.subscribe_events("Seller_deletion")
+        event_subscriber.subscribe_events("Buyer_deletion", routing_key="Buyer_deletion")
+        event_subscriber.subscribe_events(
+            "Seller_deletion", routing_key="Seller_deletion"
+        )
 
         # Start consuming events
         self.stdout.write(self.style.SUCCESS("Starting RabbitMQ event subscriber..."))
