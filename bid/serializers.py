@@ -44,6 +44,21 @@ class BidListSerializer(serializers.ModelSerializer):
             "images",
         ]
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        currency = instance.auction.currency
+        offer = representation["offer"]
+        representation["offer"] = f"{get_currency_symbol(currency)}{offer}"
+
+        delivery_fee = representation.get("delivery_fee")
+        if delivery_fee:
+            representation["delivery_fee"] = (
+                f"{get_currency_symbol(currency)}{delivery_fee}"
+            )
+
+        return representation
+
 
 class BaseBidSerializer(serializers.ModelSerializer):
     images = serializers.ListField(
