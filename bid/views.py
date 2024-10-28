@@ -17,6 +17,7 @@ from bid.models import Bid
 from bid.models.bid import StatusChoices
 from bid.openapi.bid_approve_openapi_examples import approve_bid_examples
 from bid.openapi.bid_create_openapi_examples import create_bid_examples
+from bid.openapi.bid_list_openapi_examples import list_bid_examples
 from bid.openapi.bid_reject_openapi_examples import reject_bid_examples
 from bid.openapi.bid_retrive_openapi_examples import retrieve_bid_examples
 from bid.openapi.bid_update_openapi_examples import update_bid_examples
@@ -428,18 +429,58 @@ class ApproveBidView(generics.GenericAPIView):
 
 @extend_schema(
     tags=["Bids"],
+    examples=list_bid_examples(),
+    responses={
+        200: BidListSerializer,
+        401: BidListSerializer,
+        403: BidListSerializer,
+        404: BidListSerializer,
+    },
 )
-class BidListView(ListAPIView):
+class BuyerBidListView(ListAPIView):
     serializer_class = BidListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsBuyer, IsOwner]
 
     def get_queryset(self):
         auction_id = self.kwargs.get("auction_id")
-        auction = get_object_or_404(Auction, id=auction_id)
+        user_id = self.request.user.id
+        auction = get_object_or_404(Auction, id=auction_id, author=user_id)
 
         # Fetch bids with related images in one query
         queryset = (
             Bid.objects.filter(auction=auction)
+            .exclude(status=StatusChoices.DELETED)
+            .prefetch_related("images")
+        )
+
+        return queryset
+
+
+@extend_schema(
+    tags=["Bids"],
+    examples=list_bid_examples(),
+    responses={
+        200: BidListSerializer,
+        401: BidListSerializer,
+        403: BidListSerializer,
+        404: BidListSerializer,
+    },
+)
+class SellerBidListView(ListAPIView):
+    serializer_class = BidListSerializer
+    permission_classes = [IsAuthenticated, IsSeller]
+
+    def get_queryset(self):
+        auction_id = self.kwargs.get("auction_id")
+        user_id = self.request.user.id
+        auction = get_object_or_404(Auction, id=auction_id)
+
+        # Fetch only the seller's bids for this auction
+        queryset = (
+            Bid.objects.filter(
+                auction=auction,
+                author=user_id,
+            )
             .exclude(status=StatusChoices.DELETED)
             .prefetch_related("images")
         )
