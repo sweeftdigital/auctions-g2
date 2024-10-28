@@ -21,7 +21,10 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd /home/nata_tchikhinashvili/auctions-g2
+            source ~/.zshrc
             source .venv/bin/activate
+            source ~/.zshrc
+            git reset --hard
             git pull --strategy-option theirs
             git checkout dev
             pip3 install -r requirements.txt
