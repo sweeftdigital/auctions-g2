@@ -41,18 +41,19 @@ class EventSubscriber:
             exchange=self._exchange_name, queue=queue_name, routing_key=routing_key
         )
         self._channel.basic_consume(
-            queue=queue_name, on_message_callback=self._on_message
+            queue=queue_name, on_message_callback=self._on_message, auto_ack=False
         )
 
     def _on_message(self, channel, method, properties, body):
         try:
             event_type = properties.headers.get("event_type")
             event_body = json.loads(body)
+            print(f"Received event: {event_type} with body: {event_body}")
 
             if event_type in self._event_handlers:
                 self._event_handlers[event_type].handle(event_body)
                 channel.basic_ack(delivery_tag=method.delivery_tag)
-                print("*" * 200)
+                print("Message acknowledged.")
             else:
                 print(f"No handler registered for event type: {event_type}")
                 channel.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
