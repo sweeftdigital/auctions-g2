@@ -29,7 +29,7 @@ class EventSubscriber:
             exchange=self._exchange_name,
             exchange_type="direct",
             durable=True,
-            auto_delete=True,
+            auto_delete=False,
         )
 
     def register_handler(self, event_type: str, handler: EventHandler):
@@ -40,6 +40,7 @@ class EventSubscriber:
         self._channel.queue_bind(
             exchange=self._exchange_name, queue=queue_name, routing_key=routing_key
         )
+        self._channel.basic_qos(prefetch_count=1)
         self._channel.basic_consume(
             queue=queue_name, on_message_callback=self._on_message, auto_ack=False
         )
