@@ -2,7 +2,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import F
 from rest_framework import serializers
 
-from auction.models.auction import AcceptedBiddersChoices, AuctionStatistics
+from auction.models.auction import AuctionStatistics
 from auction.utils import get_currency_symbol
 from bid.models.bid import Bid, BidImage, StatusChoices
 
@@ -51,6 +51,7 @@ class BaseBidSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
     )
+    bid_images = serializers.SerializerMethodField(read_only=True)
     auction_name = serializers.CharField(source="auction.auction_name", read_only=True)
     author_name = serializers.CharField(source="author.full_name", read_only=True)
 
@@ -67,6 +68,7 @@ class BaseBidSerializer(serializers.ModelSerializer):
             "delivery_fee",
             "status",
             "images",
+            "bid_images",
         ]
         read_only_fields = [
             "id",
@@ -75,44 +77,17 @@ class BaseBidSerializer(serializers.ModelSerializer):
             "author_name",
             "auction",
             "auction_name",
+            "bid_images",
         ]
 
-    def validate(self, data):
-        auction = self.context.get("auction")
-        user = self.context["request"].user
-
-        if auction is None:
-            raise serializers.ValidationError("Auction does not exist.")
-
-        if auction.status != "Live":
-            raise serializers.ValidationError("You can only bid on live auctions.")
-
-        if not user.is_seller:
-            raise serializers.ValidationError("Only sellers can place bids.")
-
-        if (
-            auction.accepted_bidders == AcceptedBiddersChoices.COMPANY
-            and not user.is_company()
-        ):
-            raise serializers.ValidationError("Only companies can bid on this auction.")
-        if (
-            auction.accepted_bidders == AcceptedBiddersChoices.INDIVIDUAL
-            and not user.is_individual()
-        ):
-            raise serializers.ValidationError("Only individuals can bid on this auction.")
-        if auction.accepted_bidders == AcceptedBiddersChoices.BOTH and not (
-            user.is_company() or user.is_individual()
-        ):
-            raise serializers.ValidationError(
-                "Only individuals or companies can bid on this auction."
-            )
-
-        return data
+    def get_bid_images(self, obj):
+        """Return all image URLs for this bid"""
+        # Using the correct related_name from your model: 'images'
+        return [image.image_url.url for image in obj.images.all()]
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
 
-        # Attach currency symbol to offer and delivery_fee fields
         currency = instance.auction.currency
         offer = representation["offer"]
         representation["offer"] = f"{get_currency_symbol(currency)}{offer}"
@@ -142,19 +117,22 @@ class CreateBidSerializer(BaseBidSerializer):
                     image_file.name = image_name
                     BidImage.objects.create(bid=bid, image_url=image_file)
 
+                # Update statistics
                 AuctionStatistics.objects.filter(auction=bid.auction).update(
                     total_bids_count=F("total_bids_count") + 1
                 )
 
-            return bid
+                # Refresh to get the latest data including images
+                bid.refresh_from_db()
+
+                return bid
+
         except IntegrityError:
             raise serializers.ValidationError(
                 "Failed to create bid. Please check your input."
             )
-        except Exception:
-            raise serializers.ValidationError(
-                "An unexpected error occurred. Please try again."
-            )
+        except Exception as e:
+            raise serializers.ValidationError(f"An unexpected error occurred: {str(e)}")
 
 
 class UpdateBidSerializer(BaseBidSerializer):
