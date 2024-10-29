@@ -2,6 +2,7 @@ from django.urls import path
 
 from auction.views import (
     BookmarkListView,
+    BulkDeleteAuctionView,
     BuyerAuctionListView,
     BuyerDashboardListView,
     CreateBookmarkView,
@@ -43,6 +44,7 @@ urlpatterns = [
         name="create-draft-auction",
     ),
     path("delete/<uuid:id>/", DeleteAuctionView.as_view(), name="delete-auction"),
+    path("bulk-delete/", BulkDeleteAuctionView.as_view(), name="bulk-delete-auction"),
     path("bookmarks/list/", BookmarkListView.as_view(), name="list-bookmark"),
     path("bookmark/create/", CreateBookmarkView.as_view(), name="create-bookmark"),
     path(

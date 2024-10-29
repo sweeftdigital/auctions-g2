@@ -318,3 +318,11 @@ class AuctionSaveSerializer(CountryFieldMixin, serializers.ModelSerializer):
             representation["status"] = "Upcoming"
 
         return representation
+
+
+class BulkDeleteAuctionSerializer(serializers.Serializer):
+    ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        allow_empty=False,
+        help_text="List of auction UUIDs to delete.",
+    )

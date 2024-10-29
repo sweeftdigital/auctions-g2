@@ -42,6 +42,7 @@ from auction.serializers import (
     AuctionSaveSerializer,
     BookmarkCreateSerializer,
     BookmarkListSerializer,
+    BulkDeleteAuctionSerializer,
     SellerLiveAuctionListSerializer,
 )
 
@@ -543,6 +544,81 @@ class DeleteAuctionView(generics.DestroyAPIView):
             {"detail": _("Auction deleted successfully.")},
             status=status.HTTP_204_NO_CONTENT,
         )
+
+
+@extend_schema(
+    tags=["Auctions"],
+    responses={
+        204: BulkDeleteAuctionSerializer,
+        401: BulkDeleteAuctionSerializer,
+        403: BulkDeleteAuctionSerializer,
+        404: BulkDeleteAuctionSerializer,
+    },
+    examples=auction_delete_openapi_examples.examples(),
+)
+class BulkDeleteAuctionView(generics.GenericAPIView):
+    """
+    Bulk delete multiple auctions by their UUIDs.
+
+    This view allows authenticated users to delete multiple auctions they own.
+    Only auctions that the user has permission to delete will be processed.
+
+    **Deletion Behavior:**
+    - If an auction is in "DRAFT" status, it is permanently deleted from the database.
+    - For other statuses, the auction is marked as "DELETED" but remains in the database.
+
+    **Permissions:**
+    - The user must be authenticated.
+    - Only users who are not sellers or who own the auction are permitted to delete it.
+
+    **Response:**
+    - 204 (No Content): The auctions were successfully deleted or marked as deleted.
+    - 401 (Unauthorized): Authentication credentials are missing or invalid.
+    - 403 (Forbidden): User does not have permission to delete the auctions.
+    - 404 (Not Found): One or more auctions do not exist or are inaccessible.
+    """
+
+    serializer_class = BulkDeleteAuctionSerializer
+    permission_classes = (IsAuthenticated, IsNotSellerAndIsOwner)
+
+    def post(self, request, *args, **kwargs):
+        # Validate request data using the serializer
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        auction_ids = serializer.validated_data["ids"]
+
+        deleted_count = 0
+        marked_deleted_count = 0
+
+        for auction_id in auction_ids:
+            try:
+                auction = Auction.objects.get(id=auction_id)
+
+                if auction.status == StatusChoices.DRAFT:
+                    auction.delete()
+                    deleted_count += 1
+                else:
+                    auction.status = StatusChoices.DELETED
+                    auction.save()
+                    marked_deleted_count += 1
+
+            except Auction.DoesNotExist:
+                return Response(
+                    {
+                        "detail": _("Auction with UUID {id} does not exist.").format(
+                            id=auction_id
+                        )
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+        response_data = {
+            "detail": _(
+                "{deleted} auctions deleted and {marked_deleted} auctions marked as deleted."
+            ).format(deleted=deleted_count, marked_deleted=marked_deleted_count)
+        }
+        return Response(response_data, status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema(
