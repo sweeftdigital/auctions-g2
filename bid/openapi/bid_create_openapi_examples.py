@@ -32,9 +32,11 @@ def create_bid_examples():
                 "description": "Placing my bid for this auction",
                 "delivery_fee": "₾25.00",
                 "status": "Pending",
-                "bid_images": [
+                "images": [
                     "https://reversello-bid-images.s3.amazonaws.com/bid_images/20f58f67-02c4-474f-"
-                    "80f4-3e2a06df27d3-image_1"
+                    "80f4-3e2a06df27d3-image_1",
+                    "https://reversello-bid-images.s3.amazonaws.com/bid_images/20f58f67-02c4-474f-"
+                    "80f4-3e2a06df27d3-image_2",
                 ],
             },
             response_only=True,

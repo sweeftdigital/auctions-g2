@@ -57,6 +57,11 @@ class BidListSerializer(serializers.ModelSerializer):
                 f"{get_currency_symbol(currency)}{delivery_fee}"
             )
 
+        image_urls = [
+            image.image_url.url for image in instance.images.all() if image.image_url
+        ]
+        representation["images"] = image_urls
+
         return representation
 
 
@@ -66,7 +71,6 @@ class BaseBidSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
     )
-    bid_images = serializers.SerializerMethodField(read_only=True)
     auction_name = serializers.CharField(source="auction.auction_name", read_only=True)
     author_name = serializers.CharField(source="author.full_name", read_only=True)
 
@@ -83,7 +87,6 @@ class BaseBidSerializer(serializers.ModelSerializer):
             "delivery_fee",
             "status",
             "images",
-            "bid_images",
         ]
         read_only_fields = [
             "id",
@@ -92,13 +95,7 @@ class BaseBidSerializer(serializers.ModelSerializer):
             "author_name",
             "auction",
             "auction_name",
-            "bid_images",
         ]
-
-    def get_bid_images(self, obj):
-        """Return all image URLs for this bid"""
-        # Using the correct related_name from your model: 'images'
-        return [image.image_url.url for image in obj.images.all()]
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -112,6 +109,10 @@ class BaseBidSerializer(serializers.ModelSerializer):
             representation["delivery_fee"] = (
                 f"{get_currency_symbol(currency)}{delivery_fee}"
             )
+
+        representation["images"] = [
+            image.image_url.url for image in instance.images.all()
+        ]
 
         return representation
 

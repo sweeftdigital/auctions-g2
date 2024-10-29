@@ -17,10 +17,8 @@ def retrieve_bid_examples():
                 "delivery_fee": "€122",
                 "status": "Pending",
                 "images": [
-                    {
-                        "image_url": "https://hips.hearstapps.com/hmg-prod/images/2025-lexus-rx350-premium-101-"
-                        "66f2dbe526c80.jpg?crop=0.788xw:0.666xh;0.0224xw,0.329xh&resize=2048:*"
-                    }
+                    "https://hips.hearstapps.com/hmg-prod/images/2025-lexus-rx350-premium-101-"
+                    "66f2dbe526c80.jpg?crop=0.788xw:0.666xh;0.0224xw,0.329xh&resize=2048:*"
                 ],
             },
             response_only=True,
