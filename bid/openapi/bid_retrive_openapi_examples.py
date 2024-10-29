@@ -42,6 +42,27 @@ def retrieve_bid_examples():
             status_codes=[401],
         ),
         OpenApiExample(
+            "Error: No permission (GET)",
+            summary="No permission to perform the requested operation.",
+            description="This example shows an error response when a user tries "
+            "to retrieve a bid that does not belong to them, or "
+            "if they are an user with user_type of Buyer and the "
+            "auction on which the bid is placed does not belong "
+            "to them.",
+            value={
+                "type": "client_error",
+                "errors": [
+                    {
+                        "code": "permission_denied",
+                        "message": "You do not have permission to perform this action.",
+                        "field_name": None,
+                    }
+                ],
+            },
+            response_only=True,
+            status_codes=[403],
+        ),
+        OpenApiExample(
             "Error: Bid not found (GET)",
             summary="Bid not found",
             description="This example shows an error response when a user tries to retrieve a bid that doesn't exist.",

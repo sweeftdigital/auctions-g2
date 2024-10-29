@@ -21,6 +21,7 @@ from bid.openapi.bid_list_openapi_examples import list_bid_examples
 from bid.openapi.bid_reject_openapi_examples import reject_bid_examples
 from bid.openapi.bid_retrive_openapi_examples import retrieve_bid_examples
 from bid.openapi.bid_update_openapi_examples import update_bid_examples
+from bid.permissions import IsBidAuthorOrAuctionAuthor
 from bid.serializers import (
     BaseBidSerializer,
     BidListSerializer,
@@ -231,6 +232,7 @@ class UpdateBidView(generics.GenericAPIView, mixins.UpdateModelMixin):
     responses={
         200: BaseBidSerializer,
         401: BaseBidSerializer,
+        403: BaseBidSerializer,
         404: BaseBidSerializer,
     },
     examples=retrieve_bid_examples(),
@@ -248,26 +250,9 @@ class RetrieveBidView(RetrieveAPIView):
     """
 
     serializer_class = BaseBidSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        """
-        Override to fetch the bid by the ID.
-        """
-        return Bid.objects.filter(
-            id=self.kwargs.get("bid_id"), author=self.request.user.id
-        )
-
-    def get_object(self):
-        """
-        Retrieves the bid instance using the bid_id from the URL and ensures
-        the user is the author of the bid.
-        """
-        queryset = self.get_queryset()
-        bid = queryset.first()
-        if not bid:
-            raise ValidationError({"detail": "Bid not found or you are not the author."})
-        return bid
+    permission_classes = (IsAuthenticated, IsBidAuthorOrAuctionAuthor)
+    lookup_url_kwarg = "bid_id"
+    queryset = Bid.objects.all()
 
 
 @extend_schema(
