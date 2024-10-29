@@ -17,7 +17,7 @@ urlpatterns = [
         name="create-bid",
     ),
     path(
-        "auction/<uuid:auction_id>/bid/<uuid:bid_id>/update/",
+        "update/<uuid:bid_id>/",
         UpdateBidView.as_view(),
         name="update-bid",
     ),

@@ -39,6 +39,24 @@ def update_bid_examples():
             status_codes=[401],
         ),
         OpenApiExample(
+            "Error: No permission (GET)",
+            summary="No permission to perform the requested operation.",
+            description="This example shows an error response when a user tries "
+            "to update a bid that does not belong to them.",
+            value={
+                "type": "client_error",
+                "errors": [
+                    {
+                        "code": "permission_denied",
+                        "message": "You do not have permission to perform this action.",
+                        "field_name": None,
+                    }
+                ],
+            },
+            response_only=True,
+            status_codes=[403],
+        ),
+        OpenApiExample(
             "Error: Bid not found or unauthorized (PATCH)",
             summary="Bid not found or unauthorized",
             description="This example shows an error response when a user tries to update a bid that"

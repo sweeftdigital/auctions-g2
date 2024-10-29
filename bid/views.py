@@ -4,7 +4,7 @@ from django.db import IntegrityError, transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
-from rest_framework import generics, mixins
+from rest_framework import generics
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -21,7 +21,7 @@ from bid.openapi.bid_list_openapi_examples import list_bid_examples
 from bid.openapi.bid_reject_openapi_examples import reject_bid_examples
 from bid.openapi.bid_retrive_openapi_examples import retrieve_bid_examples
 from bid.openapi.bid_update_openapi_examples import update_bid_examples
-from bid.permissions import IsBidAuthorOrAuctionAuthor
+from bid.permissions import IsBidAuthorOrAuctionAuthor, IsBidOwner
 from bid.serializers import (
     BaseBidSerializer,
     BidListSerializer,
@@ -143,25 +143,26 @@ class CreateBidView(generics.CreateAPIView):
         200: UpdateBidSerializer,
         400: UpdateBidSerializer,
         401: UpdateBidSerializer,
+        403: UpdateBidSerializer,
         404: UpdateBidSerializer,
     },
     examples=update_bid_examples(),
 )
-class UpdateBidView(generics.GenericAPIView, mixins.UpdateModelMixin):
+class UpdateBidView(generics.UpdateAPIView):
     """
     View for partially updating a bid in an auction.
 
     **Functionality**:
     - Allows authenticated users to update their own bids in a specific auction.
-    - Validates that the auction exists and the bid belongs to the user.
+    - Validates that the bid belongs to the user.
     - Sends a WebSocket notification to inform other users about the updated bid.
+    - **Note**: Only the `offer` field can be updated.
 
     **Permissions**:
     - The user must be authenticated (IsAuthenticated).
     - Only the bid's author is allowed to make updates.
 
     **Request Parameters**:
-    - `auction_id`: UUID of the auction.
     - `bid_id`: UUID of the bid to be updated.
 
     **Response**:
@@ -170,39 +171,10 @@ class UpdateBidView(generics.GenericAPIView, mixins.UpdateModelMixin):
     """
 
     serializer_class = UpdateBidSerializer
-    permission_classes = [IsAuthenticated]
-
-    def patch(self, request, *args, **kwargs):
-        """Allow partial update, specifically for the offer"""
-        auction_id = self.kwargs.get("auction_id")
-        bid_id = self.kwargs.get("bid_id")
-
-        auction = Auction.objects.filter(id=auction_id).first()
-        if auction is None:
-            raise ValidationError({"detail": "Auction not found."})
-
-        bid = Bid.objects.filter(
-            id=bid_id, auction_id=auction_id, author=self.request.user.id
-        ).first()
-        if bid is None:
-            raise ValidationError({"detail": "Bid not found or you are not the author."})
-
-        if len(request.data) > 1 or "offer" not in request.data:
-            raise ValidationError(
-                "Offer not provided or more that one field was provided."
-            )
-
-        serializer = self.get_serializer(
-            bid,
-            data=request.data,
-            context={"auction": auction, "request": request},
-            partial=True,
-        )
-        serializer.is_valid(raise_exception=True)
-
-        self.perform_update(serializer)
-
-        return Response(serializer.data)
+    permission_classes = [IsAuthenticated, IsBidOwner]
+    lookup_url_kwarg = "bid_id"
+    queryset = Bid.objects.all()
+    http_method_names = ["patch"]
 
     def perform_update(self, serializer):
         """Send WebSocket notification after bid update"""

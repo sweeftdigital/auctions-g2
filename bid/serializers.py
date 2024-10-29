@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from auction.models.auction import AuctionStatistics
 from auction.utils import get_currency_symbol
-from bid.models.bid import Bid, BidImage, StatusChoices
+from bid.models.bid import Bid, BidImage
 
 
 class BidSerializer(serializers.ModelSerializer):
@@ -153,19 +153,12 @@ class CreateBidSerializer(BaseBidSerializer):
 
 class UpdateBidSerializer(BaseBidSerializer):
     class Meta(BaseBidSerializer.Meta):
+        model = Bid
         fields = ["offer"]
 
-    def update(self, instance, validated_data):
-        status = instance.status
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
 
-        if status == StatusChoices.REJECTED:
-            raise serializers.ValidationError("Rejected bids cannot be updated.")
-
-        if status == StatusChoices.APPROVED and validated_data["offer"] >= instance.offer:
-            raise serializers.ValidationError(
-                "For approved bids, the offer can only be reduced."
-            )
-
-        instance.offer = validated_data["offer"]
-        instance.save()
-        return instance
+        return {
+            "offer": representation["offer"],
+        }

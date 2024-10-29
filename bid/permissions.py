@@ -12,3 +12,13 @@ class IsBidAuthorOrAuctionAuthor(BasePermission):
         is_auction_author = str(obj.auction.author) == str(request.user.id)
         print(obj.auction.author, request.user.id)
         return is_bid_author or is_auction_author
+
+
+class IsBidOwner(BasePermission):
+    """
+    Custom permission to only allow owners of an object to work with them.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        is_author = str(obj.author) == str(request.user.id)
+        return is_author
