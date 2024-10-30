@@ -26,6 +26,8 @@ class UserProxy:
         self.last_name = payload.get("last_name", "")
         self.theme = payload.get("theme", "")
         self.language = payload.get("language", "")
+        self.avatar = payload.get("avatar", None)
+        self.nickname = payload.get("nickname", None)
 
     @property
     def full_name(self) -> str:
