@@ -19,6 +19,10 @@ def examples():
                 "user_id": "c3774265-ddbd-470e-a0a0-eec81dec0201",
                 "auction": {
                     "id": "5624773c-ddbd-470e-a0a0-eec81dec0201",
+                    "author": "8df4cbc0-c2ab-4f63-a547-a945ac81d595",
+                    "author_avatar": "https://api.dicebear.com/9.x/micah/svg?seed=830",
+                    "author_nickname": "NostalgicRide939",
+                    "author_kyc_verified": False,
                     "product": "High-Performance Laptop",
                     "status": "Upcoming",
                     "category": "Electronics",

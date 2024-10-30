@@ -11,6 +11,9 @@ def examples(include_description=False):
     example_1_value = {
         "id": "2ea3de7f-944b-44d6-919f-519130b7d583",
         "author": "0a85c5dd-c896-4802-8fa6-426220c78cd9",
+        "author_avatar": "https://api.dicebear.com/9.x/micah/svg?seed=777",
+        "author_nickname": "SadWozniak777",
+        "author_kyc_verified": True,
         "product": "Strawberry",
         "status": "Upcoming",
         "category": "Food & Beverages",
