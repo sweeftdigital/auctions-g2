@@ -90,7 +90,12 @@ class CreateBidView(generics.CreateAPIView):
         if not auction:  # pragma: no cover
             raise ValidationError({"detail": "Auction not found."})
 
-        serializer.save(auction=auction, author=self.request.user.id)
+        serializer.save(
+            auction=auction,
+            author=self.request.user.id,
+            author_avatar=self.request.user.avatar,
+            author_nickname=self.request.user.nickname,
+        )
 
         self.notify_auction_group(auction.id, serializer.instance)
 
