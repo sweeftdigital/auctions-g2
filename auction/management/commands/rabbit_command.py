@@ -3,7 +3,14 @@ import os
 
 from django.core.management.base import BaseCommand
 
-from auctions.rabbitmq.handlers import BuyerDeletedHandler, SellerDeletedHandler
+from auctions.rabbitmq.handlers import (
+    BuyerDeletedHandler,
+    BuyerUpdateAuthorAvatarHandler,
+    BuyerUpdateAuthorNicknameHandler,
+    SellerDeletedHandler,
+    SellerUpdateAuthorAvatarHandler,
+    SellerUpdateAuthorNicknameHandler,
+)
 from auctions.rabbitmq.subscriber import EventSubscriber
 
 logger = logging.getLogger(__name__)
@@ -23,6 +30,22 @@ class Command(BaseCommand):
             "Seller_deletion": {
                 "queue": "auctions.seller.deletion",
                 "handler": SellerDeletedHandler(),
+            },
+            "Buyer_avatar_update": {
+                "queue": "auctions.buyer.update.avatar",
+                "handler": BuyerUpdateAuthorAvatarHandler(),
+            },
+            "Seller_avatar_update": {
+                "queue": "auctions.seller.update.avatar",
+                "handler": SellerUpdateAuthorAvatarHandler(),
+            },
+            "Buyer_nickname_update": {
+                "queue": "auctions.buyer.update.nickname",
+                "handler": BuyerUpdateAuthorNicknameHandler(),
+            },
+            "Seller_nickname_update": {
+                "queue": "auctions.seller.update.nickname",
+                "handler": SellerUpdateAuthorNicknameHandler(),
             },
         }
 

@@ -53,3 +53,61 @@ class SellerDeletedHandler(EventHandler):
         except Exception as e:
             print(f"Error processing Buyer deletion: {e}")
             raise
+
+
+class BuyerUpdateAuthorAvatarHandler(EventHandler):
+    def handle(self, event_body):
+        print(f"Handling buyer avatar change event: {event_body}")
+        user_id = event_body.get("user_id")
+        new_avatar = event_body.get("new_avatar")
+
+        try:
+            with transaction.atomic():
+                Auction.objects.filter(author=user_id).update(author_avatar=new_avatar)
+        except Exception as e:
+            print(f"Error processing Buyer update author info: {e}")
+            raise
+
+
+class SellerUpdateAuthorAvatarHandler(EventHandler):
+    def handle(self, event_body):
+        print(f"Handling seller avatar change event: {event_body}")
+        user_id = event_body.get("user_id")
+        new_avatar = event_body.get("new_avatar")
+
+        try:
+            with transaction.atomic():
+                Bid.objects.filter(author=user_id).update(author_avatar=new_avatar)
+        except Exception as e:
+            print(f"Error processing Seller update author info: {e}")
+            raise
+
+
+class BuyerUpdateAuthorNicknameHandler(EventHandler):
+    def handle(self, event_body):
+        print(f"Handling buyer nickname change event: {event_body}")
+        user_id = event_body.get("user_id")
+        new_nickname = event_body.get("new_nickname")
+
+        try:
+            with transaction.atomic():
+                Auction.objects.filter(author=user_id).update(
+                    author_nickname=new_nickname
+                )
+        except Exception as e:
+            print(f"Error processing Buyer update author info: {e}")
+            raise
+
+
+class SellerUpdateAuthorNicknameHandler(EventHandler):
+    def handle(self, event_body):
+        print(f"Handling seller nickname change event: {event_body}")
+        user_id = event_body.get("user_id")
+        new_nickname = event_body.get("new_nickname")
+
+        try:
+            with transaction.atomic():
+                Bid.objects.filter(author=user_id).update(author_nickname=new_nickname)
+        except Exception as e:
+            print(f"Error processing Seller update author info: {e}")
+            raise
