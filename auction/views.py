@@ -759,7 +759,13 @@ class BaseAuctionView(CreateAPIView):
     permission_classes = [IsAuthenticated, IsBuyer, HasCountryInProfile]
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user.id, status=self.get_auction_status())
+
+        serializer.save(
+            author=self.request.user.id,
+            author_avatar=self.request.user.avatar,
+            author_nickname=self.request.user.nickname,
+            status=self.get_auction_status(),
+        )
         try:
             self.notify_auction(serializer.data)
         except Exception as e:
