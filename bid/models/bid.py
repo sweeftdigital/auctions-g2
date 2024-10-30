@@ -20,6 +20,9 @@ class StatusChoices(models.TextChoices):
 class Bid(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     author = models.UUIDField()
+    author_avatar = models.CharField(max_length=255, blank=True, null=True)
+    author_nickname = models.CharField(max_length=255, blank=True, null=True)
+    author_kyc_verified = models.BooleanField(default=False)
     auction = models.ForeignKey(
         Auction, related_name="bids", null=True, on_delete=models.CASCADE
     )
