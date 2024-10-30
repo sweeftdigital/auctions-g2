@@ -34,6 +34,9 @@ class AuctionListSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "author",
+            "author_avatar",
+            "author_nickname",
+            "author_kyc_verified",
             "product",
             "status",
             "category",
@@ -200,6 +203,9 @@ class AuctionSaveSerializer(CountryFieldMixin, serializers.ModelSerializer):
         fields = [
             "id",
             "author",
+            "author_avatar",
+            "author_nickname",
+            "author_kyc_verified",
             "auction_name",
             "description",
             "category",
@@ -215,7 +221,14 @@ class AuctionSaveSerializer(CountryFieldMixin, serializers.ModelSerializer):
             "custom_fields",
             "condition",
         ]
-        read_only_fields = ["id", "status", "author"]
+        read_only_fields = [
+            "id",
+            "status",
+            "author",
+            "author_nickname",
+            "author_avatar",
+            "author_kyc_verified",
+        ]
 
     def validate(self, data):
         for field in self.Meta.read_only_fields:
