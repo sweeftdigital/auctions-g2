@@ -26,6 +26,9 @@ def create_bid_examples():
             value={
                 "id": "b6f0c9c7-deaa-4699-9e77-d26e5b4e1338",
                 "author": "00dd3466-a745-41fe-b5f4-bb1818ec8dbf",
+                "author_avatar": "https://api.dicebear.com/9.x/micah/svg?seed=777",
+                "author_nickname": "SadWozniak777",
+                "author_kyc_verified": True,
                 "auction": "e890e8e7-91c5-4c2e-8a28-a2a522a3bcc9",
                 "auction_name": "High-Performance Laptop",
                 "offer": "₾500.00",
