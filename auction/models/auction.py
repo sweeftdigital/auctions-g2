@@ -41,6 +41,9 @@ class Auction(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     author = models.UUIDField()
+    author_avatar = models.CharField(max_length=255, blank=True, null=True)
+    author_nickname = models.CharField(max_length=255, blank=True, null=True)
+    author_kyc_verified = models.BooleanField(default=False)
     auction_name = models.CharField(max_length=255)
     description = models.TextField()
     category = models.ForeignKey("Category", on_delete=models.PROTECT)
