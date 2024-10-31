@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-30 22:01+0000\n"
+"POT-Creation-Date: 2024-10-30 23:52+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,49 +28,49 @@ msgstr ""
 "Buyer პროფილის ტიპის მქონე მომხმარებლებს არ შეუძლიათ ამ ოპერაციის "
 "განხორციელება."
 
-#: auction/serializers.py:191
+#: auction/serializers.py:192
 msgid "This auction is already bookmarked."
 msgstr "ეს აუქციონი უკვე დაბუქმარქებულია."
 
-#: auction/serializers.py:236
+#: auction/serializers.py:237
 msgid "This field is read-only."
 msgstr ""
 "ამ ველის ჩაწერა არ შეიძლება, რადგან ის მხოლოდ წაკითხვისთვისაა განკუთვნილი."
 
-#: auction/serializers.py:247
+#: auction/serializers.py:248
 msgid "Start date cannot be in the past."
 msgstr "აუქციონის საწყისი დრო არ შეიძლება იყოს ამჟამინდელ დროზე ნაკლები."
 
-#: auction/serializers.py:271
+#: auction/serializers.py:272
 msgid "End date must be after the start date."
 msgstr "აუქციონის დასასრულის დორ არ შეიძლება იყოს საწყის დროზე ნაკლები."
 
-#: auction/serializers.py:278
+#: auction/serializers.py:279
 msgid "Max price must be greater than 0."
 msgstr "აუქციონში განსაზღვრული მაქსიმალური ფასი უნდა იყოს 0-ზე მეტი."
 
-#: auction/serializers.py:284
+#: auction/serializers.py:285
 msgid "Invalid category."
 msgstr "კატეგორია არავალიდურია."
 
-#: auction/serializers.py:290
+#: auction/serializers.py:291
 msgid "Tags are required, make sure to include them."
 msgstr "თეგების გადმოცემა სავალდებულია."
 
-#: auction/serializers.py:313
+#: auction/serializers.py:314
 msgid "There was an error during the creation of an auction. Please try again."
 msgstr "აუქციონის შექმნისას პრობლემამ იჩინა თავი. გთხოვთ სცადოთ თავიდან."
 
-#: auction/views.py:544
+#: auction/views.py:550
 msgid "Auction deleted successfully."
 msgstr "აუქციონი წარმატებით წაიშალა."
 
-#: auction/views.py:609
+#: auction/views.py:615
 #, python-brace-format
 msgid "Auction with UUID {id} does not exist."
 msgstr "აუქციონი მოცემული იდენტიფიკატორით {id} არ არსებობს."
 
-#: auction/views.py:618
+#: auction/views.py:624
 #, python-brace-format
 msgid ""
 "{deleted} auctions deleted and {marked_deleted} auctions marked as deleted."

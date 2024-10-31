@@ -45,6 +45,7 @@ from auction.serializers import (
     BulkDeleteAuctionSerializer,
     SellerLiveAuctionListSerializer,
 )
+from bid.models import Bid
 
 
 @extend_schema(
@@ -450,7 +451,7 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
 
     def get_object(self):
         try:
-            # Single annotation that gets both the bookmark status and ID for the current user
+            # Annotations for bookmark status, bid status, and related data
             auction = Auction.objects.annotate(
                 bookmark_id=Subquery(
                     Bookmark.objects.filter(
@@ -461,6 +462,11 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
                     When(bookmark_id__isnull=False, then=True),
                     default=False,
                     output_field=BooleanField(),
+                ),
+                has_bid=Exists(
+                    Bid.objects.filter(
+                        author=self.request.user.id, auction_id=OuterRef("pk")
+                    )
                 ),
             ).get(id=self.kwargs["id"])
 

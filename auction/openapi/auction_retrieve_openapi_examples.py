@@ -50,6 +50,7 @@ def examples():
                 },
                 "bookmark_id": "5df7gf12-c896-4802-8fa6-426220c78cd9",
                 "bookmarked": True,
+                "has_bid": False,
             },
             response_only=True,
             status_codes=[200],
