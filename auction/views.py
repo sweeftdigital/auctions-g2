@@ -450,12 +450,15 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
     lookup_field = "id"
 
     def get_object(self):
+        user_id = self.request.user.id
+        user_is_seller = self.request.user.is_seller
+
         try:
-            # Annotations for bookmark status, bid status, and related data
-            auction = Auction.objects.annotate(
+            # Base query with bookmark annotation
+            base_query = Auction.objects.annotate(
                 bookmark_id=Subquery(
                     Bookmark.objects.filter(
-                        user_id=self.request.user.id, auction_id=OuterRef("pk")
+                        user_id=user_id, auction_id=OuterRef("pk")
                     ).values("id")[:1]
                 ),
                 bookmarked=Case(
@@ -463,12 +466,18 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
                     default=False,
                     output_field=BooleanField(),
                 ),
-                has_bid=Exists(
-                    Bid.objects.filter(
-                        author=self.request.user.id, auction_id=OuterRef("pk")
-                    )
-                ),
-            ).get(id=self.kwargs["id"])
+            )
+
+            # bid-related annotations only for users with user_type of Seller
+            if user_is_seller:
+                base_query = base_query.annotate(
+                    has_bid=Exists(
+                        Bid.objects.filter(author=user_id, auction_id=OuterRef("pk"))
+                    ),
+                )
+
+            # Getting the auction with appropriate/combined annotations
+            auction = base_query.get(id=self.kwargs["id"])
 
             # Increment views count for the auction
             AuctionStatistics.objects.filter(auction=auction.id).update(
@@ -477,9 +486,7 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
 
             # Handle draft auction access based on user permissions
             if auction.status == StatusChoices.DRAFT:
-                if self.request.user.is_seller or str(auction.author) != str(
-                    self.request.user.id
-                ):
+                if user_is_seller or str(auction.author) != str(user_id):
                     self.permission_denied(self.request)
             else:
                 self.notify_auction_group(auction)
