@@ -47,6 +47,7 @@ def examples():
                     "top_bid_author": "1as2as3-c896-4802-8fa6-426220c78cd9",
                     "views_count": 2000,
                     "total_bids_count": 259,
+                    "bookmarks_count": 147,
                 },
                 "bookmark_id": "5df7gf12-c896-4802-8fa6-426220c78cd9",
                 "bookmarked": True,

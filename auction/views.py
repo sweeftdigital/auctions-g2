@@ -674,20 +674,40 @@ class CreateBookmarkView(CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-
         serializer = self.get_serializer(
             data=request.data, context={"user_id": request.user.id}
         )
         serializer.is_valid(raise_exception=True)
         bookmark = serializer.save()
 
+        auction_id = bookmark.auction.id
+        current_bookmarks_count = bookmark.auction.statistics.bookmarks_count
+
+        self.notify_auction_group(auction_id, current_bookmarks_count)
         response_data = {
             "bookmark_id": bookmark.id,
             "user_id": bookmark.user_id,
-            "auction_id": bookmark.auction.id,
+            "auction_id": auction_id,
         }
 
         return Response(response_data, status=status.HTTP_201_CREATED)
+
+    def notify_auction_group(self, auction_id, bookmarks_count):
+        channel_layer = get_channel_layer()
+
+        print(
+            f"Sending WebSocket notification to auction_{str(auction_id)} "
+            f"with bookmarks count increased, current bookmarks count: "
+            f"{bookmarks_count}"
+        )
+
+        async_to_sync(channel_layer.group_send)(
+            f"auction_{str(auction_id)}",
+            {
+                "type": "bookmarks_count_notification",
+                "message": bookmarks_count,
+            },
+        )
 
 
 @extend_schema(

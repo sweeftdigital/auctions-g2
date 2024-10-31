@@ -133,7 +133,7 @@ class CreateBidSerializer(BaseBidSerializer):
         validated_data["author"] = user.id
 
         try:
-            with transaction.atomic():  # Start the transaction
+            with transaction.atomic():
                 bid = Bid.objects.create(**validated_data)
 
                 for index, image_array in enumerate(image_data, start=1):

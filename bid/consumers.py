@@ -72,3 +72,15 @@ class BidConsumer(AsyncJsonWebsocketConsumer):
                 "auction_view_count": event["message"],
             }
         )
+
+    async def bookmarks_count_notification(self, event):
+        """
+        Handles real-time notifications about how many times users have
+        bookmarked specified auction.
+        """
+        await self.send_json(
+            {
+                "type": "bookmarks_count_notification",
+                "bookmarks_count": event["message"],
+            }
+        )

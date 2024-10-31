@@ -1,4 +1,5 @@
 from django.db import IntegrityError, transaction
+from django.db.models import F
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_countries.serializers import CountryFieldMixin
@@ -133,6 +134,7 @@ class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):
             "top_bid_author": auction_statistics.top_bid_author,
             "views_count": auction_statistics.views_count,
             "total_bids_count": auction_statistics.total_bids_count,
+            "bookmarks_count": auction_statistics.bookmarks_count,
         }
 
     def to_representation(self, instance):
@@ -191,8 +193,20 @@ class BookmarkCreateSerializer(serializers.ModelSerializer):
         if Bookmark.objects.filter(user_id=user_id, auction_id=auction_id).exists():
             raise serializers.ValidationError(_("This auction is already bookmarked."))
 
-        bookmark = Bookmark.objects.create(user_id=user_id, auction_id=auction_id)
-        return bookmark
+        try:
+            with transaction.atomic():
+                bookmark = Bookmark.objects.create(user_id=user_id, auction_id=auction_id)
+                AuctionStatistics.objects.filter(auction_id=auction_id).update(
+                    bookmarks_count=F("bookmarks_count") + 1
+                )
+
+                return bookmark
+        except IntegrityError:
+            raise serializers.ValidationError(
+                "Failed to create bookmark. Please try_again."
+            )
+        except Exception as e:
+            raise serializers.ValidationError(f"An unexpected error occurred: {str(e)}")
 
 
 class AuctionSaveSerializer(CountryFieldMixin, serializers.ModelSerializer):
