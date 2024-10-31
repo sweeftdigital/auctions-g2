@@ -57,6 +57,39 @@ services:
       - micro-network
       - auctions-private-network
 
+  auction_celery:
+    container_name: auction_celery
+    restart: always
+    build: .
+    command: celery -A auctions worker -E -l INFO
+    volumes:
+      - ./:/auctions
+    env_file:
+      - ./.env
+    depends_on:
+      - auctions_postgres
+      - auctions_redis
+    networks:
+      - micro-network
+      - auctions-private-network
+
+  auction_celery_beat:
+    container_name: auction_celery_beat
+    restart: on-failure
+    build: .
+    command: celery -A auctions beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - ./:/auctions
+    env_file:
+      - ./.env
+    depends_on:
+      - auctions_postgres
+      - auctions_redis
+      - auction_celery
+    networks:
+      - micro-network
+      - auctions-private-network
+
 volumes:
   postgres_auctions_data:
 

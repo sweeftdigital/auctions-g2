@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from django.utils.timezone import timedelta
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -24,6 +26,7 @@ INSTALLED_APPS = [
     "drf_standardized_errors",
     "corsheaders",
     "storages",
+    "django_celery_beat",
     # Local
     "auction.apps.AuctionConfig",
     "bid.apps.BidConfig",
@@ -202,3 +205,25 @@ STORAGES = {
         },
     },
 }
+
+# celery configuration
+
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND")
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TASK_SERIALIZER = "json"
+CELERY_TIMEZONE = "Asia/Tbilisi"
+CELERY_TASK_ACKS_LATE = True  # Only acknowledge task completion after it's done
+CELERY_TASK_REJECT_ON_WORKER_LOST = True  # Reject tasks if worker dies
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1  # Don't prefetch tasks, process one at a time
+
+CELERY_BEAT_SCHEDULE = {
+    "complete_expired_auctions": {
+        "task": "auction.tasks.complete_expired_auctions",
+        "schedule": timedelta(seconds=5),
+    }
+}
+
+# CSRF Settings
+CSRF_TRUSTED_ORIGINS = ["http://localhost:8001"]
