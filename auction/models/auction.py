@@ -103,5 +103,8 @@ class AuctionStatistics(models.Model):
     views_count = models.PositiveIntegerField(default=0)
     total_bids_count = models.PositiveIntegerField(default=0)
 
+    # Metric of how many users have bookmarked the auction
+    bookmarks_count = models.PositiveIntegerField(default=0)
+
     def __str__(self):
         return f"Statistics for {self.auction.auction_name}"
