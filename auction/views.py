@@ -1,6 +1,8 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.db import DatabaseError, transaction
 from django.db.models import BooleanField, Case, Exists, F, OuterRef, Subquery, When
+from django.db.models.functions import Greatest
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
@@ -741,6 +743,57 @@ class DeleteBookmarkView(DestroyAPIView):
 
     queryset = Bookmark.objects.all()
     permission_classes = (IsAuthenticated, IsOwner)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        auction_id = instance.auction.id
+
+        try:
+            with transaction.atomic():
+                # Decrease bookmarks count statistic field in auction statistics model
+                AuctionStatistics.objects.filter(auction_id=auction_id).update(
+                    bookmarks_count=Greatest(F("bookmarks_count") - 1, 0)
+                )
+
+                # Get the updated count for WebSocket notification
+                updated_count = AuctionStatistics.objects.get(
+                    auction_id=auction_id
+                ).bookmarks_count
+
+                # Delete the bookmark
+                instance.delete()
+                self.notify_auction_group(auction_id, updated_count)
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except DatabaseError as e:
+            return Response(
+                {"detail": f"Failed to delete bookmark due to database error. {e}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "detail": f"An unexpected error occurred while deleting the bookmark. {e}"
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    def notify_auction_group(self, auction_id, bookmarks_count):
+        channel_layer = get_channel_layer()
+
+        print(
+            f"Sending WebSocket notification to auction_{str(auction_id)} "
+            f"with bookmarks count decreased, current bookmarks count: "
+            f"{bookmarks_count}"
+        )
+
+        async_to_sync(channel_layer.group_send)(
+            f"auction_{auction_id}",
+            {
+                "type": "bookmarks_count_notification",
+                "message": bookmarks_count,
+            },
+        )
 
 
 @extend_schema(
