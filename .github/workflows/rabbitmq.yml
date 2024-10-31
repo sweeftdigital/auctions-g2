@@ -31,6 +31,8 @@ jobs:
             deactivate
             sudo systemctl daemon-reload
             sudo systemctl restart rabbimqlisten
+            sudo systemctl restart celery-auctions
+            sudo systemctl restart cb-auctions
           EOF
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
