@@ -79,6 +79,12 @@ class Auction(models.Model):
         ordering = [
             "-created_at",
         ]
+        indexes = [
+            models.Index(fields=["author"]),
+            models.Index(fields=["start_date", "end_date"]),
+            models.Index(fields=["status"]),
+            models.Index(fields=["created_at"]),
+        ]
 
     def __str__(self):
         return f"{self.auction_name} - Status: {self.status}"
