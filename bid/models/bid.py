@@ -42,6 +42,13 @@ class Bid(models.Model):
         max_length=20,
         help_text="Status of the bid",
     )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Bid Created At")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Bid Updated At")
+
+    class Meta:
+        ordering = [
+            "-created_at",
+        ]
 
     def __str__(self):
         return f"Bid of ${self.offer} - {self.description[:50]}"
