@@ -6,7 +6,8 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from auction.models import Auction, StatusChoices
+from auction.models import Auction
+from auction.models.auction import StatusChoices
 from auctions.celery import app
 
 logger = logging.getLogger(__name__)
@@ -72,20 +73,29 @@ def complete_expired_auctions(self) -> Dict[str, Any]:
 def process_auction_chunk(current_time: timezone.datetime) -> int:
     """
     Process and update expired auctions in batches, returning the count of updated auctions.
+    Uses efficient batch processing with ID-based pagination.
     """
     try:
         with transaction.atomic():
-            # Select and update auctions in a single step without storing auction IDs in memory
-            update_count = (
+            # First, get the IDs of auctions to update
+            auction_ids = list(
                 Auction.objects.filter(
                     status=StatusChoices.LIVE, end_date__lte=current_time
                 )
-                .select_for_update(skip_locked=True)[:BATCH_SIZE]
-                .update(status=StatusChoices.COMPLETED, updated_at=current_time)
+                .select_for_update(skip_locked=True)
+                .values_list("id", flat=True)[:BATCH_SIZE]
+            )
+
+            if not auction_ids:
+                return 0
+
+            # Then perform the update on the selected IDs
+            update_count = Auction.objects.filter(id__in=auction_ids).update(
+                status=StatusChoices.COMPLETED, updated_at=current_time
             )
 
             return update_count
 
     except Exception as e:
-        logger.error(f"Error processing auction chunk. {e}", exc_info=True)
+        logger.error(f"Error processing auction chunk: {e}", exc_info=True)
         return 0
