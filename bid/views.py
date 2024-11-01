@@ -81,6 +81,14 @@ class CreateBidView(generics.CreateAPIView):
         auction_id = self.kwargs.get("auction_id")
         try:
             auction = Auction.objects.get(id=auction_id)
+            if auction.status == "Draft":
+                raise ValidationError(
+                    {
+                        "message": _(
+                            "You can not place bids on auctions with a status of `Draft`."
+                        )
+                    }
+                )
             if auction.end_date < timezone.now():
                 raise ValidationError(
                     {
