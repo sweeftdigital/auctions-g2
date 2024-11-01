@@ -41,6 +41,7 @@ def create_bid_examples():
                     "https://reversello-bid-images.s3.amazonaws.com/bid_images/20f58f67-02c4-474f-"
                     "80f4-3e2a06df27d3-image_2",
                 ],
+                "is_top_bid": True,
             },
             response_only=True,
             status_codes=[201],
