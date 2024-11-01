@@ -1,5 +1,6 @@
 from django.db import IntegrityError, transaction
 from django.db.models import F
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from auction.models.auction import AuctionStatistics
@@ -248,10 +249,12 @@ class UpdateBidSerializer(BaseBidSerializer):
         return bid
 
     def validate_bid_offer(self, new_offer, current_offer):
-        if current_offer < new_offer:
+        if current_offer <= new_offer:
             raise serializers.ValidationError(
-                "You can not update bid with "
-                "an offer that is more than the "
-                "current one. You can only lower "
-                "the offer when updating a bid"
+                _(
+                    "You can not update bid with "
+                    "an offer that is more or equal than the "
+                    "current one. You can only lower "
+                    "the offer when updating a bid"
+                )
             )

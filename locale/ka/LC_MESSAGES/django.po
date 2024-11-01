@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-01 13:12+0000\n"
+"POT-Creation-Date: 2024-11-01 22:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -78,7 +78,13 @@ msgstr ""
 "წაიშალა {deleted} აუქციონი და {marked_deleted} აუქციონი მონიშნულია, როგორც "
 "წაშლილი."
 
-#: bid/views.py:84
+#: bid/serializers.py:255
+msgid ""
+"You can not update bid with an offer that is more or equal than the current "
+"one. You can only lower the offer when updating a bid"
+msgstr "ბიდის ფასის შეცვლისას თქვენ არ შეგიძლიათ უკვე არსებული მნიშვნელობის ან მასზე მეტი მნიშვნელობის მითითება. ბიდის განახლებისას შესაძლებელია მხოლოდ ფასის დაკლება."
+
+#: bid/views.py:88
 msgid "Auction has already been completed, you can no longer place bids."
 msgstr ""
 "აუქციონი უკვე დასრულდა, თქვენ ვეღარ შეძლებთ ამ აუქციონზე ბიდის განთავსებას."
