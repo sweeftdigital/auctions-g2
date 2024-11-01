@@ -106,8 +106,9 @@ class CreateBidView(generics.CreateAPIView):
             author_avatar=self.request.user.avatar,
             author_nickname=self.request.user.nickname,
         )
+        is_top_bid = serializer.data.get("is_top_bid", False)
 
-        self.notify_auction_group(auction.id, serializer.instance)
+        self.notify_auction_group(auction.id, serializer.instance, is_top_bid)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -116,17 +117,17 @@ class CreateBidView(generics.CreateAPIView):
         return context
 
     @staticmethod
-    def notify_auction_group(auction_id, bid):  # pragma: no cover
+    def notify_auction_group(auction_id, bid, is_top_bid):  # pragma: no cover
         """
         Notify the WebSocket group when a new bid is created.
         Send the full bid data to the WebSocket group.
         """
         channel_layer = get_channel_layer()
-
         bid_data = CreateBidSerializer(bid).data
 
         bid_data["id"] = str(bid_data["id"])
         bid_data["auction"] = str(bid_data["auction"])
+        bid_data["is_top_bid"] = is_top_bid
         auction_statistics = AuctionStatistics.objects.filter(auction=auction_id).first()
 
         additional_information = {}
