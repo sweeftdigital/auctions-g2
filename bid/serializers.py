@@ -137,7 +137,12 @@ class CreateBidSerializer(BaseBidSerializer):
         """Check if current bid is the top bid for the auction"""
 
         previous_top_bid = self.context.get("previous_top_bid")
-        return previous_top_bid is not None and current_bid.offer < previous_top_bid
+        if previous_top_bid is None:
+            return True
+        if current_bid.offer < previous_top_bid:
+            return True
+
+        return False
 
     def update_auction_statistics(self, bid):
         """Update auction statistics with new bid information"""
