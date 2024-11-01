@@ -3,6 +3,8 @@ from channels.layers import get_channel_layer
 from django.db import IntegrityError, transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
@@ -79,6 +81,14 @@ class CreateBidView(generics.CreateAPIView):
         auction_id = self.kwargs.get("auction_id")
         try:
             auction = Auction.objects.get(id=auction_id)
+            if auction.end_date < timezone.now():
+                raise ValidationError(
+                    {
+                        "message": _(
+                            "Auction has already been completed, you can no longer place bids."
+                        )
+                    }
+                )
             return auction
         except Auction.DoesNotExist:
             return None
