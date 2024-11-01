@@ -9,6 +9,17 @@ def update_bid_examples():
             description="This example demonstrates a successful request to update a bid that"
             " is in a pending state or an approved bid with a reduced offer.",
             value={
+                "offer": "₾1200.00",
+            },
+            request_only=True,
+            status_codes=[200],
+        ),
+        OpenApiExample(
+            "Successful bid update response (PATCH)",
+            summary="Response for successfully Updating an existing bid (Pending or Approved)",
+            description="This example demonstrates a successful response after updating a bid that"
+            " is in a pending state or an approved bid with a reduced offer.",
+            value={
                 "id": "56fde4e4-85ae-4c11-b420-cc74a7d9d685",
                 "author": "89180d7c-7a8e-4e7a-8133-f10313912fc4",
                 "author_nickname": "AngryMaxwell455",
@@ -28,15 +39,6 @@ def update_bid_examples():
                     "80f4-3e2a06df27d3-image_2",
                 ],
             },
-            request_only=True,
-            status_codes=[200],
-        ),
-        OpenApiExample(
-            "Successful bid update response (PATCH)",
-            summary="Response for successfully Updating an existing bid (Pending or Approved)",
-            description="This example demonstrates a successful response after updating a bid that"
-            " is in a pending state or an approved bid with a reduced offer.",
-            value={"offer": "$950"},
             response_only=True,
             status_codes=[200],
         ),
