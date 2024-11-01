@@ -76,6 +76,7 @@ class BaseBidSerializer(serializers.ModelSerializer):
     )
     auction_name = serializers.CharField(source="auction.auction_name", read_only=True)
     author_name = serializers.CharField(source="author.full_name", read_only=True)
+    is_top_bid = serializers.SerializerMethodField()
 
     class Meta:
         model = Bid
@@ -93,6 +94,7 @@ class BaseBidSerializer(serializers.ModelSerializer):
             "delivery_fee",
             "status",
             "images",
+            "is_top_bid",
         ]
         read_only_fields = [
             "id",
@@ -104,7 +106,29 @@ class BaseBidSerializer(serializers.ModelSerializer):
             "author_kyc_verified",
             "auction",
             "auction_name",
+            "is_top_bid",
         ]
+
+    def get_auction_statistics(self, auction):
+        """Get or initialize auction statistics"""
+        auction_statistics = AuctionStatistics.objects.filter(auction=auction).first()
+        if auction_statistics:
+            self.context["previous_top_bid"] = auction_statistics.top_bid
+        return auction_statistics
+
+    def get_is_top_bid(self, current_bid):
+        """Check if current bid is the top bid for the auction"""
+
+        # Get latest auction statistics
+        if "previous_top_bid" not in self.context:
+            self.get_auction_statistics(current_bid.auction)
+
+        previous_top_bid = self.context.get("previous_top_bid")
+        if previous_top_bid is None:
+            return True
+        if current_bid.offer < previous_top_bid:
+            return True
+        return False
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -127,28 +151,11 @@ class BaseBidSerializer(serializers.ModelSerializer):
 
 
 class CreateBidSerializer(BaseBidSerializer):
-    is_top_bid = serializers.SerializerMethodField()
-
-    class Meta(BaseBidSerializer.Meta):
-        model = Bid
-        fields = BaseBidSerializer.Meta.fields + ["is_top_bid"]
-
-    def get_is_top_bid(self, current_bid):
-        """Check if current bid is the top bid for the auction"""
-
-        previous_top_bid = self.context.get("previous_top_bid")
-        if previous_top_bid is None:
-            return True
-        if current_bid.offer < previous_top_bid:
-            return True
-
-        return False
 
     def update_auction_statistics(self, bid):
         """Update auction statistics with new bid information"""
 
-        auction_statistics = AuctionStatistics.objects.filter(auction=bid.auction).first()
-        self.context["previous_top_bid"] = auction_statistics.top_bid
+        auction_statistics = self.get_auction_statistics(bid.auction)
 
         if not auction_statistics:
             return None
@@ -209,12 +216,42 @@ class CreateBidSerializer(BaseBidSerializer):
 
 class UpdateBidSerializer(BaseBidSerializer):
     class Meta(BaseBidSerializer.Meta):
-        model = Bid
-        fields = ["offer"]
+        read_only_fields = [
+            "id",
+            "author",
+            "author_name",
+            "author_nickname",
+            "author_avatar",
+            "author_kyc_verified",
+            "auction",
+            "auction_name",
+            "description",
+            "delivery_fee",
+            "status",
+            "images",
+            "is_top_bid",
+        ]
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
+    def update(self, instance, validated_data):
+        auction_statistics = self.get_auction_statistics(instance.auction)
+        new_offer = validated_data.get("offer")
+        current_offer = instance.offer
+        self.validate_bid_offer(new_offer, current_offer)
+        bid = super().update(instance, validated_data)
 
-        return {
-            "offer": representation["offer"],
-        }
+        # Get and update auction statistics
+        if auction_statistics and bid.offer < auction_statistics.top_bid:
+            auction_statistics.top_bid = bid.offer
+            auction_statistics.top_bid_author = bid.author
+            auction_statistics.save()
+
+        return bid
+
+    def validate_bid_offer(self, new_offer, current_offer):
+        if current_offer < new_offer:
+            raise serializers.ValidationError(
+                "You can not update bid with "
+                "an offer that is more than the "
+                "current one. You can only lower "
+                "the offer when updating a bid"
+            )
