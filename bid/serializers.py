@@ -146,6 +146,7 @@ class CreateBidSerializer(BaseBidSerializer):
                 AuctionStatistics.objects.filter(auction=bid.auction).update(
                     total_bids_count=F("total_bids_count") + 1
                 )
+                self.determine_top_bid(bid)
 
                 # Refresh to get the latest data including images
                 bid.refresh_from_db()
@@ -158,6 +159,20 @@ class CreateBidSerializer(BaseBidSerializer):
             )
         except Exception as e:
             raise serializers.ValidationError(f"An unexpected error occurred: {str(e)}")
+
+    def determine_top_bid(self, bid):
+        auction_statistics = AuctionStatistics.objects.filter(auction=bid.auction).first()
+        top_bid = auction_statistics.top_bid
+        if top_bid and bid.offer < top_bid:
+            auction_statistics.top_bid = bid.offer
+            auction_statistics.top_bid_author = bid.author
+        elif not top_bid:
+            auction_statistics.top_bid = bid.offer
+            auction_statistics.top_bid_author = bid.author
+
+        auction_statistics.save()
+
+        return auction_statistics
 
 
 class UpdateBidSerializer(BaseBidSerializer):
