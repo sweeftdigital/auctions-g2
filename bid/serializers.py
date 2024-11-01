@@ -133,9 +133,42 @@ class CreateBidSerializer(BaseBidSerializer):
         model = Bid
         fields = BaseBidSerializer.Meta.fields + ["is_top_bid"]
 
-    def get_is_top_bid(self, instance):
-        auction = self.context.get("auction")
-        return auction is not None and instance.offer < auction.top_bid
+    def get_is_top_bid(self, current_bid):
+        """Check if current bid is the top bid for the auction"""
+
+        previous_top_bid = self.context.get("previous_top_bid")
+        return previous_top_bid is not None and current_bid.offer < previous_top_bid
+
+    def update_auction_statistics(self, bid):
+        """Update auction statistics with new bid information"""
+
+        auction_statistics = AuctionStatistics.objects.filter(auction=bid.auction).first()
+        self.context["previous_top_bid"] = auction_statistics.top_bid
+
+        if not auction_statistics:
+            return None
+
+        with transaction.atomic():
+            # Update bid count
+            auction_statistics.total_bids_count = F("total_bids_count") + 1
+
+            # Update top bid
+            if not auction_statistics.top_bid or bid.offer < auction_statistics.top_bid:
+                auction_statistics.top_bid = bid.offer
+                auction_statistics.top_bid_author = bid.author
+
+            auction_statistics.save()
+            auction_statistics.refresh_from_db()
+
+        return auction_statistics
+
+    def create_bid_images(self, bid, image_data):
+        """Create images for the bid"""
+
+        for index, image_array in enumerate(image_data, start=1):
+            image_name = f"{bid.id}-image_{index}"
+            image_array.name = image_name
+            BidImage.objects.create(bid=bid, image_url=image_array)
 
     def create(self, validated_data):
         image_data = validated_data.pop("images", [])
@@ -144,49 +177,29 @@ class CreateBidSerializer(BaseBidSerializer):
 
         try:
             with transaction.atomic():
+                # Create bid
                 bid = Bid.objects.create(**validated_data)
 
-                for index, image_array in enumerate(image_data, start=1):
-                    image_file = image_array
-                    image_name = f"{bid.id}-image_{index}"
-                    image_file.name = image_name
-                    BidImage.objects.create(bid=bid, image_url=image_file)
+                # Create images
+                if image_data:
+                    self.create_bid_images(bid, image_data)
 
                 # Update statistics
-                auction = AuctionStatistics.objects.filter(auction=bid.auction).first()
-                if auction:
-                    auction.total_bids_count = F("total_bids_count") + 1
-                    auction.save(update_fields=["total_bids_count"])
-                    auction.refresh_from_db()
+                auction_statistics = self.update_auction_statistics(bid)
+                if not auction_statistics:
+                    raise serializers.ValidationError(
+                        "Failed to update auction statistics."
+                    )
 
-                self.context["auction"] = auction
-                self.determine_top_bid(bid)
-
-                # Refresh to get the latest data including images
+                # Refresh bid to get latest data
                 bid.refresh_from_db()
 
                 return bid
 
-        except IntegrityError:
-            raise serializers.ValidationError(
-                "Failed to create bid. Please check your input."
-            )
+        except IntegrityError as e:
+            raise serializers.ValidationError(f"Failed to create bid: {str(e)}")
         except Exception as e:
             raise serializers.ValidationError(f"An unexpected error occurred: {str(e)}")
-
-    def determine_top_bid(self, bid):
-        auction_statistics = AuctionStatistics.objects.filter(auction=bid.auction).first()
-        top_bid = auction_statistics.top_bid
-        if top_bid and bid.offer < top_bid:
-            auction_statistics.top_bid = bid.offer
-            auction_statistics.top_bid_author = bid.author
-        elif not top_bid:
-            auction_statistics.top_bid = bid.offer
-            auction_statistics.top_bid_author = bid.author
-
-        auction_statistics.save()
-
-        return auction_statistics
 
 
 class UpdateBidSerializer(BaseBidSerializer):
