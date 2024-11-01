@@ -8,7 +8,26 @@ def update_bid_examples():
             summary="Update an existing bid (Pending or Approved)",
             description="This example demonstrates a successful request to update a bid that"
             " is in a pending state or an approved bid with a reduced offer.",
-            value={"offer": "950"},
+            value={
+                "id": "56fde4e4-85ae-4c11-b420-cc74a7d9d685",
+                "author": "89180d7c-7a8e-4e7a-8133-f10313912fc4",
+                "author_nickname": "AngryMaxwell455",
+                "author_avatar": "https://api.dicebear.com/9.x/micah/svg?seed=826",
+                "author_kyc_verified": False,
+                "auction": "c39b607f-1c83-4bc5-a079-73b830bc6987",
+                "auction_name": "High-Performance Laptop",
+                "offer": "₾1200.00",
+                "description": "Very descriptive description for an auction.",
+                "delivery_fee": "₾25.00",
+                "status": "Pending",
+                "is_top_bid": True,
+                "images": [
+                    "https://reversello-bid-images.s3.amazonaws.com/bid_images/20f58f67-02c4-474f-"
+                    "80f4-3e2a06df27d3-image_1",
+                    "https://reversello-bid-images.s3.amazonaws.com/bid_images/20f58f67-02c4-474f-"
+                    "80f4-3e2a06df27d3-image_2",
+                ],
+            },
             request_only=True,
             status_codes=[200],
         ),

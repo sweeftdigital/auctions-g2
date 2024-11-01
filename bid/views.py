@@ -195,16 +195,18 @@ class UpdateBidView(generics.UpdateAPIView):
     def perform_update(self, serializer):
         """Send WebSocket notification after bid update"""
         bid = serializer.save()
-        self.notify_auction_group(bid.auction.id, bid)
+        is_top_bid = serializer.data.get("is_top_bid", False)
+        self.notify_auction_group(bid.auction.id, serializer.data, is_top_bid)
 
     @staticmethod
-    def notify_auction_group(auction_id, bid):
+    def notify_auction_group(auction_id, bid, is_top_bid):
         """Notify WebSocket group of updated bid with full fields"""
         channel_layer = get_channel_layer()
-        bid_data = BaseBidSerializer(bid).data
+        bid_data = bid
 
-        bid_data["id"] = str(bid.id)
-        bid_data["auction"] = str(bid.auction.id)
+        bid_data["id"] = str(bid.get("id"))
+        bid_data["auction"] = str(auction_id)
+        bid_data["is_top_bid"] = is_top_bid
 
         async_to_sync(channel_layer.group_send)(
             f"auction_{auction_id}",
