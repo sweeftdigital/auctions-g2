@@ -3,7 +3,23 @@ import json
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 
-class BidConsumer(AsyncJsonWebsocketConsumer):
+class CustomAsyncJsonWebsocketConsumer(AsyncJsonWebsocketConsumer):
+    async def send_json(self, content, close=False, ensure_ascii=False):
+        """
+        Encode the given content as JSON and send it to the client,
+        with optional ensure_ascii parameter (default is False).
+        """
+        # Override encode_json to include the ensure_ascii parameter
+        await super().send(
+            text_data=self.encode_json(content, ensure_ascii=ensure_ascii), close=close
+        )
+
+    @classmethod
+    def encode_json(cls, content, ensure_ascii=False):
+        return json.dumps(content, ensure_ascii=ensure_ascii)
+
+
+class BidConsumer(CustomAsyncJsonWebsocketConsumer):
     async def connect(self):
         user = self.scope["user"]
         self.auction_id = self.scope["url_route"]["kwargs"]["auction_id"]
