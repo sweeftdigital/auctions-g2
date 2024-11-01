@@ -21,18 +21,15 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd /home/nata_tchikhinashvili/auctions-g2
-            source ~/.zshrc
             source .venv/bin/activate
-            source ~/.zshrc
             git reset --hard
             git pull --strategy-option theirs
             git checkout dev
             pip3 install -r requirements.txt
-            deactivate
             sudo systemctl daemon-reload
-            sudo systemctl restart rabbimqlisten
-            sudo systemctl restart celery-auctions
-            sudo systemctl restart cb-auctions
+            sudo systemctl restart rabbimq-listen
+            sudo systemctl restart celery
+            sudo systemctl restart celery-beats
           EOF
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
