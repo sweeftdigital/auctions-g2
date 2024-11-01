@@ -127,6 +127,16 @@ class BaseBidSerializer(serializers.ModelSerializer):
 
 
 class CreateBidSerializer(BaseBidSerializer):
+    is_top_bid = serializers.SerializerMethodField()
+
+    class Meta(BaseBidSerializer.Meta):
+        model = Bid
+        fields = BaseBidSerializer.Meta.fields + ["is_top_bid"]
+
+    def get_is_top_bid(self, instance):
+        auction = self.context.get("auction")
+        return auction is not None and instance.offer < auction.top_bid
+
     def create(self, validated_data):
         image_data = validated_data.pop("images", [])
         user = self.context["request"].user
@@ -143,9 +153,13 @@ class CreateBidSerializer(BaseBidSerializer):
                     BidImage.objects.create(bid=bid, image_url=image_file)
 
                 # Update statistics
-                AuctionStatistics.objects.filter(auction=bid.auction).update(
-                    total_bids_count=F("total_bids_count") + 1
-                )
+                auction = AuctionStatistics.objects.filter(auction=bid.auction).first()
+                if auction:
+                    auction.total_bids_count = F("total_bids_count") + 1
+                    auction.save(update_fields=["total_bids_count"])
+                    auction.refresh_from_db()
+
+                self.context["auction"] = auction
                 self.determine_top_bid(bid)
 
                 # Refresh to get the latest data including images
