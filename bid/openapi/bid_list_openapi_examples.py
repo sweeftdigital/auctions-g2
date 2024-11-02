@@ -4,8 +4,8 @@ from drf_spectacular.utils import OpenApiExample
 def list_bid_examples():
     return [
         OpenApiExample(
-            "Successful bid retrieval (GET)",
-            summary="List existing bids on auction",
+            "Successful bid retrieval for all bids (GET)",
+            summary="List all bids of a user",
             description="This example demonstrates a successful request to list bids on particular auction.",
             value={
                 "id": "9f275616-3b9a-4c21-b0d4-a9418a7983e4",
@@ -21,6 +21,108 @@ def list_bid_examples():
                 "images": [
                     "https://hips.hearstapps.com/hmg-prod/images/2025-lexus-rx350-premium-101-"
                     "66f2dbe526c80.jpg?crop=0.788xw:0.666xh;0.0224xw,0.329xh&resize=2048:*"
+                ],
+            },
+            response_only=True,
+            status_codes=[200],
+        ),
+        OpenApiExample(
+            "Successful bid retrieval for specified auction (GET)",
+            summary="List existing bids on auction",
+            description="This example demonstrates a successful request to list bids on particular auction.",
+            value={
+                "user_bids": [
+                    {
+                        "id": "e4597a56-c4ce-497f-8193-84638e367764",
+                        "author": "748f2e52-5d0b-4de2-a733-dedc41450eb7",
+                        "author_nickname": "GoofyChaum240'",
+                        "author_avatar": "https://api.dicebear.com/9.x/micah/svg?seed=826",
+                        "author_kyc_verified": False,
+                        "auction": "5e10d49b-bf3a-4ecb-b845-ed2a51551cb1",
+                        "offer": "₾30.00",
+                        "description": "Placing my bid for this auction",
+                        "delivery_fee": "₾25.00",
+                        "status": "Pending",
+                        "images": [
+                            "https://hips.hearstapps.com/hmg-prod/images/2025-lexus-rx350-premium-101-"
+                            "66f2dbe526c80.jpg?crop=0.788xw:0.666xh;0.0224xw,0.329xh&resize=2048:*",
+                        ],
+                    },
+                    {
+                        "id": "fee07951-7a63-4b95-8335-06a65ae47f75",
+                        "author": "748f2e52-5d0b-4de2-a733-dedc41450eb7",
+                        "author_nickname": "GoofyChaum240",
+                        "author_avatar": "https://api.dicebear.com/9.x/micah/svg?seed=826",
+                        "author_kyc_verified": False,
+                        "auction": "5e10d49b-bf3a-4ecb-b845-ed2a51551cb1",
+                        "offer": "₾500.00",
+                        "description": "Placing my bid for this auction",
+                        "delivery_fee": "₾25.00",
+                        "status": "Pending",
+                        "images": [],
+                    },
+                ],
+                "top_bids": [
+                    {
+                        "id": "e4597a56-c4ce-497f-8193-84638e367764",
+                        "author": "748f2e52-5d0b-4de2-a733-dedc41450eb7",
+                        "author_nickname": "GoofyChaum240",
+                        "author_avatar": "https://api.dicebear.com/9.x/micah/svg?seed=826",
+                        "author_kyc_verified": False,
+                        "auction": "5e10d49b-bf3a-4ecb-b845-ed2a51551cb1",
+                        "offer": "₾30.00",
+                        "description": "Placing my bid for this auction",
+                        "delivery_fee": "₾25.00",
+                        "status": "Pending",
+                        "images": [
+                            "https://hips.hearstapps.com/hmg-prod/images/2025-lexus-rx350-premium-101-"
+                            "66f2dbe526c80.jpg?crop=0.788xw:0.666xh;0.0224xw,0.329xh&resize=2048:*",
+                        ],
+                    },
+                    {
+                        "id": "748f2e52-9f63-4cad-8564-b1d9558cd103",
+                        "author": "2b791267-5d0b-4de2-a733-dedc41450eb7",
+                        "author_nickname": "SadWozniak988",
+                        "author_avatar": "https://api.dicebear.com/9.x/micah/svg?seed=756",
+                        "author_kyc_verified": False,
+                        "auction": "5e10d49b-bf3a-4ecb-b845-ed2a51551cb1",
+                        "offer": "₾31.00",
+                        "description": "Placing my bid for this auction",
+                        "delivery_fee": "₾25.00",
+                        "status": "Pending",
+                        "images": [
+                            "https://hips.hearstapps.com/hmg-prod/images/2025-lexus-rx350-premium-101-"
+                            "66f2dbe526c80.jpg?crop=0.788xw:0.666xh;0.0224xw,0.329xh&resize=2048:*",
+                            "https://hips.hearstapps.com/hmg-prod/images/2025-lexus-rx350-premium-101-"
+                            "66f2dbe526c80.jpg?crop=0.788xw:0.666xh;0.0224xw,0.329xh&resize=2048:*",
+                            "https://hips.hearstapps.com/hmg-prod/images/2025-lexus-rx350-premium-101-"
+                            "66f2dbe526c80.jpg?crop=0.788xw:0.666xh;0.0224xw,0.329xh&resize=2048:*",
+                        ],
+                    },
+                    {
+                        "id": "C2002cbf-f9e3-4479-be64-65f1f429b6e5",
+                        "author": "5e10d49b-5d0b-4de2-a733-dedc41450eb7",
+                        "author_nickname": "HappyTesla777",
+                        "author_avatar": "https://api.dicebear.com/9.x/micah/svg?seed=777",
+                        "author_kyc_verified": False,
+                        "auction": "5e10d49b-bf3a-4ecb-b845-ed2a51551cb1",
+                        "offer": "₾32.00",
+                        "description": "Placing my bid for this auction",
+                        "delivery_fee": "₾25.00",
+                        "status": "Pending",
+                        "images": [
+                            "https://hips.hearstapps.com/hmg-prod/images/2025-lexus-rx350-premium-101-"
+                            "66f2dbe526c80.jpg?crop=0.788xw:0.666xh;0.0224xw,0.329xh&resize=2048:*",
+                            "https://hips.hearstapps.com/hmg-prod/images/2025-lexus-rx350-premium-101-"
+                            "66f2dbe526c80.jpg?crop=0.788xw:0.666xh;0.0224xw,0.329xh&resize=2048:*",
+                            "https://hips.hearstapps.com/hmg-prod/images/2025-lexus-rx350-premium-101-"
+                            "66f2dbe526c80.jpg?crop=0.788xw:0.666xh;0.0224xw,0.329xh&resize=2048:*",
+                            "https://hips.hearstapps.com/hmg-prod/images/2025-lexus-rx350-premium-101-"
+                            "66f2dbe526c80.jpg?crop=0.788xw:0.666xh;0.0224xw,0.329xh&resize=2048:*",
+                            "https://hips.hearstapps.com/hmg-prod/images/2025-lexus-rx350-premium-101-"
+                            "66f2dbe526c80.jpg?crop=0.788xw:0.666xh;0.0224xw,0.329xh&resize=2048:*",
+                        ],
+                    },
                 ],
             },
             response_only=True,

@@ -13,6 +13,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from auction.models import Auction, AuctionStatistics
+from auction.pagination import CustomPageNumberPagination
 from auction.permissions import HasCountryInProfile, IsBuyer, IsOwner, IsSeller
 from auction.utils import get_currency_symbol
 from bid.models import Bid
@@ -475,6 +476,21 @@ class BuyerBidListView(ListAPIView):
 class SellerBidListView(ListAPIView):
     serializer_class = BidListSerializer
     permission_classes = [IsAuthenticated, IsSeller]
+    pagination_class = None  # Disable pagination by default
+
+    def get_top_bids(self, auction_id):
+        """
+        Get top 3 bids for an auction based on lowest offer and best condition.
+        Returns only approved and pending bids.
+        """
+        return (
+            Bid.objects.filter(
+                auction_id=auction_id,
+                status__in=[StatusChoices.APPROVED, StatusChoices.PENDING],
+            )
+            .order_by("offer", "-created_at")
+            .prefetch_related("images")[:3]
+        )
 
     def get_queryset(self):
         user_id = self.request.user.id
@@ -495,3 +511,24 @@ class SellerBidListView(ListAPIView):
             queryset = queryset.filter(auction=auction)
 
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        auction_id = self.kwargs.get("auction_id")
+        queryset = self.get_queryset()
+
+        if auction_id:
+            # When auction_id is provided, return without pagination
+            response_data = {"user_bids": self.serializer_class(queryset, many=True).data}
+            top_bids = self.get_top_bids(auction_id)
+            response_data["top_bids"] = self.serializer_class(top_bids, many=True).data
+            return Response(response_data)
+        else:
+            # When no auction_id, use pagination
+            self.pagination_class = CustomPageNumberPagination
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.serializer_class(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = self.serializer_class(queryset, many=True)
+            return Response(serializer.data)
