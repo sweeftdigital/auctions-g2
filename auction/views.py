@@ -477,21 +477,30 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
         user_is_seller = self.request.user.is_seller
 
         try:
-            # Base query with bookmark annotation
-            base_query = Auction.objects.annotate(
-                bookmark_id=Subquery(
-                    Bookmark.objects.filter(
-                        user_id=user_id, auction_id=OuterRef("pk")
-                    ).values("id")[:1]
-                ),
-                bookmarked=Case(
-                    When(bookmark_id__isnull=False, then=True),
-                    default=False,
-                    output_field=BooleanField(),
-                ),
+            # Base query with all necessary relations and annotations
+            base_query = (
+                Auction.objects.select_related(
+                    "statistics",
+                    "category",
+                )
+                .prefetch_related(
+                    "tags",
+                )
+                .annotate(
+                    bookmark_id=Subquery(
+                        Bookmark.objects.filter(
+                            user_id=user_id, auction_id=OuterRef("pk")
+                        ).values("id")[:1]
+                    ),
+                    bookmarked=Case(
+                        When(bookmark_id__isnull=False, then=True),
+                        default=False,
+                        output_field=BooleanField(),
+                    ),
+                )
             )
 
-            # bid-related annotations only for users with user_type of Seller
+            # bid-related annotations only for sellers
             if user_is_seller:
                 base_query = base_query.annotate(
                     has_bid=Exists(
@@ -499,13 +508,13 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
                     ),
                 )
 
-            # Getting the auction with appropriate/combined annotations
+            # Get the auction with a single query
             auction = base_query.get(id=self.kwargs["id"])
 
             # Increment views count for the auction
-            AuctionStatistics.objects.filter(auction=auction.id).update(
-                views_count=F("views_count") + 1
-            )
+            auction.statistics.views_count = F("views_count") + 1
+            auction.statistics.save(update_fields=["views_count"])
+            auction.statistics.refresh_from_db()
 
             # Handle draft auction access based on user permissions
             if auction.status == StatusChoices.DRAFT:

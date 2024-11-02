@@ -143,15 +143,14 @@ class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):
     def get_statistics(self, obj):
         if obj.status == StatusChoices.DRAFT:
             return None
-        auction_statistics = AuctionStatistics.objects.filter(auction=obj.id).first()
         return {
-            "winner_bid": auction_statistics.winner_bid,
-            "winner_bid_author": auction_statistics.winner_bid_author,
-            "top_bid": auction_statistics.top_bid,
-            "top_bid_author": auction_statistics.top_bid_author,
-            "views_count": auction_statistics.views_count,
-            "total_bids_count": auction_statistics.total_bids_count,
-            "bookmarks_count": auction_statistics.bookmarks_count,
+            "winner_bid": obj.statistics.winner_bid,
+            "winner_bid_author": obj.statistics.winner_bid_author,
+            "top_bid": obj.statistics.top_bid,
+            "top_bid_author": obj.statistics.top_bid_author,
+            "views_count": obj.statistics.views_count,
+            "total_bids_count": obj.statistics.total_bids_count,
+            "bookmarks_count": obj.statistics.bookmarks_count,
         }
 
     def to_representation(self, instance):
