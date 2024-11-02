@@ -36,6 +36,7 @@ class BidListSerializer(serializers.ModelSerializer):
         model = Bid
         fields = [
             "id",
+            "auction",
             "author",
             "author_nickname",
             "author_avatar",

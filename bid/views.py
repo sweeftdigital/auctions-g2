@@ -445,14 +445,14 @@ class BuyerBidListView(ListAPIView):
     def get_queryset(self):
         auction_id = self.kwargs.get("auction_id")
         user_id = self.request.user.id
-        auction = get_object_or_404(Auction, id=auction_id, author=user_id)
 
-        # Fetch bids with related images in one query
-        queryset = (
-            Bid.objects.filter(auction=auction)
-            .exclude(status=StatusChoices.DELETED)
-            .prefetch_related("images")
+        queryset = Bid.objects.exclude(status=StatusChoices.DELETED).prefetch_related(
+            "images"
         )
+
+        if auction_id:
+            auction = get_object_or_404(Auction, id=auction_id, author=user_id)
+            queryset = queryset.filter(auction=auction)
 
         return queryset
 
@@ -472,18 +472,21 @@ class SellerBidListView(ListAPIView):
     permission_classes = [IsAuthenticated, IsSeller]
 
     def get_queryset(self):
-        auction_id = self.kwargs.get("auction_id")
         user_id = self.request.user.id
-        auction = get_object_or_404(Auction, id=auction_id)
+        auction_id = self.kwargs.get("auction_id")
 
-        # Fetch only the seller's bids for this auction
+        # Base queryset: filter by user and exclude deleted bids
         queryset = (
             Bid.objects.filter(
-                auction=auction,
                 author=user_id,
             )
             .exclude(status=StatusChoices.DELETED)
             .prefetch_related("images")
         )
+
+        # If auction_id is provided, filter by auction
+        if auction_id:
+            auction = get_object_or_404(Auction, id=auction_id)
+            queryset = queryset.filter(auction=auction)
 
         return queryset
