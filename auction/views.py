@@ -568,6 +568,7 @@ class DeleteAuctionView(generics.DestroyAPIView):
     tags=["Auctions"],
     responses={
         200: AuctionUpdateSerializer,
+        400: AuctionUpdateSerializer,
         401: AuctionUpdateSerializer,
         403: AuctionUpdateSerializer,
         404: AuctionUpdateSerializer,
@@ -578,6 +579,30 @@ class DeleteAuctionView(generics.DestroyAPIView):
 )
 @extend_schema(examples=auction_update_put_openapi_examples.examples(), methods=["PUT"])
 class UpdateAuctionView(generics.UpdateAPIView):
+    """
+    Update details of a specific auction by its ID.
+
+    This view allows authenticated users to update an auction they own, with
+    permission checks to ensure that only authorized users can perform this action.
+
+    **Update Behavior:**
+    - Users can update auction fields like `title`, `description`, and `start_date` and etc.
+    - If the auction has already started, users won't be able to update the auction.
+    - If the auction has already been completed, users won't be able to update the auction.
+    - If an update violates validation rules, an appropriate error response is returned.
+
+    **Permissions:**
+    - The user must be authenticated.
+    - Only users who are not sellers or who own the auction are permitted to update it.
+
+    **Response:**
+    - 200 (OK): The auction was successfully updated.
+    - 400 (Bad Request): Validation errors or read-only fields attempted to be updated.
+    - 401 (Unauthorized): Authentication credentials are missing or invalid.
+    - 403 (Forbidden): User does not have permission to update the auction.
+    - 404 (Not Found): The auction does not exist or is inaccessible.
+    """
+
     queryset = Auction.objects.all()
     lookup_url_kwarg = "id"
     permission_classes = (IsAuthenticated, IsNotSellerAndIsOwner)
