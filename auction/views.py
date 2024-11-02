@@ -42,6 +42,7 @@ from auction.serializers import (
     AuctionListSerializer,
     AuctionRetrieveSerializer,
     AuctionSaveSerializer,
+    AuctionUpdateSerializer,
     BookmarkCreateSerializer,
     BookmarkListSerializer,
     BulkDeleteAuctionSerializer,
@@ -559,6 +560,14 @@ class DeleteAuctionView(generics.DestroyAPIView):
             {"detail": _("Auction deleted successfully.")},
             status=status.HTTP_204_NO_CONTENT,
         )
+
+
+@extend_schema(tags=["Auctions"])
+class UpdateAuctionView(generics.UpdateAPIView):
+    queryset = Auction.objects.all()
+    lookup_url_kwarg = "id"
+    permission_classes = (IsAuthenticated, IsNotSellerAndIsOwner)
+    serializer_class = AuctionUpdateSerializer
 
 
 @extend_schema(

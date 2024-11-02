@@ -32,6 +32,8 @@ class MockUser:
         self.is_seller = False
         self.is_buyer = False
         self.country = "Georgia"
+        self.avatar = "https://api.dicebear.com/9.x/micah/svg?seed=826"
+        self.nickname = "SadWozniak777"
 
 
 class BuyerAuctionListViewTests(APITestCase):
@@ -1319,3 +1321,196 @@ class CreateLiveAuctionViewTests(APITestCase):
             "sellers": False,
         }
         self.assertEqual(view.get_notifications(), data_to_compare)
+
+
+class UpdateLiveAuctionViewTests(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = MockUser(user_id=uuid4())
+        self.client.force_authenticate(user=self.user)
+
+        self.category = CategoryFactory(name="Collectibles & Art")
+        self.tag1 = TagFactory(name="Luxury")
+        self.tag2 = TagFactory(name="Rare")
+
+        self.auction = Auction.objects.create(
+            author=self.user.id,
+            auction_name="Original Auction",
+            description="Original description",
+            category=self.category,
+            start_date=timezone.now() + timedelta(days=2),
+            end_date=timezone.now() + timedelta(days=5),
+            max_price=1000.00,
+            quantity=1,
+            accepted_bidders=AcceptedBiddersChoices.BOTH,
+            condition=ConditionChoices.NEW,
+        )
+        self.auction.tags.set([self.tag1, self.tag2])
+
+        self.url = reverse("update-auction", kwargs={"id": self.auction.id})
+
+        self.update_data = {
+            "auction_name": "Updated Luxury Painting Auction",
+            "description": "Updated description for the auction.",
+            "category": self.category.name,
+            "end_date": timezone.now() + timedelta(days=7),
+            "max_price": 6000.00,
+            "quantity": 2,
+            "accepted_bidders": AcceptedBiddersChoices.BOTH,
+            "accepted_locations": ["US"],
+            "tags": [{"name": self.tag1.name}, {"name": self.tag2.name}],
+            "currency": "GEL",
+            "condition": ConditionChoices.USED_GOOD,
+        }
+
+    def test_update_auction_success(self):
+        response = self.client.patch(self.url, self.update_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["auction_name"], self.update_data["auction_name"])
+        self.assertEqual(response.data["description"], self.update_data["description"])
+        self.assertEqual(response.data["category"], self.update_data["category"])
+        self.assertEqual(response.data["max_price"], "6000.00")
+        self.assertEqual(response.data["quantity"], self.update_data["quantity"])
+        self.assertIsNotNone(response.data["tags"])
+
+    def test_unauthenticated_user_cannot_update_auction(self):
+        self.client.logout()
+        response = self.client.patch(self.url, self.update_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_non_author_cannot_update_auction(self):
+        different_user = MockUser(user_id=uuid4())
+        self.client.force_authenticate(user=different_user)
+        response = self.client.patch(self.url, self.update_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_cannot_update_started_auction(self):
+        # Set auction start date to past
+        self.auction.start_date = timezone.now() - timedelta(days=1)
+        self.auction.save()
+
+        response = self.client.patch(self.url, self.update_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Cannot modify core auction parameters after the auction has started",
+            response.data["errors"][0]["message"],
+        )
+
+    def test_cannot_update_ended_auction(self):
+        self.auction.end_date = timezone.now() - timedelta(days=1)
+        self.auction.save()
+
+        response = self.client.patch(self.url, self.update_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Cannot update auction that has already ended",
+            response.data["errors"][0]["message"],
+        )
+
+    def test_can_update_start_date_before_auction_starts(self):
+        data = self.update_data.copy()
+        data["start_date"] = timezone.now() + timedelta(days=4)
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_cannot_update_start_date_before_auction_starts(self):
+        """
+        Test that start date can not be set to be more than the end_date
+        even if the auction has not started yet.
+        """
+        data = self.update_data.copy()
+        data["start_date"] = timezone.now() + timedelta(days=100)
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["errors"][0]["message"],
+            "End date must be after the start date.",
+        )
+
+    def test_end_date_validation(self):
+        data = self.update_data.copy()
+        data["end_date"] = timezone.now() + timedelta(hours=1)
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["errors"][0]["message"],
+            "End date must be after the start date.",
+        )
+        self.assertIn("end_date", response.data["errors"][0]["field_name"])
+
+    def test_invalid_max_price(self):
+        data = self.update_data.copy()
+        data["max_price"] = -100
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("max_price", response.data["errors"][0]["field_name"])
+        self.assertIn(
+            "Max price must be greater than 0", response.data["errors"][0]["message"]
+        )
+
+    def test_can_update_currency(self):
+        data = self.update_data.copy()
+        data["currency"] = "EUR"
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_can_update_condition(self):
+        data = self.update_data.copy()
+        data["condition"] = ConditionChoices.USED_ACCEPTABLE
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_update_tags(self):
+        new_tag = TagFactory(name="Compact")
+        data = self.update_data.copy()
+        data["tags"] = [{"name": new_tag.name}]
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["tags"]), 1)
+        self.assertEqual(response.data["tags"][0], new_tag.name)
+
+    def test_update_with_empty_tags(self):
+        data = self.update_data.copy()
+        data["tags"] = []
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Tags are required, make sure to include them",
+            response.data["errors"][0]["message"],
+        )
+
+    def test_update_with_invalid_category(self):
+        data = self.update_data.copy()
+        data["category"] = "Invalid Category"
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("category", response.data["errors"][0]["field_name"])
+
+    def test_partial_update(self):
+        partial_data = {
+            "auction_name": "Partially Updated Auction",
+            "description": "New description only",
+        }
+        response = self.client.patch(self.url, partial_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["auction_name"], partial_data["auction_name"])
+        self.assertEqual(response.data["description"], partial_data["description"])
+
+    @patch("auction.serializers.transaction.atomic")
+    def test_transaction_atomic_on_error(self, mock_atomic):
+        mock_atomic.side_effect = IntegrityError()
+        response = self.client.patch(self.url, self.update_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "There was an error during the update of the auction. " "Please try again.",
+            response.data["errors"][0]["message"],
+        )
+
+    def test_country_codes_are_translated_to_country_names(self):
+        data = self.update_data.copy()
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            Auction.objects.get(id=self.auction.id).accepted_locations[0].name,
+            "United States of America",
+        )

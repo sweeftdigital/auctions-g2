@@ -209,7 +209,7 @@ class BookmarkCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(f"An unexpected error occurred: {str(e)}")
 
 
-class AuctionSaveSerializer(CountryFieldMixin, serializers.ModelSerializer):
+class BaseAuctionSerializer(CountryFieldMixin, serializers.ModelSerializer):
     tags = TagSerializer(many=True)
     category = serializers.CharField()
 
@@ -251,6 +251,44 @@ class AuctionSaveSerializer(CountryFieldMixin, serializers.ModelSerializer):
                 raise serializers.ValidationError({field: _("This field is read-only.")})
         return data
 
+    def validate_max_price(self, value):
+        if value <= 0:
+            raise serializers.ValidationError(_("Max price must be greater than 0."))
+        return value
+
+    def validate_category(self, value):
+        if value not in CategoryChoices.values:
+            raise serializers.ValidationError(_("Invalid category."))
+        return value
+
+    def validate_tags(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                _("Tags are required, make sure to include them.")
+            )
+        return value
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation["accepted_locations"] = (
+            [country.name for country in instance.accepted_locations]
+            if len(representation["accepted_locations"]) > 0
+            else ["International"]
+        )
+        representation["tags"] = [tag.name for tag in instance.tags.all()]
+
+        if instance.start_date > timezone.now() and instance.status != "Draft":
+            representation["status"] = "Upcoming"
+
+        # Attach currency symbol to max_price field
+        currency = representation["currency"]
+        max_price = representation["max_price"]
+        representation["max_price"] = f"{get_currency_symbol(currency)}{max_price}"
+
+        return representation
+
+
+class AuctionSaveSerializer(BaseAuctionSerializer):
     def validate_start_date(self, value):
         if value.tzinfo is None:
             # If value is naive, convert it to aware
@@ -263,12 +301,8 @@ class AuctionSaveSerializer(CountryFieldMixin, serializers.ModelSerializer):
         return value
 
     def validate_end_date(self, value):
-        # Make sure the value is timezone-aware
         if value.tzinfo is None:
-            # If value is naive, convert it to aware
-            value = timezone.make_aware(
-                value, timezone.get_default_timezone()
-            )  # pragma: no cover
+            value = timezone.make_aware(value, timezone.get_default_timezone())
 
         start_date_str = self.initial_data.get("start_date")
 
@@ -286,24 +320,6 @@ class AuctionSaveSerializer(CountryFieldMixin, serializers.ModelSerializer):
                     _("End date must be after the start date.")
                 )
 
-        return value
-
-    def validate_max_price(self, value):
-        if value <= 0:
-            raise serializers.ValidationError(_("Max price must be greater than 0."))
-
-        return value
-
-    def validate_category(self, value):
-        if value not in CategoryChoices.values:
-            raise serializers.ValidationError(_("Invalid category."))
-        return value
-
-    def validate_tags(self, value):
-        if not value:
-            raise serializers.ValidationError(
-                _("Tags are required, make sure to include them.")
-            )
         return value
 
     def create(self, validated_data):
@@ -331,22 +347,6 @@ class AuctionSaveSerializer(CountryFieldMixin, serializers.ModelSerializer):
 
         return auction
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation["accepted_locations"] = (
-            [country.name for country in instance.accepted_locations]
-            if len(representation["accepted_locations"]) > 0
-            else ["International"]
-        )
-        representation["tags"] = [tag.name for tag in instance.tags.all()]
-        # Check if the auction's start_date is in the future
-        # and set status to "Upcoming", if status is Draft
-        # leave it as it is
-        if instance.start_date > timezone.now() and instance.status != "Draft":
-            representation["status"] = "Upcoming"
-
-        return representation
-
 
 class BulkDeleteAuctionSerializer(serializers.Serializer):
     ids = serializers.ListField(
@@ -354,3 +354,82 @@ class BulkDeleteAuctionSerializer(serializers.Serializer):
         allow_empty=False,
         help_text="List of auction UUIDs to delete.",
     )
+
+
+class AuctionUpdateSerializer(BaseAuctionSerializer):
+    def validate(self, data):
+        data = super().validate(data)
+        instance = self.instance
+
+        # Forbid updates of certain fields if auction has started
+        if instance.start_date <= timezone.now():
+            raise serializers.ValidationError(
+                _("Cannot modify core auction parameters after the auction has started.")
+            )
+
+        # Don't allow updates if auction has ended
+        if instance.end_date <= timezone.now():
+            raise serializers.ValidationError(
+                _("Cannot update auction that has already ended.")
+            )
+
+        return data
+
+    def validate_start_date(self, value):
+        if value.tzinfo is None:
+            # If value is naive, convert it to aware
+            value = timezone.make_aware(
+                value, timezone.get_default_timezone()
+            )  # pragma: no cover
+
+        if value <= timezone.now():
+            raise serializers.ValidationError(_("Start date cannot be in the past."))
+        elif value >= self.instance.end_date:
+            raise serializers.ValidationError(_("End date must be after the start date."))
+
+        return value
+
+    def validate_end_date(self, value):
+        # Make sure the value is timezone-aware
+        if value.tzinfo is None:
+            value = timezone.make_aware(value, timezone.get_default_timezone())
+
+        # Check if end date is after start date
+        if value <= self.instance.start_date:
+            raise serializers.ValidationError(_("End date must be after the start date."))
+
+        return value
+
+    def update(self, instance, validated_data):
+        tags_data = validated_data.pop("tags", None)
+        category_data = validated_data.pop("category", None)
+
+        try:
+            with transaction.atomic():
+                # Update category if provided
+                if category_data:
+                    category, created = Category.objects.get_or_create(name=category_data)
+                    instance.category = category
+
+                # Update tags if provided
+                if tags_data is not None:
+                    tags = {tag_data["name"] for tag_data in tags_data}
+                    tag_objects = [
+                        Tag.objects.get_or_create(name=name)[0] for name in tags
+                    ]
+                    instance.tags.set(tag_objects)
+
+                # Update other fields
+                for attr, value in validated_data.items():
+                    setattr(instance, attr, value)
+
+                instance.save()
+
+        except IntegrityError:
+            raise serializers.ValidationError(
+                _(
+                    "There was an error during the update of the auction. Please try again."
+                )
+            )
+
+        return instance
