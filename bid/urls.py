@@ -30,14 +30,14 @@ urlpatterns = [
         name="list-all-bids-buyer",
     ),
     path(
-        "bids/list/buyer/<uuid:auction_id>/",
-        BuyerBidListView.as_view(),
-        name="list-bids-by-auction-buyer",
-    ),
-    path(
         "bids/list/seller/",
         SellerBidListView.as_view(),
         name="list-all-bids-seller",
+    ),
+    path(
+        "bids/list/buyer/<uuid:auction_id>/",
+        BuyerBidListView.as_view(),
+        name="list-bids-by-auction-buyer",
     ),
     path(
         "bids/list/seller/<uuid:auction_id>/",
