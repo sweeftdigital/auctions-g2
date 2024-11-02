@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-02 01:52+0000\n"
+"POT-Creation-Date: 2024-11-02 02:19+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -91,13 +91,20 @@ msgstr ""
 "წაიშალა {deleted} აუქციონი და {marked_deleted} აუქციონი მონიშნულია, როგორც "
 "წაშლილი."
 
-#: bid/permissions.py:45
+#: bid/permissions.py:50
 msgid ""
 "As a non-premium user you can not place more than five unique bids on this "
 "auction. But you can change the offer of a bid as many times as you want."
-msgstr "მომხმარებლებს, რომლებსაც არ აქვთ პრემიუმ ტიპის ანგარიში, არ შეუძლიათ "
-"ერთ აუქციონზე დადონ 5-ზე მეტი სხვადასხვა ბიდი, მაგრამ თქვენ შეგიძლიათ, რომ"
-"უკვე არსებული ბიდის შეთავაზება განაახლოთ იმდენჯერ, რამდენჯერაც მოგესურვებათ."
+msgstr ""
+"მომხმარებლებს, რომლებსაც არ აქვთ პრემიუმ ტიპის ანგარიში, არ შეუძლიათ ერთ "
+"აუქციონზე დადონ 5-ზე მეტი სხვადასხვა ბიდი, მაგრამ თქვენ შეგიძლიათ, რომუკვე "
+"არსებული ბიდის შეთავაზება განაახლოთ იმდენჯერ, რამდენჯერაც მოგესურვებათ."
+
+#: bid/permissions.py:69
+msgid "As a non-premium user you can not upload more than 5 images per bid."
+msgstr ""
+"მომხმარებლებს, რომლებსაც არ აქვთ პრემიუმ ტიპის ანგარიში, შეუძლიათ, რომ თითო "
+"ბიდისთვის ატვირთონ მხოლოდ ხუთი სურათი."
 
 #: bid/serializers.py:255
 msgid ""
@@ -108,16 +115,16 @@ msgstr ""
 "მეტი მნიშვნელობის მითითება. ბიდის განახლებისას შესაძლებელია მხოლოდ ფასის "
 "დაკლება."
 
-#: bid/views.py:88
+#: bid/views.py:102
 msgid "You can not place bids on auctions with a status of `Draft`."
 msgstr "თქვენ არ შეგიძლიათ ბიდის განთავსება 'Draft' სტატუსის მქონე აუქციონზე."
 
-#: bid/views.py:96
+#: bid/views.py:110
 msgid "Auction has already been completed, you can no longer place bids."
 msgstr ""
 "აუქციონი უკვე დასრულდა, თქვენ ვეღარ შეძლებთ ამ აუქციონზე ბიდის განთავსებას."
 
-#: bid/views.py:102
+#: bid/views.py:116
 msgid "Auction has not started yet, you can not place bid."
 msgstr ""
 "აუქციონი ჯერ არ დაწყებულა, თქვენ ვერ შეძლებთ ამ აუქციონზე ბიდის განთავსებას."

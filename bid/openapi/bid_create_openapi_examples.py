@@ -171,8 +171,8 @@ def create_bid_examples():
             status_codes=[400],
         ),
         OpenApiExample(
-            "Error: No permission (GET)",
-            summary="No permission to perform the requested operation.",
+            "Error: No permission to create more than 5 bids. (GET)",
+            summary="No permission to create more than 5 bids.",
             description="This example shows an error response when a user tries "
             "to create new bid, but the user has already created five bids "
             "and does not have a premium account.",
@@ -185,6 +185,26 @@ def create_bid_examples():
                         "five unique bids on this auction. But you can "
                         "change the offer of a bid as many times as you want.",
                         "field_name": None,
+                    }
+                ],
+            },
+            response_only=True,
+            status_codes=[403],
+        ),
+        OpenApiExample(
+            "Error: No permission to upload more than 5 images for a bid. (GET)",
+            summary="No permission to upload more than 5 images for a bid.",
+            description="This example shows an error response when a user tries "
+            "to create new bid with more than 5 images. Only users "
+            "with premium accounts should be able to upload more than "
+            "five images.",
+            value={
+                "type": "validation_error",
+                "errors": [
+                    {
+                        "code": "invalid",
+                        "message": "As a non-premium user you can not upload more than 5 images per bid.",
+                        "field_name": "images",
                     }
                 ],
             },

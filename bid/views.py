@@ -26,6 +26,7 @@ from bid.openapi.bid_update_openapi_examples import update_bid_examples
 from bid.permissions import (
     IsBidAuthorOrAuctionAuthor,
     IsBidOwner,
+    OnlyFiveImagesPerBid,
     OnlyFiveUniqueBidsPerUser,
 )
 from bid.serializers import (
@@ -62,6 +63,8 @@ class CreateBidView(generics.CreateAPIView):
 
     - 201 (Created): Bid created successfully. The response body contains the serialized bid data.
     - 400 (Bad Request): Invalid request data. The response body contains a list of validation errors.
+    - 403 (Forbidden): Non-premium user tries to create more than `five` bids, or tries to upload more
+    than `five` images per bid.
     - 404 (Not Found): Auction not found.
 
     **Examples:**
@@ -82,6 +85,7 @@ class CreateBidView(generics.CreateAPIView):
         IsSeller,
         HasCountryInProfile,
         OnlyFiveUniqueBidsPerUser,
+        OnlyFiveImagesPerBid,
     )
 
     def get_auction(self):

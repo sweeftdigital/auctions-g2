@@ -35,6 +35,7 @@ class OnlyFiveUniqueBidsPerUser(BasePermission):
 
     def has_permission(self, request, view):
         auction_id = view.kwargs.get("auction_id")
+        print(request.data)
 
         if auction_id is None:
             return False
@@ -50,6 +51,22 @@ class OnlyFiveUniqueBidsPerUser(BasePermission):
                     "auction. But you can change the offer of a bid as many "
                     "times as you want."
                 )
+            )
+
+        return True
+
+
+class OnlyFiveImagesPerBid(BasePermission):
+    """
+    Custom permission to only allow users to place five images per bid on an auction.
+    """
+
+    def has_permission(self, request, view):
+        images = request.data.get("images")
+
+        if images and len(images) > 5:
+            raise PermissionDenied(
+                _("As a non-premium user you can not upload more than 5 images per bid.")
             )
 
         return True
