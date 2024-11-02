@@ -131,7 +131,11 @@ class BuyerAuctionListView(ListAPIView):
 
     def get_queryset(self):
         user = self.request.user.id
-        queryset = Auction.objects.filter(author=user)
+        queryset = (
+            Auction.objects.select_related("statistics", "category").prefetch_related(
+                "tags"
+            )
+        ).filter(author=user)
 
         # Override ordering if 'category' is in the query params
         ordering = self.request.query_params.get("ordering", None)
@@ -176,8 +180,12 @@ class BuyerDashboardListView(ListAPIView):
     serializer_class = AuctionListSerializer
 
     def get_queryset(self):
-        queryset = Auction.objects.filter(
-            status="Live", start_date__lte=timezone.now(), author=self.request.user.id
+        queryset = (
+            Auction.objects.select_related("statistics", "category")
+            .prefetch_related("tags")
+            .filter(
+                status="Live", start_date__lte=timezone.now(), author=self.request.user.id
+            )
         )
         return queryset
 
@@ -263,9 +271,16 @@ class SellerAuctionListView(ListAPIView):
 
     def get_queryset(self):
         status = self.request.query_params.get("status")
-        queryset = (
-            Auction.objects.all() if status else Auction.objects.filter(status="Live")
+        base_queryset = (
+            Auction.objects.select_related("statistics", "category")
+            .prefetch_related("tags")
+            .exclude(status=StatusChoices.DRAFT)
         )
+
+        if status == "Upcoming":
+            queryset = base_queryset.filter(start_date__gt=timezone.now())
+        else:
+            queryset = base_queryset.filter(status="Live")
 
         ordering = self.request.query_params.get("ordering", None)
 
@@ -320,9 +335,12 @@ class SellerDashboardListView(ListAPIView):
         user = self.request.user
 
         # Get auctions where the user has placed bids
-        queryset = Auction.objects.filter(
-            bids__author=user.id, start_date__lte=timezone.now()
-        ).distinct()
+        queryset = (
+            Auction.objects.select_related("statistics", "category")
+            .prefetch_related("tags")
+            .filter(bids__author=user.id, start_date__lte=timezone.now())
+            .distinct()
+        )
 
         # Add bookmarked status
         bookmarked_subquery = Bookmark.objects.filter(

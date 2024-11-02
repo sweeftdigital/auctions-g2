@@ -29,6 +29,7 @@ class AuctionListSerializer(serializers.ModelSerializer):
     product = serializers.CharField(source="auction_name")
     tags = serializers.SerializerMethodField()
     bookmarked = serializers.BooleanField(default=False)
+    top_bid = serializers.SerializerMethodField()
 
     class Meta:
         model = Auction
@@ -48,6 +49,7 @@ class AuctionListSerializer(serializers.ModelSerializer):
             "start_date",
             "end_date",
             "bookmarked",
+            "top_bid",
         ]
 
     def get_tags(self, obj):
@@ -62,6 +64,17 @@ class AuctionListSerializer(serializers.ModelSerializer):
         category = obj.category
         return category.name if category else None
 
+    def get_top_bid(self, obj):
+        """
+        Returns the formatted top bid if it exists, otherwise returns None
+        """
+        try:
+            if hasattr(obj, "statistics") and obj.statistics.top_bid:
+                return obj.statistics.top_bid
+            return None
+        except AuctionStatistics.DoesNotExist:
+            return None
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
 
@@ -73,7 +86,11 @@ class AuctionListSerializer(serializers.ModelSerializer):
         # Attach currency symbol to max_price field
         currency = representation["currency"]
         max_price = representation["max_price"]
+        top_bid = representation["top_bid"]
         representation["max_price"] = f"{get_currency_symbol(currency)}{max_price}"
+        representation["top_bid"] = (
+            f"{get_currency_symbol(currency)}{top_bid}" if top_bid is not None else None
+        )
 
         return representation
 

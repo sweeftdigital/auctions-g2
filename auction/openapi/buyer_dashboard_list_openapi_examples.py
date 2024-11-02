@@ -31,6 +31,7 @@ def examples():
                 "quantity": 1000,
                 "start_date": "2024-10-08T12:34:56.789012Z",
                 "end_date": "2024-10-08T12:34:57.789012Z",
+                "top_bid": "₾2900.00",
             },
             response_only=True,
             status_codes=[200],
