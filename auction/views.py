@@ -26,6 +26,7 @@ from auction.openapi import (
     auction_delete_openapi_examples,
     auction_retrieve_openapi_examples,
     auction_update_patch_openapi_examples,
+    auction_update_put_openapi_examples,
     bookmark_create_openapi_examples,
     bookmark_delete_openapi_examples,
     bookmark_list_openapi_examples,
@@ -566,13 +567,16 @@ class DeleteAuctionView(generics.DestroyAPIView):
 @extend_schema(
     tags=["Auctions"],
     responses={
-        200: AuctionRetrieveSerializer,
-        401: AuctionRetrieveSerializer,
-        403: AuctionRetrieveSerializer,
-        404: AuctionRetrieveSerializer,
+        200: AuctionUpdateSerializer,
+        401: AuctionUpdateSerializer,
+        403: AuctionUpdateSerializer,
+        404: AuctionUpdateSerializer,
     },
-    examples=auction_update_patch_openapi_examples.examples(),
 )
+@extend_schema(
+    examples=auction_update_patch_openapi_examples.examples(), methods=["PATCH"]
+)
+@extend_schema(examples=auction_update_put_openapi_examples.examples(), methods=["PUT"])
 class UpdateAuctionView(generics.UpdateAPIView):
     queryset = Auction.objects.all()
     lookup_url_kwarg = "id"
