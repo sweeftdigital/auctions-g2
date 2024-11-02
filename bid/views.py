@@ -23,7 +23,11 @@ from bid.openapi.bid_list_openapi_examples import list_bid_examples
 from bid.openapi.bid_reject_openapi_examples import reject_bid_examples
 from bid.openapi.bid_retrive_openapi_examples import retrieve_bid_examples
 from bid.openapi.bid_update_openapi_examples import update_bid_examples
-from bid.permissions import IsBidAuthorOrAuctionAuthor, IsBidOwner
+from bid.permissions import (
+    IsBidAuthorOrAuctionAuthor,
+    IsBidOwner,
+    OnlyFiveUniqueBidsPerUser,
+)
 from bid.serializers import (
     BaseBidSerializer,
     BidListSerializer,
@@ -38,6 +42,7 @@ from bid.serializers import (
         201: CreateBidSerializer,
         400: CreateBidSerializer,
         401: CreateBidSerializer,
+        403: CreateBidSerializer,
         404: CreateBidSerializer,
     },
     examples=create_bid_examples(),
@@ -72,7 +77,12 @@ class CreateBidView(generics.CreateAPIView):
     """
 
     serializer_class = CreateBidSerializer
-    permission_classes = (IsAuthenticated, IsSeller, HasCountryInProfile)
+    permission_classes = (
+        IsAuthenticated,
+        IsSeller,
+        HasCountryInProfile,
+        OnlyFiveUniqueBidsPerUser,
+    )
 
     def get_auction(self):
         """

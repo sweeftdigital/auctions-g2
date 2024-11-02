@@ -170,4 +170,25 @@ def create_bid_examples():
             response_only=True,
             status_codes=[400],
         ),
+        OpenApiExample(
+            "Error: No permission (GET)",
+            summary="No permission to perform the requested operation.",
+            description="This example shows an error response when a user tries "
+            "to create new bid, but the user has already created five bids "
+            "and does not have a premium account.",
+            value={
+                "type": "client_error",
+                "errors": [
+                    {
+                        "code": "permission_denied",
+                        "message": "As a non-premium user you can not place more than "
+                        "five unique bids on this auction. But you can "
+                        "change the offer of a bid as many times as you want.",
+                        "field_name": None,
+                    }
+                ],
+            },
+            response_only=True,
+            status_codes=[403],
+        ),
     ]

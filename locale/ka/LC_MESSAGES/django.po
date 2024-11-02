@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-01 23:58+0000\n"
+"POT-Creation-Date: 2024-11-02 01:52+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -53,12 +53,12 @@ msgstr "თეგების გადმოცემა სავალდე�
 msgid "Start date cannot be in the past."
 msgstr "აუქციონის საწყისი დრო არ შეიძლება იყოს ამჟამინდელ დროზე ნაკლები."
 
-#: auction/serializers.py:322 auction/serializers.py:388
+#: auction/serializers.py:320 auction/serializers.py:388
 #: auction/serializers.py:399
 msgid "End date must be after the start date."
 msgstr "აუქციონის დასასრულის დორ არ შეიძლება იყოს საწყის დროზე ნაკლები."
 
-#: auction/serializers.py:345
+#: auction/serializers.py:344
 msgid "There was an error during the creation of an auction. Please try again."
 msgstr "აუქციონის შექმნისას პრობლემამ იჩინა თავი. გთხოვთ სცადოთ თავიდან."
 
@@ -74,22 +74,30 @@ msgstr ""
 msgid "There was an error during the update of the auction. Please try again."
 msgstr "აუქციონის შექმნისას პრობლემამ იჩინა თავი. გთხოვთ სცადოთ თავიდან."
 
-#: auction/views.py:560
+#: auction/views.py:562
 msgid "Auction deleted successfully."
 msgstr "აუქციონი წარმატებით წაიშალა."
 
-#: auction/views.py:635
+#: auction/views.py:672
 #, python-brace-format
 msgid "Auction with UUID {id} does not exist."
 msgstr "აუქციონი მოცემული იდენტიფიკატორით {id} არ არსებობს."
 
-#: auction/views.py:644
+#: auction/views.py:681
 #, python-brace-format
 msgid ""
 "{deleted} auctions deleted and {marked_deleted} auctions marked as deleted."
 msgstr ""
 "წაიშალა {deleted} აუქციონი და {marked_deleted} აუქციონი მონიშნულია, როგორც "
 "წაშლილი."
+
+#: bid/permissions.py:45
+msgid ""
+"As a non-premium user you can not place more than five unique bids on this "
+"auction. But you can change the offer of a bid as many times as you want."
+msgstr "მომხმარებლებს, რომლებსაც არ აქვთ პრემიუმ ტიპის ანგარიში, არ შეუძლიათ "
+"ერთ აუქციონზე დადონ 5-ზე მეტი სხვადასხვა ბიდი, მაგრამ თქვენ შეგიძლიათ, რომ"
+"უკვე არსებული ბიდის შეთავაზება განაახლოთ იმდენჯერ, რამდენჯერაც მოგესურვებათ."
 
 #: bid/serializers.py:255
 msgid ""
