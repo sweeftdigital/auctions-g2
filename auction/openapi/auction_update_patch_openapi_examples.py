@@ -5,34 +5,19 @@ def examples():
     return [
         OpenApiExample(
             "Request example (POST)",
-            summary="Create an auction",
-            description="This example demonstrates how to create an auction with valid values.",
+            summary="Update an auction",
+            description="This example demonstrates how to update an auction with valid values.",
             value={
                 "auction_name": "High-Performance Laptop",
                 "description": "Laptop that performs good.",
-                "category": "Electronics",
-                "start_date": "2024-11-28 12:34:56.789012+00:00",
-                "end_date": "2024-11-29 12:34:56.789012+00:00",
-                "max_price": "1300.00",
-                "quantity": 1,
-                "accepted_bidders": "Individual",
-                "accepted_locations": ["GE", "US"],
-                "tags": [{"name": "Modern"}],
-                "currency": "GEL",
-                "custom_fields": {
-                    "brand": "Asus",
-                    "model": "Something",
-                    "year": 2024,
-                },
-                "condition": "New",
             },
             request_only=True,
         ),
         OpenApiExample(
             "Response example 1 (POST)",
-            summary="Successfully created an auction",
+            summary="Successfully updated an auction",
             description="This example demonstrates the response that will be returned after auction has been "
-            "created successfully.",
+            "updated successfully.",
             value={
                 "id": "7aab82e5-ce90-4291-9739-ffa27564d4d1",
                 "author": "0a85c5dd-c896-4802-8fa6-426220c78cd9",
@@ -49,43 +34,13 @@ def examples():
                 "accepted_bidders": "Individual",
                 "accepted_locations": ["Georgia", "United States of America"],
                 "tags": ["Modern"],
-                "status": "Draft",
+                "status": "Upcoming",
                 "currency": "GEL",
                 "custom_fields": {"brand": "Asus", "model": "Something", "year": 2024},
                 "condition": "New",
             },
             response_only=True,
-            status_codes=[201],
-        ),
-        OpenApiExample(
-            "Response example 2 (POST)",
-            summary="Successfully created an auction but warning occurred with websockets",
-            description="This example demonstrates the response that will be returned after auction has been "
-            "created successfully but for some reason it failed to send notification to websocket.",
-            value={
-                "warning": "Some king of warning",
-                "id": "7aab82e5-ce90-4291-9739-ffa27564d4d1",
-                "author": "0a85c5dd-c896-4802-8fa6-426220c78cd9",
-                "author_avatar": "https://api.dicebear.com/9.x/micah/svg?seed=830",
-                "author_nickname": "NostalgicRide939",
-                "author_kyc_verified": False,
-                "auction_name": "High-Performance Laptop",
-                "description": "Laptop that performs good.",
-                "category": "Electronics",
-                "start_date": "2024-10-08T12:34:56.789012Z",
-                "end_date": "2024-10-09T12:34:56.789012Z",
-                "max_price": "$1300.00",
-                "quantity": 1,
-                "accepted_bidders": "Individual",
-                "accepted_locations": ["Georgia", "United States of America"],
-                "tags": ["Modern"],
-                "status": "Draft",
-                "currency": "GEL",
-                "custom_fields": {"brand": "Asus", "model": "Something", "year": 2024},
-                "condition": "New",
-            },
-            response_only=True,
-            status_codes=[201],
+            status_codes=[200],
         ),
         OpenApiExample(
             "Response example 2 (POST)",
@@ -132,10 +87,10 @@ def examples():
         ),
         OpenApiExample(
             "Response example 3 (POST)",
-            summary="Unauthenticated tries to create an auction.",
+            summary="Unauthenticated tries to update an auction.",
             description="This example demonstrates the response for a "
             "scenario where non authenticated  user tries to "
-            "create auction.",
+            "update auction.",
             value={
                 "type": "client_error",
                 "errors": [
@@ -151,9 +106,9 @@ def examples():
         ),
         OpenApiExample(
             "Response example 4 (POST)",
-            summary="User has no permission to create an auction.",
+            summary="User has no permission to update an auction.",
             description="This example demonstrates the response for a scenario where user does not have a "
-            "permission to create an auction.",
+            "permission to update an auction.",
             value={
                 "type": "client_error",
                 "errors": [
@@ -166,5 +121,19 @@ def examples():
             },
             response_only=True,
             status_codes=[403],
+        ),
+        OpenApiExample(
+            "Response example 5 (GET)",
+            summary="Auction not found",
+            description="This example demonstrates the response for a scenario where "
+            "the requested auction ID does not exist.",
+            value={
+                "type": "client_error",
+                "errors": [
+                    {"code": "not_found", "message": "Not found.", "field_name": None}
+                ],
+            },
+            response_only=True,
+            status_codes=[404],
         ),
     ]
