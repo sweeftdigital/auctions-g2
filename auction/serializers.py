@@ -373,6 +373,12 @@ class BulkDeleteAuctionSerializer(serializers.Serializer):
 
 
 class AuctionUpdateSerializer(BaseAuctionSerializer):
+    statistics = serializers.SerializerMethodField()
+
+    class Meta(BaseAuctionSerializer.Meta):
+        fields = BaseAuctionSerializer.Meta.fields + ["statistics"]
+        read_only_fields = BaseAuctionSerializer.Meta.read_only_fields + ["statistics"]
+
     def validate(self, data):
         data = super().validate(data)
         instance = self.instance
@@ -449,3 +455,28 @@ class AuctionUpdateSerializer(BaseAuctionSerializer):
             )
 
         return instance
+
+    def get_statistics(self, obj):
+        if obj.status == StatusChoices.DRAFT:
+            return None
+        return {
+            "winner_bid": obj.statistics.winner_bid,
+            "winner_bid_author": obj.statistics.winner_bid_author,
+            "top_bid": obj.statistics.top_bid,
+            "top_bid_author": obj.statistics.top_bid_author,
+            "views_count": obj.statistics.views_count,
+            "total_bids_count": obj.statistics.total_bids_count,
+            "bookmarks_count": obj.statistics.bookmarks_count,
+        }
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        # Attach currency symbol to top_bid field
+        currency = representation["currency"]
+        top_bid = representation["statistics"]["top_bid"]
+        representation["statistics"][
+            "top_bid"
+        ] = f"{get_currency_symbol(currency)}{top_bid}"
+
+        return representation
