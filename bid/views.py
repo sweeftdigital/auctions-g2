@@ -215,8 +215,13 @@ class UpdateBidView(generics.UpdateAPIView):
     serializer_class = UpdateBidSerializer
     permission_classes = [IsAuthenticated, IsBidOwner]
     lookup_url_kwarg = "bid_id"
-    queryset = Bid.objects.all()
     http_method_names = ["patch"]
+
+    def get_queryset(self):
+        """
+        Get base queryset with all necessary related fields.
+        """
+        return Bid.objects.select_related("auction").prefetch_related("images")
 
     def perform_update(self, serializer):
         """Send WebSocket notification after bid update"""

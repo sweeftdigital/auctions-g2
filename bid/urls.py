@@ -12,18 +12,18 @@ from .views import (
 
 urlpatterns = [
     path(
-        "auction/<uuid:auction_id>/bid/create/",
+        "create/bid/<uuid:auction_id>/",
         CreateBidView.as_view(),
         name="create-bid",
     ),
     path(
-        "update/<uuid:bid_id>/",
+        "update/bid/<uuid:bid_id>/",
         UpdateBidView.as_view(),
         name="update-bid",
     ),
-    path("auction/bid/<uuid:bid_id>/", RetrieveBidView.as_view(), name="retrieve-bid"),
-    path("bids/<uuid:bid_id>/reject/", RejectBidView.as_view(), name="reject-bid"),
-    path("bids/<uuid:bid_id>/approve/", ApproveBidView.as_view(), name="approve-bid"),
+    path("retrieve/bid/<uuid:bid_id>/", RetrieveBidView.as_view(), name="retrieve-bid"),
+    path("reject/bid/<uuid:bid_id>/", RejectBidView.as_view(), name="reject-bid"),
+    path("approve/bid/<uuid:bid_id>/", ApproveBidView.as_view(), name="approve-bid"),
     path(
         "bids/list/buyer/",
         BuyerBidListView.as_view(),
