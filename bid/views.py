@@ -477,6 +477,11 @@ class BuyerBidListView(ListAPIView):
 
         return queryset
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["auction_id"] = self.kwargs.get("auction_id")
+        return context
+
 
 @extend_schema(
     tags=["Bids"],
@@ -491,7 +496,7 @@ class BuyerBidListView(ListAPIView):
 class SellerBidListView(ListAPIView):
     serializer_class = BidListSerializer
     permission_classes = [IsAuthenticated, IsSeller]
-    pagination_class = None  # Disable pagination by default
+    pagination_class = None
 
     def get_top_bids(self, auction_id):
         """
@@ -517,6 +522,7 @@ class SellerBidListView(ListAPIView):
                 author=user_id,
             )
             .exclude(status=StatusChoices.DELETED)
+            .select_related("auction")
             .prefetch_related("images")
         )
 
@@ -533,16 +539,24 @@ class SellerBidListView(ListAPIView):
 
         if auction_id:
             # When auction_id is provided, return without pagination
-            response_data = {"user_bids": self.serializer_class(queryset, many=True).data}
+            response_data = {
+                "user_bids": self.serializer_class(
+                    queryset, many=True, context={"auction_id": auction_id}
+                ).data
+            }
             top_bids = self.get_top_bids(auction_id)
-            response_data["top_bids"] = self.serializer_class(top_bids, many=True).data
+            response_data["top_bids"] = self.serializer_class(
+                top_bids, many=True, context={"auction_id": auction_id}
+            ).data
             return Response(response_data)
         else:
             # When no auction_id, use pagination
             self.pagination_class = CustomPageNumberPagination
             page = self.paginate_queryset(queryset)
             if page is not None:
-                serializer = self.serializer_class(page, many=True)
+                serializer = self.serializer_class(
+                    page, many=True, context={"auction_id": None}
+                )
                 return self.get_paginated_response(serializer.data)
 
             serializer = self.serializer_class(queryset, many=True)

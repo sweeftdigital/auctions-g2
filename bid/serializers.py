@@ -32,6 +32,9 @@ class BidImageSerializer(serializers.ModelSerializer):
 
 class BidListSerializer(serializers.ModelSerializer):
     images = BidImageSerializer(many=True, read_only=True)
+    auction_status = serializers.SerializerMethodField(read_only=True)
+    auction_author_nickname = serializers.SerializerMethodField(read_only=True)
+    auction_max_price = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Bid
@@ -42,12 +45,35 @@ class BidListSerializer(serializers.ModelSerializer):
             "author_avatar",
             "author_kyc_verified",
             "auction",
+            "auction_status",
+            "auction_author_nickname",
+            "auction_max_price",
             "offer",
             "description",
             "delivery_fee",
             "status",
             "images",
         ]
+
+    def get_auction_status(self, obj):
+        # Only include auction status if we're listing all bids of seller (no auction_id in context)
+        if self.context.get("auction_id") is None:
+            return obj.auction.status
+        return None
+
+    def get_auction_author_nickname(self, obj):
+        # Only include auction author nickname if we're listing all bids of seller (no auction_id in context)
+        if self.context.get("auction_id") is None:
+            return obj.auction.author_nickname
+        return None
+
+    def get_auction_max_price(self, obj):
+        # Only include auction author nickname if we're listing all bids of seller (no auction_id in context)
+        if self.context.get("auction_id") is None:
+            currency = obj.auction.currency
+            max_price = obj.auction.max_price
+            return f"{get_currency_symbol(currency)}{max_price}"
+        return None
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -66,6 +92,11 @@ class BidListSerializer(serializers.ModelSerializer):
             image.image_url.url for image in instance.images.all() if image.image_url
         ]
         representation["images"] = image_urls
+
+        # Remove fields with None values from representation if auction_id is not in context
+        for field in ["auction_status", "auction_author_nickname", "auction_max_price"]:
+            if representation.get(field) is None:
+                representation.pop(field)
 
         return representation
 
