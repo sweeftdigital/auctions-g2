@@ -94,41 +94,38 @@ class CreateBidView(generics.CreateAPIView):
     def get_auction(self):
         """
         Helper method to fetch the auction based on auction_id from the URL.
+        Raises a ValidationError if auction is invalid.
         """
         auction_id = self.kwargs.get("auction_id")
         try:
             auction = Auction.objects.get(id=auction_id)
-            if auction.status == "Draft":
-                raise ValidationError(
-                    {
-                        "message": _(
-                            "You can not place bids on auctions with a status of `Draft`."
-                        )
-                    }
-                )
-            if auction.status == "Completed":
-                raise ValidationError(
-                    {
-                        "message": _(
-                            "You can not place bids on auctions that have already been completed."
-                        )
-                    }
-                )
-            if auction.end_date < timezone.now():
-                raise ValidationError(
-                    {
-                        "message": _(
-                            "Auction has already been completed, you can no longer place bids."
-                        )
-                    }
-                )
-            elif auction.start_date > timezone.now():
-                raise ValidationError(
-                    {"message": _("Auction has not started yet, you can not place bid.")}
-                )
+            self.validate_auction_status(auction)
             return auction
         except Auction.DoesNotExist:
-            return None
+            raise ValidationError({"detail": "Auction not found."})
+
+    def validate_auction_status(self, auction):
+        """Check the auction's status and date to ensure bidding is allowed."""
+        if auction.status == "Draft":
+            raise ValidationError(
+                {
+                    "message": _(
+                        "You cannot place bids on auctions with a status of `Draft`."
+                    )
+                }
+            )
+        if auction.status == "Completed" or auction.end_date < timezone.now():
+            raise ValidationError(
+                {
+                    "message": _(
+                        "Auction has already been completed, you can no longer place bids."
+                    )
+                }
+            )
+        if auction.start_date > timezone.now():
+            raise ValidationError(
+                {"message": _("Auction has not started yet, you cannot place a bid.")}
+            )
 
     def perform_create(self, serializer):
         """Fetch the auction based on the auction_id from the URL"""

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-03 18:34+0000\n"
+"POT-Creation-Date: 2024-11-03 20:41+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -100,13 +100,13 @@ msgstr ""
 "აუქციონზე დადონ 5-ზე მეტი სხვადასხვა ბიდი, მაგრამ თქვენ შეგიძლიათ, რომუკვე "
 "არსებული ბიდის შეთავაზება განაახლოთ იმდენჯერ, რამდენჯერაც მოგესურვებათ."
 
-#: bid/serializers.py:212
-msgid "As a non-premium user you can not upload more than 5 images per bid."
+#: bid/serializers.py:213
+msgid "As a non-premium user you cannot upload more than 5 images per bid."
 msgstr ""
 "მომხმარებლებს, რომლებსაც არ აქვთ პრემიუმ ტიპის ანგარიში, შეუძლიათ, რომ თითო "
 "ბიდისთვის ატვირთონ მხოლოდ ხუთი სურათი."
 
-#: bid/serializers.py:282
+#: bid/serializers.py:324
 msgid ""
 "You can not update bid with an offer that is more or equal than the current "
 "one. You can only lower the offer when updating a bid"
@@ -115,16 +115,18 @@ msgstr ""
 "მეტი მნიშვნელობის მითითება. ბიდის განახლებისას შესაძლებელია მხოლოდ ფასის "
 "დაკლება."
 
-#: bid/views.py:102
-msgid "You can not place bids on auctions with a status of `Draft`."
+#: bid/views.py:111
+
+msgid "You cannot place bids on auctions with a status of `Draft`."
 msgstr "თქვენ არ შეგიძლიათ ბიდის განთავსება 'Draft' სტატუსის მქონე აუქციონზე."
 
-#: bid/views.py:110
+#: bid/views.py:115
 msgid "Auction has already been completed, you can no longer place bids."
 msgstr ""
 "აუქციონი უკვე დასრულდა, თქვენ ვეღარ შეძლებთ ამ აუქციონზე ბიდის განთავსებას."
 
-#: bid/views.py:116
-msgid "Auction has not started yet, you can not place bid."
+#: bid/views.py:119
+
+msgid "Auction has not started yet, you cannot place a bid."
 msgstr ""
 "აუქციონი ჯერ არ დაწყებულა, თქვენ ვერ შეძლებთ ამ აუქციონზე ბიდის განთავსებას."
