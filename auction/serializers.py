@@ -143,11 +143,19 @@ class AuctionRetrieveSerializer(CountryFieldMixin, serializers.ModelSerializer):
     def get_statistics(self, obj):
         if obj.status == StatusChoices.DRAFT:
             return None
+
+        top_bid = obj.statistics.top_bid_object if obj.statistics.top_bid_object else None
+        winner_bid = (
+            obj.statistics.winner_bid_object if obj.statistics.winner_bid_object else None
+        )
+
         return {
-            "winner_bid": obj.statistics.winner_bid,
-            "winner_bid_author": obj.statistics.winner_bid_author,
-            "top_bid": obj.statistics.top_bid,
-            "top_bid_author": obj.statistics.top_bid_author,
+            "winner_bid": winner_bid.offer if winner_bid else None,
+            "winner_bid_author": winner_bid.author if winner_bid else None,
+            "winner_bid_id": winner_bid.id if winner_bid else None,
+            "top_bid": top_bid.offer if top_bid else None,
+            "top_bid_author": top_bid.author if top_bid else None,
+            "top_bid_id": top_bid.id if top_bid else None,
             "views_count": obj.statistics.views_count,
             "total_bids_count": obj.statistics.total_bids_count,
             "bookmarks_count": obj.statistics.bookmarks_count,
@@ -466,11 +474,19 @@ class AuctionUpdateSerializer(BaseAuctionSerializer):
     def get_statistics(self, obj):
         if obj.status == StatusChoices.DRAFT:
             return None
+
+        top_bid = obj.statistics.top_bid_object if obj.statistics.top_bid_object else None
+        winner_bid = (
+            obj.statistics.winner_bid_object if obj.statistics.winner_bid_object else None
+        )
+
         return {
-            "winner_bid": obj.statistics.winner_bid,
-            "winner_bid_author": obj.statistics.winner_bid_author,
-            "top_bid": obj.statistics.top_bid,
-            "top_bid_author": obj.statistics.top_bid_author,
+            "winner_bid": winner_bid.offer if winner_bid else None,
+            "winner_bid_author": winner_bid.author if winner_bid else None,
+            "winner_bid_id": winner_bid.id if winner_bid else None,
+            "top_bid": top_bid.offer if top_bid else None,
+            "top_bid_author": top_bid.author if top_bid else None,
+            "top_bid_id": top_bid.id if top_bid else None,
             "views_count": obj.statistics.views_count,
             "total_bids_count": obj.statistics.total_bids_count,
             "bookmarks_count": obj.statistics.bookmarks_count,

@@ -41,8 +41,10 @@ def examples():
                 "statistics": {
                     "winner_bid": None,
                     "winner_bid_author": None,
+                    "winner_bid_id": None,
                     "top_bid": "$750",
                     "top_bid_author": "89180d7c-7a8e-4e7a-8133-f10313912fc4",
+                    "top_bid_id": "7ca1as98-c896-4802-8fa6-426220c78cd9",
                     "views_count": 3,
                     "total_bids_count": 2,
                     "bookmarks_count": 1,

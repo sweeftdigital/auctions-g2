@@ -114,7 +114,17 @@ class BaseBidSerializer(serializers.ModelSerializer):
         """Get or initialize auction statistics"""
         auction_statistics = AuctionStatistics.objects.filter(auction=auction).first()
         if auction_statistics:
-            self.context["previous_top_bid"] = auction_statistics.top_bid
+            self.context["previous_top_bid"] = (
+                auction_statistics.top_bid_object.offer
+                if auction_statistics.top_bid_object
+                else None
+            )
+            self.context["previous_top_bid_object"] = (
+                auction_statistics.top_bid_object.id
+                if auction_statistics.top_bid_object
+                else None
+            )
+
         return auction_statistics
 
     def get_is_top_bid(self, current_bid):
@@ -125,10 +135,15 @@ class BaseBidSerializer(serializers.ModelSerializer):
             self.get_auction_statistics(current_bid.auction)
 
         previous_top_bid = self.context.get("previous_top_bid")
+        previous_top_bid_object = self.context.get("previous_top_bid_object")
+
         if previous_top_bid is None:
+            return True
+        if str(current_bid.id) == str(previous_top_bid_object):
             return True
         if current_bid.offer < previous_top_bid:
             return True
+
         return False
 
     def to_representation(self, instance):
@@ -166,9 +181,13 @@ class CreateBidSerializer(BaseBidSerializer):
             auction_statistics.total_bids_count = F("total_bids_count") + 1
 
             # Update top bid
-            if not auction_statistics.top_bid or bid.offer < auction_statistics.top_bid:
+            if (
+                not auction_statistics.top_bid_object
+                or bid.offer < auction_statistics.top_bid_object.offer
+            ):
                 auction_statistics.top_bid = bid.offer
                 auction_statistics.top_bid_author = bid.author
+                auction_statistics.top_bid_object = bid
 
             auction_statistics.save()
             auction_statistics.refresh_from_db()
@@ -240,10 +259,14 @@ class UpdateBidSerializer(BaseBidSerializer):
         self.validate_bid_offer(new_offer, current_offer)
         bid = super().update(instance, validated_data)
 
-        # Get and update auction statistics
-        if auction_statistics and bid.offer < auction_statistics.top_bid:
+        # get and update auction stat
+        if (
+            not auction_statistics.top_bid_object
+            or bid.offer < auction_statistics.top_bid_object.offer
+        ):
             auction_statistics.top_bid = bid.offer
             auction_statistics.top_bid_author = bid.author
+            auction_statistics.top_bid_object = bid
             auction_statistics.save()
 
         return bid

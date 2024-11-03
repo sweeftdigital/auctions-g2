@@ -113,10 +113,10 @@ class CreateBidView(generics.CreateAPIView):
                         )
                     }
                 )
-            elif auction.start_date > timezone.now():
-                raise ValidationError(
-                    {"message": _("Auction has not started yet, you can not place bid.")}
-                )
+            # elif auction.start_date > timezone.now():
+            #     raise ValidationError(
+            #         {"message": _("Auction has not started yet, you can not place bid.")}
+            #     )
             return auction
         except Auction.DoesNotExist:
             return None

@@ -100,10 +100,24 @@ class AuctionStatistics(models.Model):
         max_digits=10, decimal_places=2, null=True, blank=True
     )
     winner_bid_author = models.UUIDField(null=True, blank=True)
+    winner_bid_object = models.ForeignKey(
+        "bid.Bid",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="winner_bid_statistics",
+    )
 
     # Top bid details
     top_bid = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     top_bid_author = models.UUIDField(null=True, blank=True)
+    top_bid_object = models.ForeignKey(
+        "bid.Bid",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="top_bid_statistics",
+    )
 
     # Viewing and bidding metrics
     views_count = models.PositiveIntegerField(default=0)
