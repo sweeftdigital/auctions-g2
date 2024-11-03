@@ -15,6 +15,8 @@ class StatusChoices(models.TextChoices):
     APPROVED = "Approved", "Approved"
     REJECTED = "Rejected", "Rejected"
     DELETED = "Deleted", "Deleted"
+    REVOKED = "Revoked", "Revoked"
+    CANCELLED = "Cancelled", "Cancelled"
 
 
 class Bid(models.Model):
