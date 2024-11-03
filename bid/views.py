@@ -28,7 +28,6 @@ from bid.openapi.bid_update_openapi_examples import update_bid_examples
 from bid.permissions import (
     IsBidAuthorOrAuctionAuthor,
     IsBidOwner,
-    OnlyFiveImagesPerBid,
     OnlyFiveUniqueBidsPerUser,
 )
 from bid.serializers import (
@@ -87,7 +86,6 @@ class CreateBidView(generics.CreateAPIView):
         IsSeller,
         HasCountryInProfile,
         OnlyFiveUniqueBidsPerUser,
-        OnlyFiveImagesPerBid,
     )
 
     def get_auction(self):
@@ -113,10 +111,10 @@ class CreateBidView(generics.CreateAPIView):
                         )
                     }
                 )
-            # elif auction.start_date > timezone.now():
-            #     raise ValidationError(
-            #         {"message": _("Auction has not started yet, you can not place bid.")}
-            #     )
+            elif auction.start_date > timezone.now():
+                raise ValidationError(
+                    {"message": _("Auction has not started yet, you can not place bid.")}
+                )
             return auction
         except Auction.DoesNotExist:
             return None

@@ -2,6 +2,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import F
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
+from rest_framework.exceptions import PermissionDenied
 
 from auction.models.auction import AuctionStatistics
 from auction.utils import get_currency_symbol
@@ -206,6 +207,11 @@ class CreateBidSerializer(BaseBidSerializer):
         image_data = validated_data.pop("images", [])
         user = self.context["request"].user
         validated_data["author"] = user.id
+
+        if len(image_data) > 5:
+            raise PermissionDenied(
+                _("As a non-premium user you can not upload more than 5 images per bid.")
+            )
 
         try:
             with transaction.atomic():

@@ -54,19 +54,3 @@ class OnlyFiveUniqueBidsPerUser(BasePermission):
             )
 
         return True
-
-
-class OnlyFiveImagesPerBid(BasePermission):
-    """
-    Custom permission to only allow users to place five images per bid on an auction.
-    """
-
-    def has_permission(self, request, view):
-        images = request.data.get("images")
-
-        if images and len(images) > 5:
-            raise PermissionDenied(
-                _("As a non-premium user you can not upload more than 5 images per bid.")
-            )
-
-        return True

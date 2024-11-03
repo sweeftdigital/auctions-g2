@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-03 02:31+0000\n"
+"POT-Creation-Date: 2024-11-03 18:34+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,49 +28,49 @@ msgstr ""
 "Buyer პროფილის ტიპის მქონე მომხმარებლებს არ შეუძლიათ ამ ოპერაციის "
 "განხორციელება."
 
-#: auction/serializers.py:210
+#: auction/serializers.py:219
 msgid "This auction is already bookmarked."
 msgstr "ეს აუქციონი უკვე დაბუქმარქებულია."
 
-#: auction/serializers.py:267
+#: auction/serializers.py:276
 msgid "This field is read-only."
 msgstr ""
 "ამ ველის ჩაწერა არ შეიძლება, რადგან ის მხოლოდ წაკითხვისთვისაა განკუთვნილი."
 
-#: auction/serializers.py:272
+#: auction/serializers.py:281
 msgid "Max price must be greater than 0."
 msgstr "აუქციონში განსაზღვრული მაქსიმალური ფასი უნდა იყოს 0-ზე მეტი."
 
-#: auction/serializers.py:277
+#: auction/serializers.py:286
 msgid "Invalid category."
 msgstr "კატეგორია არავალიდურია."
 
-#: auction/serializers.py:283
+#: auction/serializers.py:292
 msgid "Tags are required, make sure to include them."
 msgstr "თეგების გადმოცემა სავალდებულია."
 
-#: auction/serializers.py:316 auction/serializers.py:415
+#: auction/serializers.py:325 auction/serializers.py:424
 msgid "Start date cannot be in the past."
 msgstr "აუქციონის საწყისი დრო არ შეიძლება იყოს ამჟამინდელ დროზე ნაკლები."
 
-#: auction/serializers.py:336 auction/serializers.py:417
-#: auction/serializers.py:428
+#: auction/serializers.py:345 auction/serializers.py:426
+#: auction/serializers.py:437
 msgid "End date must be after the start date."
 msgstr "აუქციონის დასასრულის დორ არ შეიძლება იყოს საწყის დროზე ნაკლები."
 
-#: auction/serializers.py:360
+#: auction/serializers.py:369
 msgid "There was an error during the creation of an auction. Please try again."
 msgstr "აუქციონის შექმნისას პრობლემამ იჩინა თავი. გთხოვთ სცადოთ თავიდან."
 
-#: auction/serializers.py:396
+#: auction/serializers.py:405
 msgid "Cannot modify core auction parameters after the auction has started."
 msgstr "აუქციონის დაწყების შემდეგ თქვენ აღარ შეგიძლია მისი მონაცემების შეცვლა."
 
-#: auction/serializers.py:402
+#: auction/serializers.py:411
 msgid "Cannot update auction that has already ended."
 msgstr "თქვენ არ შეგიძლიათ შეცვალოთ უკვე დასრულებული აუქციონი."
 
-#: auction/serializers.py:460
+#: auction/serializers.py:469
 msgid "There was an error during the update of the auction. Please try again."
 msgstr "აუქციონის შექმნისას პრობლემამ იჩინა თავი. გთხოვთ სცადოთ თავიდან."
 
@@ -100,13 +100,13 @@ msgstr ""
 "აუქციონზე დადონ 5-ზე მეტი სხვადასხვა ბიდი, მაგრამ თქვენ შეგიძლიათ, რომუკვე "
 "არსებული ბიდის შეთავაზება განაახლოთ იმდენჯერ, რამდენჯერაც მოგესურვებათ."
 
-#: bid/permissions.py:69
+#: bid/serializers.py:212
 msgid "As a non-premium user you can not upload more than 5 images per bid."
 msgstr ""
 "მომხმარებლებს, რომლებსაც არ აქვთ პრემიუმ ტიპის ანგარიში, შეუძლიათ, რომ თითო "
 "ბიდისთვის ატვირთონ მხოლოდ ხუთი სურათი."
 
-#: bid/serializers.py:255
+#: bid/serializers.py:282
 msgid ""
 "You can not update bid with an offer that is more or equal than the current "
 "one. You can only lower the offer when updating a bid"
@@ -115,16 +115,16 @@ msgstr ""
 "მეტი მნიშვნელობის მითითება. ბიდის განახლებისას შესაძლებელია მხოლოდ ფასის "
 "დაკლება."
 
-#: bid/views.py:104
+#: bid/views.py:102
 msgid "You can not place bids on auctions with a status of `Draft`."
 msgstr "თქვენ არ შეგიძლიათ ბიდის განთავსება 'Draft' სტატუსის მქონე აუქციონზე."
 
-#: bid/views.py:112
+#: bid/views.py:110
 msgid "Auction has already been completed, you can no longer place bids."
 msgstr ""
 "აუქციონი უკვე დასრულდა, თქვენ ვეღარ შეძლებთ ამ აუქციონზე ბიდის განთავსებას."
 
-#: bid/views.py:118
+#: bid/views.py:116
 msgid "Auction has not started yet, you can not place bid."
 msgstr ""
 "აუქციონი ჯერ არ დაწყებულა, თქვენ ვერ შეძლებთ ამ აუქციონზე ბიდის განთავსებას."
