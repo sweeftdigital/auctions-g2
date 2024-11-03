@@ -9,7 +9,7 @@ def update_bid_examples():
             description="This example demonstrates a successful request to update a bid that"
             " is in a pending state or an approved bid with a reduced offer.",
             value={
-                "offer": "₾1200.00",
+                "offer": "1200.00",
             },
             request_only=True,
             status_codes=[200],

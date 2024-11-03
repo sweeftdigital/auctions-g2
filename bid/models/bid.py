@@ -47,6 +47,8 @@ class Bid(models.Model):
 
     class Meta:
         ordering = [
+            "offer",
+            "-updated_at",
             "-created_at",
         ]
 
