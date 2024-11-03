@@ -293,7 +293,7 @@ class BaseAuctionSerializer(CountryFieldMixin, serializers.ModelSerializer):
         )
         representation["tags"] = [tag.name for tag in instance.tags.all()]
 
-        if instance.start_date > timezone.now() and instance.status != "Draft":
+        if instance.start_date > timezone.now() and instance.status == "Live":
             representation["status"] = "Upcoming"
 
         # Attach currency symbol to max_price field
@@ -377,7 +377,14 @@ class AuctionUpdateSerializer(BaseAuctionSerializer):
 
     class Meta(BaseAuctionSerializer.Meta):
         fields = BaseAuctionSerializer.Meta.fields + ["statistics"]
-        read_only_fields = BaseAuctionSerializer.Meta.read_only_fields + ["statistics"]
+        read_only_fields = [
+            "id",
+            "author",
+            "author_nickname",
+            "author_avatar",
+            "author_kyc_verified",
+            "statistics",
+        ]
 
     def validate(self, data):
         data = super().validate(data)

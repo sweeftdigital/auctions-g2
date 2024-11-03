@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-02 23:53+0000\n"
+"POT-Creation-Date: 2024-11-03 02:31+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -49,12 +49,12 @@ msgstr "კატეგორია არავალიდურია."
 msgid "Tags are required, make sure to include them."
 msgstr "თეგების გადმოცემა სავალდებულია."
 
-#: auction/serializers.py:316 auction/serializers.py:408
+#: auction/serializers.py:316 auction/serializers.py:415
 msgid "Start date cannot be in the past."
 msgstr "აუქციონის საწყისი დრო არ შეიძლება იყოს ამჟამინდელ დროზე ნაკლები."
 
-#: auction/serializers.py:336 auction/serializers.py:410
-#: auction/serializers.py:421
+#: auction/serializers.py:336 auction/serializers.py:417
+#: auction/serializers.py:428
 msgid "End date must be after the start date."
 msgstr "აუქციონის დასასრულის დორ არ შეიძლება იყოს საწყის დროზე ნაკლები."
 
@@ -62,15 +62,15 @@ msgstr "აუქციონის დასასრულის დორ ა
 msgid "There was an error during the creation of an auction. Please try again."
 msgstr "აუქციონის შექმნისას პრობლემამ იჩინა თავი. გთხოვთ სცადოთ თავიდან."
 
-#: auction/serializers.py:389
+#: auction/serializers.py:396
 msgid "Cannot modify core auction parameters after the auction has started."
 msgstr "აუქციონის დაწყების შემდეგ თქვენ აღარ შეგიძლია მისი მონაცემების შეცვლა."
 
-#: auction/serializers.py:395
+#: auction/serializers.py:402
 msgid "Cannot update auction that has already ended."
 msgstr "თქვენ არ შეგიძლიათ შეცვალოთ უკვე დასრულებული აუქციონი."
 
-#: auction/serializers.py:453
+#: auction/serializers.py:460
 msgid "There was an error during the update of the auction. Please try again."
 msgstr "აუქციონის შექმნისას პრობლემამ იჩინა თავი. გთხოვთ სცადოთ თავიდან."
 
@@ -115,16 +115,16 @@ msgstr ""
 "მეტი მნიშვნელობის მითითება. ბიდის განახლებისას შესაძლებელია მხოლოდ ფასის "
 "დაკლება."
 
-#: bid/views.py:102
+#: bid/views.py:104
 msgid "You can not place bids on auctions with a status of `Draft`."
 msgstr "თქვენ არ შეგიძლიათ ბიდის განთავსება 'Draft' სტატუსის მქონე აუქციონზე."
 
-#: bid/views.py:110
+#: bid/views.py:112
 msgid "Auction has already been completed, you can no longer place bids."
 msgstr ""
 "აუქციონი უკვე დასრულდა, თქვენ ვეღარ შეძლებთ ამ აუქციონზე ბიდის განთავსებას."
 
-#: bid/views.py:116
+#: bid/views.py:118
 msgid "Auction has not started yet, you can not place bid."
 msgstr ""
 "აუქციონი ჯერ არ დაწყებულა, თქვენ ვერ შეძლებთ ამ აუქციონზე ბიდის განთავსებას."
