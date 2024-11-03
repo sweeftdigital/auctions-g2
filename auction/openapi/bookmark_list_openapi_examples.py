@@ -32,6 +32,7 @@ def examples():
                     "quantity": 5,
                     "start_date": "2024-10-08T12:34:56.789012Z",
                     "end_date": "2024-10-09T12:34:56.789012Z",
+                    "description": "Very good description for High-Performance Laptops",
                 },
             },
             response_only=True,

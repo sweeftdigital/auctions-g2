@@ -113,6 +113,9 @@ class BookmarkListSerializer(serializers.ModelSerializer):
         # Use the AuctionListSerializer to serialize the auction field
         auction_data = AuctionListSerializer(obj.auction, context=self.context).data
 
+        # Including description for just bookmark list view, also slicing
+        # description so that it is not too long in response.
+        auction_data["description"] = obj.auction.description[:100] + "..."
         return auction_data
 
 
