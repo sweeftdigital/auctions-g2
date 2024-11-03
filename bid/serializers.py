@@ -318,3 +318,12 @@ class UpdateBidSerializer(BaseBidSerializer):
                     "the offer when updating a bid"
                 )
             )
+
+
+class SellerStatisticsSerializer(serializers.Serializer):
+    total_bids = serializers.IntegerField()
+    total_auctions_participated = serializers.IntegerField()
+    completed_auctions_participated = serializers.IntegerField()
+    auctions_won = serializers.IntegerField()
+    live_auction_bids = serializers.IntegerField()
+    success_rate = serializers.FloatField()

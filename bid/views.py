@@ -26,6 +26,7 @@ from bid.openapi.bid_list_openapi_examples import list_bid_examples
 from bid.openapi.bid_reject_openapi_examples import reject_bid_examples
 from bid.openapi.bid_retrive_openapi_examples import retrieve_bid_examples
 from bid.openapi.bid_update_openapi_examples import update_bid_examples
+from bid.openapi.seller_statistics_openapi_examples import seller_statistics_examples
 from bid.permissions import (
     IsBidAuthorOrAuctionAuthor,
     IsBidOwner,
@@ -35,6 +36,7 @@ from bid.serializers import (
     BaseBidSerializer,
     BidListSerializer,
     CreateBidSerializer,
+    SellerStatisticsSerializer,
     UpdateBidSerializer,
 )
 
@@ -572,7 +574,33 @@ class SellerBidListView(ListAPIView):
             return Response(serializer.data)
 
 
+@extend_schema(
+    tags=["Statistics"],
+    examples=seller_statistics_examples(),
+    responses={
+        200: SellerStatisticsSerializer,
+        401: SellerStatisticsSerializer,
+        403: SellerStatisticsSerializer,
+    },
+)
 class SellerStatisticsView(generics.GenericAPIView):
+    """
+    View for retrieving seller statistics on auction participation and bids.
+
+    **Functionality**:
+    - Provides an overview of a seller's bidding activity and success in auctions.
+    - Calculates total bids, distinct auctions participated in, live auction bids,
+    completed auctions, auctions won, and success rate.
+    - Success rate reflects the percentage of completed auctions won by the seller.
+
+    **Permissions**:
+    - The user must be authenticated (IsAuthenticated).
+    - Only accessible to users with seller permissions (IsSeller).
+
+    **Response**:
+    - Returns a dictionary with bid and auction statistics.
+    """
+
     permission_classes = [IsAuthenticated, IsSeller]
 
     def get_stats(self, user_id):
