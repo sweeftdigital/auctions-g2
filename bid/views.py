@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import DestroyAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -20,6 +20,7 @@ from bid.models import Bid
 from bid.models.bid import StatusChoices
 from bid.openapi.bid_approve_openapi_examples import approve_bid_examples
 from bid.openapi.bid_create_openapi_examples import create_bid_examples
+from bid.openapi.bid_delete_openapi_examples import delete_bid_examples
 from bid.openapi.bid_list_openapi_examples import list_bid_examples
 from bid.openapi.bid_reject_openapi_examples import reject_bid_examples
 from bid.openapi.bid_retrive_openapi_examples import retrieve_bid_examples
@@ -275,6 +276,22 @@ class RetrieveBidView(RetrieveAPIView):
     permission_classes = (IsAuthenticated, IsBidAuthorOrAuctionAuthor)
     lookup_url_kwarg = "bid_id"
     queryset = Bid.objects.all()
+
+
+@extend_schema(
+    tags=["Bids"],
+    responses={
+        204: BaseBidSerializer,
+        401: BaseBidSerializer,
+        403: BaseBidSerializer,
+        404: BaseBidSerializer,
+    },
+    examples=delete_bid_examples(),
+)
+class DeleteBidView(DestroyAPIView):
+    queryset = Bid.objects.all()
+    lookup_url_kwarg = "bid_id"
+    permission_classes = (IsAuthenticated, IsBidOwner)
 
 
 @extend_schema(

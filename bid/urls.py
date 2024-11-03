@@ -4,6 +4,7 @@ from .views import (
     ApproveBidView,
     BuyerBidListView,
     CreateBidView,
+    DeleteBidView,
     RejectBidView,
     RetrieveBidView,
     SellerBidListView,
@@ -22,6 +23,7 @@ urlpatterns = [
         name="update-bid",
     ),
     path("retrieve/bid/<uuid:bid_id>/", RetrieveBidView.as_view(), name="retrieve-bid"),
+    path("delete/bid/<uuid:bid_id>/", DeleteBidView.as_view(), name="delete-bid"),
     path("reject/bid/<uuid:bid_id>/", RejectBidView.as_view(), name="reject-bid"),
     path("approve/bid/<uuid:bid_id>/", ApproveBidView.as_view(), name="approve-bid"),
     path(
