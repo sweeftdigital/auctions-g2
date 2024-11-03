@@ -200,6 +200,21 @@ class BaseBidSerializer(serializers.ModelSerializer):
 
 class CreateBidSerializer(BaseBidSerializer):
 
+    def validate(self, attrs):
+        """
+        Validate the bid data.
+        """
+        validated_data = super().validate(attrs)
+
+        # Validate image count
+        images = validated_data.get("images", [])
+        if len(images) > 5:
+            raise PermissionDenied(
+                _("As a non-premium user you cannot upload more than 5 images per bid.")
+            )
+
+        return validated_data
+
     def update_auction_statistics(self, bid):
         """Update auction statistics with new bid information"""
 
@@ -238,11 +253,6 @@ class CreateBidSerializer(BaseBidSerializer):
         image_data = validated_data.pop("images", [])
         user = self.context["request"].user
         validated_data["author"] = user.id
-
-        if len(image_data) > 5:
-            raise PermissionDenied(
-                _("As a non-premium user you can not upload more than 5 images per bid.")
-            )
 
         try:
             with transaction.atomic():
