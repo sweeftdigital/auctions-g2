@@ -8,6 +8,7 @@ from .views import (
     RejectBidView,
     RetrieveBidView,
     SellerBidListView,
+    SellerStatisticsView,
     UpdateBidView,
 )
 
@@ -45,5 +46,10 @@ urlpatterns = [
         "bids/list/seller/<uuid:auction_id>/",
         SellerBidListView.as_view(),
         name="list-bids-by-auction-seller",
+    ),
+    path(
+        "bids/statistics/seller/",
+        SellerStatisticsView.as_view(),
+        name="seller-statistics",
     ),
 ]

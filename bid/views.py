@@ -1,6 +1,7 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db import IntegrityError, transaction
+from django.db.models import Count, Q, Subquery
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -100,6 +101,14 @@ class CreateBidView(generics.CreateAPIView):
                     {
                         "message": _(
                             "You can not place bids on auctions with a status of `Draft`."
+                        )
+                    }
+                )
+            if auction.status == "Completed":
+                raise ValidationError(
+                    {
+                        "message": _(
+                            "You can not place bids on auctions that have already been completed."
                         )
                     }
                 )
@@ -561,3 +570,70 @@ class SellerBidListView(ListAPIView):
 
             serializer = self.serializer_class(queryset, many=True)
             return Response(serializer.data)
+
+
+class SellerStatisticsView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated, IsSeller]
+
+    def get_stats(self, user_id):
+        # Create a subquery for won auctions (only completed auctions)
+        won_auctions_subquery = (
+            AuctionStatistics.objects.filter(
+                winner_bid_object__author=user_id, auction__status="Completed"
+            )
+            .values("auction")
+            .distinct()
+        )
+
+        # Get base queryset for bids
+        base_bids = Bid.objects.filter(author=user_id).exclude(
+            status=StatusChoices.DELETED
+        )
+
+        # Get statistics for all bids
+        stats = base_bids.aggregate(
+            # Total bids
+            total_bids=Count("id"),
+            # Count distinct auctions participated in
+            total_auctions_participated=Count("auction", distinct=True),
+            # Count live auction bids
+            live_auction_bids=Count("id", filter=Q(auction__status="Live")),
+        )
+
+        # Separately calculate completed auctions statistics
+        completed_auctions_stats = base_bids.filter(
+            auction__status="Completed"
+        ).aggregate(
+            # Count completed auctions participated in
+            completed_auctions_participated=Count("auction", distinct=True),
+            # Count won auctions (among completed ones)
+            auctions_won=Count(
+                "auction",
+                filter=Q(auction__in=Subquery(won_auctions_subquery)),
+                distinct=True,
+            ),
+        )
+
+        # Calculate success rate only based on completed auctions
+        completed_auctions = completed_auctions_stats["completed_auctions_participated"]
+        success_rate = (
+            (completed_auctions_stats["auctions_won"] / completed_auctions * 100)
+            if completed_auctions > 0
+            else 0
+        )
+
+        response_data = {
+            "total_bids": stats["total_bids"],
+            "total_auctions_participated": stats["total_auctions_participated"],
+            "completed_auctions_participated": completed_auctions,
+            "auctions_won": completed_auctions_stats["auctions_won"],
+            "live_auction_bids": stats["live_auction_bids"],
+            "success_rate": round(success_rate, 2),
+        }
+
+        return response_data
+
+    def get(self, request):
+        user_id = request.user.id
+        stats = self.get_stats(user_id)
+        return Response(stats)
