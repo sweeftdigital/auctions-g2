@@ -34,8 +34,9 @@ class BidListSerializer(serializers.ModelSerializer):
     images = BidImageSerializer(many=True, read_only=True)
     auction_name = serializers.SerializerMethodField(read_only=True)
     auction_status = serializers.SerializerMethodField(read_only=True)
-    auction_author_nickname = serializers.SerializerMethodField(read_only=True)
     auction_max_price = serializers.SerializerMethodField(read_only=True)
+    auction_author_nickname = serializers.SerializerMethodField(read_only=True)
+    auction_author_avatar = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Bid
@@ -48,8 +49,9 @@ class BidListSerializer(serializers.ModelSerializer):
             "auction",
             "auction_name",
             "auction_status",
-            "auction_author_nickname",
             "auction_max_price",
+            "auction_author_nickname",
+            "auction_author_avatar",
             "offer",
             "description",
             "delivery_fee",
@@ -58,6 +60,7 @@ class BidListSerializer(serializers.ModelSerializer):
         ]
 
     def get_auction_name(self, obj):
+        # Only include auction name if we're listing all bids of seller (no auction_id in context)
         if self.context.get("auction_id") is None:
             return obj.auction.auction_name
         return None
@@ -68,18 +71,24 @@ class BidListSerializer(serializers.ModelSerializer):
             return obj.auction.status
         return None
 
-    def get_auction_author_nickname(self, obj):
-        # Only include auction author nickname if we're listing all bids of seller (no auction_id in context)
-        if self.context.get("auction_id") is None:
-            return obj.auction.author_nickname
-        return None
-
     def get_auction_max_price(self, obj):
         # Only include auction author nickname if we're listing all bids of seller (no auction_id in context)
         if self.context.get("auction_id") is None:
             currency = obj.auction.currency
             max_price = obj.auction.max_price
             return f"{get_currency_symbol(currency)}{max_price}"
+        return None
+
+    def get_auction_author_nickname(self, obj):
+        # Only include auction author nickname if we're listing all bids of seller (no auction_id in context)
+        if self.context.get("auction_id") is None:
+            return obj.auction.author_nickname
+        return None
+
+    def get_auction_author_avatar(self, obj):
+        # Only include auction author avatar if we're listing all bids of seller (no auction_id in context)
+        if self.context.get("auction_id") is None:
+            return obj.auction.author_avatar
         return None
 
     def to_representation(self, instance):
@@ -104,8 +113,9 @@ class BidListSerializer(serializers.ModelSerializer):
         for field in [
             "auction_name",
             "auction_status",
-            "auction_author_nickname",
             "auction_max_price",
+            "auction_author_nickname",
+            "auction_author_avatar",
         ]:
             if representation.get(field) is None:
                 representation.pop(field)
