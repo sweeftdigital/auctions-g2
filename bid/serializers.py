@@ -241,14 +241,6 @@ class CreateBidSerializer(BaseBidSerializer):
 
         return auction_statistics
 
-    def create_bid_images(self, bid, image_data):
-        """Create images for the bid"""
-
-        for index, image_array in enumerate(image_data, start=1):
-            image_name = f"{bid.id}-image_{index}"
-            image_array.name = image_name
-            BidImage.objects.create(bid=bid, image_url=image_array)
-
     def create(self, validated_data):
         image_data = validated_data.pop("images", [])
         user = self.context["request"].user
@@ -259,9 +251,16 @@ class CreateBidSerializer(BaseBidSerializer):
                 # Create bid
                 bid = Bid.objects.create(**validated_data)
 
-                # Create images
+                # Bulk create images if any
                 if image_data:
-                    self.create_bid_images(bid, image_data)
+                    bid_images = [
+                        BidImage(
+                            bid=bid,
+                            image_url=image_array,
+                        )
+                        for index, image_array in enumerate(image_data, start=1)
+                    ]
+                    BidImage.objects.bulk_create(bid_images)
 
                 # Update statistics
                 auction_statistics = self.update_auction_statistics(bid)
