@@ -7,7 +7,7 @@ class IsOwner(BasePermission):
     """
 
     def has_object_permission(self, request, view, obj):
-        result = str(obj.user_id) == str(request.user.id)
+        result = str(obj.author) == str(request.user.id)
         return result
 
 
@@ -49,3 +49,16 @@ class HasCountryInProfile(BasePermission):
 
     def has_permission(self, request, view):
         return bool(request.user.country)
+
+
+class IsAuctionOwner(BasePermission):
+    """
+    Custom permission to only allow owners of an auction to declare winners.
+    """
+
+    def has_permission(self, request, view):
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        print("we are here")
+        return str(obj.auction.author) == str(request.user.id)

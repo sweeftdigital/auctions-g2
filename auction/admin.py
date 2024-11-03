@@ -95,22 +95,9 @@ class BidImageAdmin(admin.ModelAdmin):
 
 @admin.register(AuctionStatistics)
 class AuctionStatisticsAdmin(admin.ModelAdmin):
-    # Update this to use the new fields
     list_display = [
         "auction",
-        "get_winner_bid_author",
-        "get_top_bid_author",
         "views_count",
         "total_bids_count",
         "bookmarks_count",
     ]
-
-    def get_winner_bid_author(self, obj):
-        return obj.winner_bid.author if obj.winner_bid else None
-
-    get_winner_bid_author.short_description = "Winner"
-
-    def get_top_bid_author(self, obj):
-        return obj.top_bid.author if obj.top_bid else None
-
-    get_top_bid_author.short_description = "Top Bidder"

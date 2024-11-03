@@ -3,13 +3,14 @@ from channels.layers import get_channel_layer
 from django.db import DatabaseError, transaction
 from django.db.models import BooleanField, Case, Exists, F, OuterRef, Subquery, When
 from django.db.models.functions import Greatest
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.openapi import OpenApiParameter
-from drf_spectacular.utils import extend_schema
-from rest_framework import filters, generics, status
-from rest_framework.exceptions import NotFound
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import filters, generics, serializers, status
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.generics import CreateAPIView, DestroyAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -23,6 +24,7 @@ from auction.models import Auction, AuctionStatistics, Bookmark
 from auction.models.auction import StatusChoices
 from auction.openapi import (
     auction_create_openapi_examples,
+    auction_declare_winner_openapi_examples,
     auction_delete_openapi_examples,
     auction_retrieve_openapi_examples,
     auction_update_patch_openapi_examples,
@@ -35,6 +37,7 @@ from auction.openapi import (
 )
 from auction.permissions import (
     HasCountryInProfile,
+    IsAuctionOwner,
     IsBuyer,
     IsNotSellerAndIsOwner,
     IsOwner,
@@ -50,7 +53,9 @@ from auction.serializers import (
     BulkDeleteAuctionSerializer,
     SellerLiveAuctionListSerializer,
 )
+from auction.utils import get_currency_symbol
 from bid.models import Bid
+from bid.models.bid import StatusChoices as BidStatusChoices
 
 
 @extend_schema(
@@ -993,3 +998,174 @@ class CreateLiveAuctionView(BaseAuctionView):
 class CreateDraftAuctionView(BaseAuctionView):
     def get_auction_status(self):
         return StatusChoices.DRAFT
+
+
+@extend_schema(
+    tags=["Auctions"],
+    responses={
+        200: inline_serializer(
+            name="DeclareWinnerResponse",
+            fields={
+                "message": serializers.CharField(),
+                "bid_id": serializers.UUIDField(),
+                "auction_id": serializers.UUIDField(),
+                "winner_offer": serializers.CharField(
+                    help_text="Offer amount with currency symbol"
+                ),
+                "winner_author_id": serializers.UUIDField(),
+            },
+        ),
+        401: inline_serializer(
+            name="DeclareWinnerUnauthorized",
+            fields={
+                "message": serializers.CharField(help_text="Authentication error message")
+            },
+        ),
+        403: inline_serializer(
+            name="DeclareWinnerForbidden",
+            fields={
+                "message": serializers.CharField(help_text="Permission error message")
+            },
+        ),
+    },
+    examples=auction_declare_winner_openapi_examples.examples(),
+)
+class DeclareWinnerView(generics.GenericAPIView):
+    """
+    Declare the winner of an auction.
+
+    This view allows authenticated users with to declare a winner for
+    a specified auction bid, provided that the auction has completed.
+
+    **Permissions:**
+
+    - IsAuthenticated: Requires the user to be authenticated.
+    - IsBuyer: Requires the user to be a buyer.
+    - IsAuctionOwner: Requires the user to be an owner of the auction.
+    - HasCountryInProfile: Requires the user to have a country specified in their profile.
+
+    **Response:**
+
+    - 200 (OK): Winner of the auction has been successfully declared. The response body contains
+    the details of the winning bid, including the `bid_id`, `auction_id`, and `winner_offer`.
+    - 401 (Unauthorized): Authentication credentials are missing or invalid.
+    - 403 (Forbidden): User does not have permission to declare a winner.
+    - 500 (Internal Server Error): An unexpected error occurred while processing the request.
+
+    **Notes:**
+
+    - The winner can only be declared after the auction has been completed.
+    If the auction is still ongoing or in a draft state, a validation error will be raised.
+    - Bids that have been deleted, rejected, or already approved cannot be declared as winners.
+    - If a winner is successfully declared, the auction status will be updated to `COMPLETED`
+    and the bid status will be set to `APPROVED`.
+    """
+
+    permission_classes = [IsAuthenticated, IsBuyer, IsAuctionOwner, HasCountryInProfile]
+
+    def get_bid(self, auction_id, bid_id):
+        bid = get_object_or_404(
+            Bid.objects.select_related("auction"), id=bid_id, auction_id=auction_id
+        )
+
+        self.check_object_permissions(self.request, bid)
+        return bid
+
+    def validate_bid_and_auction(self, bid):
+        """Validate bid and auction status"""
+        if bid.status in [
+            BidStatusChoices.REJECTED,
+            BidStatusChoices.DELETED,
+            BidStatusChoices.APPROVED,
+        ]:
+            raise ValidationError(
+                _(
+                    "Deleted, rejected or already approved bids cannot be declared as winners."
+                )
+            )
+
+        auction = bid.auction
+        if (
+            auction.status
+            in [
+                StatusChoices.LIVE,
+                StatusChoices.DRAFT,
+                StatusChoices.CANCELED,
+                StatusChoices.DELETED,
+            ]
+            or auction.end_date > timezone.now()
+        ):
+            raise ValidationError(
+                _("You can only declare a winner after the auction has been completed.")
+            )
+
+    def update_auction_winner(self, bid):
+        with transaction.atomic():
+            statistics, created = AuctionStatistics.objects.get_or_create(
+                auction=bid.auction,
+                defaults={
+                    "winner_bid": bid.offer,
+                    "winner_bid_author": bid.author,
+                    "winner_bid_object": bid,
+                    "top_bid": bid.offer,
+                    "top_bid_author": bid.author,
+                    "top_bid_object": bid,
+                },
+            )
+
+            if not created:
+                statistics.winner_bid = bid.offer
+                statistics.winner_bid_author = bid.author
+                statistics.winner_bid_object = bid
+
+                # If this is also the top bid, update top bid information
+                if (
+                    not statistics.top_bid_object
+                    or bid.offer > statistics.top_bid_object.offer
+                ):
+                    statistics.top_bid = bid.offer
+                    statistics.top_bid_author = bid.author
+                    statistics.top_bid_object = bid
+
+                statistics.save()
+
+            # Update bid status to approved
+            bid.status = BidStatusChoices.APPROVED
+            bid.save()
+
+            # Update auction status to indicate winner has been declared
+            bid.auction.status = StatusChoices.COMPLETED
+            bid.auction.save()
+
+            return {
+                "message": _("Winner of this auction has successfully been declared"),
+                "bid_id": str(bid.id),
+                "auction_id": str(bid.auction.id),
+                "winner_offer": f"{get_currency_symbol(bid.auction.currency)}{bid.offer}",
+                "winner_author_id": str(bid.author),
+            }
+
+    def post(self, request, auction_id, bid_id, *args, **kwargs):
+        try:
+            bid = self.get_bid(auction_id, bid_id)
+            self.validate_bid_and_auction(bid)
+
+            # All state changes happen in this method within a transaction
+            result = self.update_auction_winner(bid)
+
+            return Response(result, status=status.HTTP_200_OK)
+
+        except ValidationError as e:
+            error_message = (
+                str(e.detail[0]) if isinstance(e.detail, list) else str(e.detail)
+            )
+            return Response(
+                {"message": error_message}, status=status.HTTP_400_BAD_REQUEST
+            )
+        except PermissionDenied as e:
+            return Response({"message": str(e)}, status=status.HTTP_403_FORBIDDEN)
+        except Exception as e:
+            return Response(
+                {"message": f"An error occurred while declaring the winner {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

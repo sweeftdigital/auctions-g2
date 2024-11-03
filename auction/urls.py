@@ -8,6 +8,7 @@ from auction.views import (
     CreateBookmarkView,
     CreateDraftAuctionView,
     CreateLiveAuctionView,
+    DeclareWinnerView,
     DeleteAuctionView,
     DeleteBookmarkView,
     RetrieveAuctionView,
@@ -53,5 +54,10 @@ urlpatterns = [
         "bookmark/delete/<uuid:pk>/",
         DeleteBookmarkView.as_view(),
         name="delete-bookmark",
+    ),
+    path(
+        "declare-winner/<uuid:auction_id>/<uuid:bid_id>/",
+        DeclareWinnerView.as_view(),
+        name="declare-winner",
     ),
 ]
