@@ -14,6 +14,7 @@ def list_bid_examples():
                 "author_nickname": "SadWozniak777",
                 "author_kyc_verified": True,
                 "auction": "39bdccae-3506-4e18-951a-9fdfa1228a22",
+                "auction_name": "High-Performance Laptop",
                 "auction_status": "Live",
                 "auction_author_nickname": "QuirkyMclaren241",
                 "auction_max_price": "₾1300.00",

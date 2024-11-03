@@ -32,6 +32,7 @@ class BidImageSerializer(serializers.ModelSerializer):
 
 class BidListSerializer(serializers.ModelSerializer):
     images = BidImageSerializer(many=True, read_only=True)
+    auction_name = serializers.SerializerMethodField(read_only=True)
     auction_status = serializers.SerializerMethodField(read_only=True)
     auction_author_nickname = serializers.SerializerMethodField(read_only=True)
     auction_max_price = serializers.SerializerMethodField(read_only=True)
@@ -45,6 +46,7 @@ class BidListSerializer(serializers.ModelSerializer):
             "author_avatar",
             "author_kyc_verified",
             "auction",
+            "auction_name",
             "auction_status",
             "auction_author_nickname",
             "auction_max_price",
@@ -54,6 +56,11 @@ class BidListSerializer(serializers.ModelSerializer):
             "status",
             "images",
         ]
+
+    def get_auction_name(self, obj):
+        if self.context.get("auction_id") is None:
+            return obj.auction.auction_name
+        return None
 
     def get_auction_status(self, obj):
         # Only include auction status if we're listing all bids of seller (no auction_id in context)
@@ -94,7 +101,12 @@ class BidListSerializer(serializers.ModelSerializer):
         representation["images"] = image_urls
 
         # Remove fields with None values from representation if auction_id is not in context
-        for field in ["auction_status", "auction_author_nickname", "auction_max_price"]:
+        for field in [
+            "auction_name",
+            "auction_status",
+            "auction_author_nickname",
+            "auction_max_price",
+        ]:
             if representation.get(field) is None:
                 representation.pop(field)
 

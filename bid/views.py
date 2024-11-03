@@ -6,8 +6,9 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from drf_spectacular.openapi import OpenApiParameter
 from drf_spectacular.utils import extend_schema
-from rest_framework import generics
+from rest_framework import filters, generics
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.generics import DestroyAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -500,11 +501,22 @@ class BuyerBidListView(ListAPIView):
         403: BidListSerializer,
         404: BidListSerializer,
     },
+    parameters=[
+        OpenApiParameter(
+            name="search",
+            description="Search by `auction_name` field. Only used if `auction_id` is absent. "
+            "If auction id is provided passing this parameter will do nothing.",
+            required=False,
+            type=str,
+        ),
+    ],
 )
 class SellerBidListView(ListAPIView):
     serializer_class = BidListSerializer
     permission_classes = [IsAuthenticated, IsSeller]
     pagination_class = None
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["auction__auction_name"]
 
     def get_top_bids(self, auction_id):
         """
@@ -546,7 +558,7 @@ class SellerBidListView(ListAPIView):
         queryset = self.get_queryset()
 
         if auction_id:
-            # When auction_id is provided, return without pagination
+            # When auction_id is provided, return without search and pagination
             response_data = {
                 "user_bids": self.serializer_class(
                     queryset, many=True, context={"auction_id": auction_id}
@@ -558,16 +570,18 @@ class SellerBidListView(ListAPIView):
             ).data
             return Response(response_data)
         else:
-            # When no auction_id, use pagination
+            # When no auction_id, apply search and pagination
             self.pagination_class = CustomPageNumberPagination
-            page = self.paginate_queryset(queryset)
+            filtered_queryset = self.filter_queryset(queryset)
+            page = self.paginate_queryset(filtered_queryset)
+
             if page is not None:
                 serializer = self.serializer_class(
                     page, many=True, context={"auction_id": None}
                 )
                 return self.get_paginated_response(serializer.data)
 
-            serializer = self.serializer_class(queryset, many=True)
+            serializer = self.serializer_class(filtered_queryset, many=True)
             return Response(serializer.data)
 
 
