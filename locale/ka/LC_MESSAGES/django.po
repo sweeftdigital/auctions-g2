@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-03 21:56+0000\n"
+"POT-Creation-Date: 2024-11-04 01:29+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,62 +28,62 @@ msgstr ""
 "Buyer პროფილის ტიპის მქონე მომხმარებლებს არ შეუძლიათ ამ ოპერაციის "
 "განხორციელება."
 
-#: auction/serializers.py:219
+#: auction/serializers.py:221
 msgid "This auction is already bookmarked."
 msgstr "ეს აუქციონი უკვე დაბუქმარქებულია."
 
-#: auction/serializers.py:276
+#: auction/serializers.py:278
 msgid "This field is read-only."
 msgstr ""
 "ამ ველის ჩაწერა არ შეიძლება, რადგან ის მხოლოდ წაკითხვისთვისაა განკუთვნილი."
 
-#: auction/serializers.py:281
+#: auction/serializers.py:283
 msgid "Max price must be greater than 0."
 msgstr "აუქციონში განსაზღვრული მაქსიმალური ფასი უნდა იყოს 0-ზე მეტი."
 
-#: auction/serializers.py:286
+#: auction/serializers.py:288
 msgid "Invalid category."
 msgstr "კატეგორია არავალიდურია."
 
-#: auction/serializers.py:292
+#: auction/serializers.py:294
 msgid "Tags are required, make sure to include them."
 msgstr "თეგების გადმოცემა სავალდებულია."
 
-#: auction/serializers.py:325 auction/serializers.py:424
+#: auction/serializers.py:327 auction/serializers.py:426
 msgid "Start date cannot be in the past."
 msgstr "აუქციონის საწყისი დრო არ შეიძლება იყოს ამჟამინდელ დროზე ნაკლები."
 
-#: auction/serializers.py:345 auction/serializers.py:426
-#: auction/serializers.py:437
+#: auction/serializers.py:347 auction/serializers.py:428
+#: auction/serializers.py:439
 msgid "End date must be after the start date."
 msgstr "აუქციონის დასასრულის დორ არ შეიძლება იყოს საწყის დროზე ნაკლები."
 
-#: auction/serializers.py:369
+#: auction/serializers.py:371
 msgid "There was an error during the creation of an auction. Please try again."
 msgstr "აუქციონის შექმნისას პრობლემამ იჩინა თავი. გთხოვთ სცადოთ თავიდან."
 
-#: auction/serializers.py:405
+#: auction/serializers.py:407
 msgid "Cannot modify core auction parameters after the auction has started."
 msgstr "აუქციონის დაწყების შემდეგ თქვენ აღარ შეგიძლია მისი მონაცემების შეცვლა."
 
-#: auction/serializers.py:411
+#: auction/serializers.py:413
 msgid "Cannot update auction that has already ended."
 msgstr "თქვენ არ შეგიძლიათ შეცვალოთ უკვე დასრულებული აუქციონი."
 
-#: auction/serializers.py:469
+#: auction/serializers.py:471
 msgid "There was an error during the update of the auction. Please try again."
 msgstr "აუქციონის შექმნისას პრობლემამ იჩინა თავი. გთხოვთ სცადოთ თავიდან."
 
-#: auction/views.py:592
+#: auction/views.py:596
 msgid "Auction deleted successfully."
 msgstr "აუქციონი წარმატებით წაიშალა."
 
-#: auction/views.py:702
+#: auction/views.py:706
 #, python-brace-format
 msgid "Auction with UUID {id} does not exist."
 msgstr "აუქციონი მოცემული იდენტიფიკატორით {id} არ არსებობს."
 
-#: auction/views.py:711
+#: auction/views.py:715
 #, python-brace-format
 msgid ""
 "{deleted} auctions deleted and {marked_deleted} auctions marked as deleted."
@@ -91,20 +91,42 @@ msgstr ""
 "წაიშალა {deleted} აუქციონი და {marked_deleted} აუქციონი მონიშნულია, როგორც "
 "წაშლილი."
 
-#: auction/views.py:1057
+#: auction/views.py:1085
 msgid ""
 "Deleted, rejected or already approved bids cannot be declared as winners."
 msgstr ""
 "წაშლილ, უარყოფილ ან უკვე დაეფრუვებულ ბიდს გამარჯვებულად ვერ გამოაცხადებთ."
 
-#: auction/views.py:1068
+#: auction/views.py:1101
 msgid "You can only declare a winner after the auction has been completed."
 msgstr ""
 "გამარჯვებულის გამოცხადება მხოლოდ აუქციონის დასრულების შემდეგ შეგიძლიათ."
 
-#: auction/views.py:1112
+#: auction/views.py:1143
 msgid "Winner of this auction has successfully been declared"
 msgstr "აუქციონის გამარჯვებული წარმატებით გამოვლინდა."
+
+#: auction/views.py:1243
+msgid "You can not cancel draft auctions."
+msgstr ""
+"თქვენ არ შეგიძლია დრაფტ სტატუსი მქონე აუქციონის გაუქმება."
+
+#: auction/views.py:1244
+msgid "This auction is already canceled."
+msgstr "ეს აუქციონი უკვე გაუქმებულია."
+
+#: auction/views.py:1245
+msgid "You can not cancel deleted auctions."
+msgstr ""
+"თქვენ არ შეგიძლიათ წაშლილი აუქციონის გაუქმება."
+
+#: auction/views.py:1246
+msgid "You can not cancel auctions that have already been completed."
+msgstr "თქვენ არ შეგიძლიათ გააუქომთ აუქციონი, რომელიც უკვე დასრულებულია."
+
+#: auction/views.py:1266
+msgid "Auction was successfully canceled."
+msgstr "აუქციონის გაუქმება წარმატებით განხორციელდა."
 
 #: bid/permissions.py:50
 msgid ""
@@ -115,13 +137,13 @@ msgstr ""
 "აუქციონზე დადონ 5-ზე მეტი სხვადასხვა ბიდი, მაგრამ თქვენ შეგიძლიათ, რომუკვე "
 "არსებული ბიდის შეთავაზება განაახლოთ იმდენჯერ, რამდენჯერაც მოგესურვებათ."
 
-#: bid/serializers.py:213
+#: bid/serializers.py:235
 msgid "As a non-premium user you cannot upload more than 5 images per bid."
 msgstr ""
 "მომხმარებლებს, რომლებსაც არ აქვთ პრემიუმ ტიპის ანგარიში, შეუძლიათ, რომ თითო "
 "ბიდისთვის ატვირთონ მხოლოდ ხუთი სურათი."
 
-#: bid/serializers.py:324
+#: bid/serializers.py:346
 msgid ""
 "You can not update bid with an offer that is more or equal than the current "
 "one. You can only lower the offer when updating a bid"
@@ -130,16 +152,16 @@ msgstr ""
 "მეტი მნიშვნელობის მითითება. ბიდის განახლებისას შესაძლებელია მხოლოდ ფასის "
 "დაკლება."
 
-#: bid/views.py:113
+#: bid/views.py:114
 msgid "You cannot place bids on auctions with a status of `Draft`."
 msgstr "თქვენ არ შეგიძლიათ ბიდის განთავსება 'Draft' სტატუსის მქონე აუქციონზე."
 
-#: bid/views.py:121
+#: bid/views.py:122
 msgid "Auction has already been completed, you can no longer place bids."
 msgstr ""
 "აუქციონი უკვე დასრულდა, თქვენ ვეღარ შეძლებთ ამ აუქციონზე ბიდის განთავსებას."
 
-#: bid/views.py:127
+#: bid/views.py:128
 msgid "Auction has not started yet, you cannot place a bid."
 msgstr ""
 "აუქციონი ჯერ არ დაწყებულა, თქვენ ვერ შეძლებთ ამ აუქციონზე ბიდის განთავსებას."

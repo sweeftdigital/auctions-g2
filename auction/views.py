@@ -23,6 +23,7 @@ from auction.filters import (
 from auction.models import Auction, AuctionStatistics, Bookmark
 from auction.models.auction import StatusChoices
 from auction.openapi import (
+    auction_cancel_openapi_examples,
     auction_create_openapi_examples,
     auction_declare_winner_openapi_examples,
     auction_delete_openapi_examples,
@@ -53,6 +54,7 @@ from auction.serializers import (
     BulkDeleteAuctionSerializer,
     SellerLiveAuctionListSerializer,
 )
+from auction.tasks import revoke_auction_bids
 from auction.utils import get_currency_symbol
 from bid.models import Bid
 from bid.models.bid import StatusChoices as BidStatusChoices
@@ -1169,3 +1171,100 @@ class DeclareWinnerView(generics.GenericAPIView):
                 {"message": f"An error occurred while declaring the winner {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+@extend_schema(
+    tags=["Auctions"],
+    responses={
+        200: inline_serializer(
+            name="CancelAuction",
+            fields={
+                "message": serializers.CharField(),
+            },
+        ),
+        401: inline_serializer(
+            name="CancelAuctionUnauthorized",
+            fields={
+                "message": serializers.CharField(help_text="Authentication error message")
+            },
+        ),
+        403: inline_serializer(
+            name="CancelAuctionForbidden",
+            fields={
+                "message": serializers.CharField(help_text="Permission error message")
+            },
+        ),
+        404: inline_serializer(
+            name="CancelAuctionNotFound",
+            fields={
+                "message": serializers.CharField(help_text="Not found error message")
+            },
+        ),
+    },
+    examples=auction_cancel_openapi_examples.examples(),
+)
+class CancelAuctionView(generics.GenericAPIView):
+    """
+    Cancel an active auction.
+
+    This view allows authenticated users to cancel an active auction, provided they are
+    the auction owner and not the seller. The cancellation will invalidate all existing
+    bids and set their status to `Revoked`.
+
+    **Permissions:**
+
+    - IsAuthenticated: Requires the user to be authenticated.
+    - IsNotSellerAndIsOwner: Requires the user to be the auction owner and not to be a  seller.
+
+    **Response:**
+
+    - 200 (OK): Auction has been successfully canceled. The response contains a success message.
+    - 401 (Unauthorized): Authentication credentials are missing or invalid.
+    - 403 (Forbidden): User does not have permission to cancel the auction.
+    - 404 (Not Found): The specified auction does not exist.
+
+    **Notes:**
+
+    - Only active auctions can be canceled. Auctions in draft, canceled, deleted, or completed
+      states cannot be canceled.
+    - An auction cannot be canceled after its end date has passed.
+    - Upon successful cancellation:
+        - The auction status is set to CANCELED
+        - All existing bids are revoked(their status gets set to `Revoked`)
+    """
+
+    permission_classes = [IsAuthenticated, IsNotSellerAndIsOwner]
+    lookup_url_kwarg = "auction_id"
+    queryset = Auction.objects.all()
+
+    def validate_auction_status(self, auction):
+
+        auction_status_responses = {
+            "Draft": _("You can not cancel draft auctions."),
+            "Canceled": _("This auction is already canceled."),
+            "Deleted": _("You can not cancel deleted auctions."),
+            "Completed": _(
+                "You can not cancel auctions that have already been completed."
+            ),
+        }
+
+        if auction.end_date < timezone.now():
+            raise ValidationError(auction_status_responses["Completed"])
+
+        if auction.status in auction_status_responses:
+            raise ValidationError(auction_status_responses[auction.status])
+
+        return True
+
+    def post(self, request, auction_id):
+        with transaction.atomic():
+            auction = self.get_object()
+            self.validate_auction_status(auction)
+            auction.status = StatusChoices.CANCELED
+            auction.save()
+            transaction.on_commit(lambda: revoke_auction_bids.delay(auction.id))
+
+        return Response(
+            {"message": _("Auction was successfully canceled.")},
+            status=status.HTTP_200_OK,
+        )

@@ -60,5 +60,4 @@ class IsAuctionOwner(BasePermission):
         return True
 
     def has_object_permission(self, request, view, obj):
-        print("we are here")
         return str(obj.auction.author) == str(request.user.id)

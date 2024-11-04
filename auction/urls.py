@@ -5,6 +5,7 @@ from auction.views import (
     BulkDeleteAuctionView,
     BuyerAuctionListView,
     BuyerDashboardListView,
+    CancelAuctionView,
     CreateBookmarkView,
     CreateDraftAuctionView,
     CreateLiveAuctionView,
@@ -60,4 +61,5 @@ urlpatterns = [
         DeclareWinnerView.as_view(),
         name="declare-winner",
     ),
+    path("cancel/<uuid:auction_id>/", CancelAuctionView.as_view(), name="cancel-auction"),
 ]
