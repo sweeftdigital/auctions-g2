@@ -5,6 +5,7 @@ from auction.views import (
     BulkDeleteAuctionView,
     BuyerAuctionListView,
     BuyerDashboardListView,
+    BuyerLeaderBoardStatisticsListView,
     CancelAuctionView,
     CreateBookmarkView,
     CreateDraftAuctionView,
@@ -64,4 +65,9 @@ urlpatterns = [
     ),
     path("cancel/<uuid:auction_id>/", CancelAuctionView.as_view(), name="cancel-auction"),
     path("leave/<uuid:auction_id>/", LeaveAuctionView.as_view(), name="leave-auction"),
+    path(
+        "buyer/leaderboard/",
+        BuyerLeaderBoardStatisticsListView.as_view(),
+        name="buyer-leaderboard",
+    ),
 ]

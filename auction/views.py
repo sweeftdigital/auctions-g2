@@ -1,8 +1,18 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db import DatabaseError, transaction
-from django.db.models import BooleanField, Case, Exists, F, OuterRef, Subquery, When
-from django.db.models.functions import Greatest
+from django.db.models import (
+    BooleanField,
+    Case,
+    Count,
+    Exists,
+    F,
+    OuterRef,
+    Subquery,
+    When,
+    Window,
+)
+from django.db.models.functions import Greatest, RowNumber
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -1456,3 +1466,111 @@ class LeaveAuctionView(generics.GenericAPIView):
                 {"detail": f"An error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+@extend_schema(
+    tags=["Statistics"],
+)
+class BuyerLeaderBoardStatisticsListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, IsBuyer]
+
+    def get_queryset(self):
+        return (
+            Auction.objects.filter(
+                status=StatusChoices.COMPLETED,
+                statistics__winner_bid_object__isnull=False,
+            )
+            .values(
+                "author",
+                "author_nickname",
+                "author_avatar",
+            )
+            .annotate(
+                completed_auctions_count=Count("id"),
+                rank=Window(
+                    expression=RowNumber(), order_by=F("completed_auctions_count").desc()
+                ),
+            )
+            .order_by("-completed_auctions_count")
+        )
+
+    def format_users(self, users):
+        return [
+            {
+                "rank": user["rank"],
+                "author_id": user["author"],
+                "author_nickname": user["author_nickname"],
+                "author_avatar": user["author_avatar"],
+                "completed_auctions_count": user["completed_auctions_count"],
+            }
+            for user in users
+        ]
+
+    def list(self, request, *args, **kwargs):
+        requesting_user_id = request.user.id
+
+        # Get the complete ordered queryset and materialize it
+        complete_queryset = list(self.get_queryset())
+
+        # Get top 3 users
+        top_three = complete_queryset[:3]
+
+        # Get paginated results
+        page = self.paginate_queryset(complete_queryset)
+        formatted_users = self.format_users(page)
+
+        # Find user's data in the complete queryset
+        user_data = None
+        for item in complete_queryset:
+            if str(item["author"]) == str(
+                requesting_user_id
+            ):  # Convert both to strings to ensure matching
+                user_data = item
+                break
+
+        # If user not found in complete_queryset but exists in results, use that data
+        if not user_data:
+            for item in formatted_users:
+                if str(item["author_id"]) == str(requesting_user_id):
+                    user_data = {
+                        "rank": item["rank"],
+                        "author": item["author_id"],
+                        "author_nickname": item["author_nickname"],
+                        "author_avatar": item["author_avatar"],
+                        "completed_auctions_count": item["completed_auctions_count"],
+                    }
+                    break
+
+        if user_data:
+            user_data_response = {
+                "rank": user_data["rank"],
+                "author_id": user_data["author"],
+                "author_nickname": user_data["author_nickname"],
+                "author_avatar": user_data["author_avatar"],
+                "completed_auctions_count": user_data["completed_auctions_count"],
+            }
+        else:
+            user_data_response = {
+                "rank": None,
+                "author_id": requesting_user_id,
+                "author_nickname": (
+                    request.user.nickname if hasattr(request.user, "nickname") else None
+                ),
+                "author_avatar": (
+                    request.user.avatar if hasattr(request.user, "avatar") else None
+                ),
+                "completed_auctions_count": 0,
+            }
+
+        paginated_response = {
+            "user_data": user_data_response,
+            "top_three_users": self.format_users(top_three),
+            "results": formatted_users,
+        }
+
+        response = self.get_paginated_response(paginated_response)
+        response.data["user_data"] = paginated_response["user_data"]
+        response.data["top_three_users"] = paginated_response["top_three_users"]
+        response.data["results"] = paginated_response["results"]
+
+        return response
