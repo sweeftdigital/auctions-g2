@@ -1,3 +1,5 @@
+import uuid
+
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db import DatabaseError, transaction
@@ -163,22 +165,6 @@ class BuyerAuctionListView(ListAPIView):
                 # Map 'category' to 'category__name'
                 ordering = ordering.replace("category", "category__name")
             queryset = queryset.order_by(ordering)
-
-        event_body = {
-            "user_id": str(self.request.user.id),
-        }
-        event_headers = {
-            "event_name": "Message_recieve",
-            "source_service": "accounts",
-            "target_service": "auctions",
-            "message_type": "delete",
-            "priority": "High",
-            "version": "1.0",
-        }
-
-        event_publisher.publish_event(
-            event_body, event_headers, routing_key="Message_recieve"
-        )
 
         return queryset
 
@@ -1172,6 +1158,9 @@ class DeclareWinnerView(generics.GenericAPIView):
             bid.auction.status = StatusChoices.COMPLETED
             bid.auction.save()
 
+            # Send rabbitmq message to account service
+            self.send_event_message(bid)
+
             return {
                 "message": _("Winner of this auction has successfully been declared"),
                 "bid_id": str(bid.id),
@@ -1179,6 +1168,32 @@ class DeclareWinnerView(generics.GenericAPIView):
                 "winner_offer": f"{get_currency_symbol(bid.auction.currency)}{bid.offer}",
                 "winner_author_id": str(bid.author),
             }
+
+    def send_event_message(self, bid):
+        event_body = {
+            "auction_id": str(bid.auction.id),
+            "seller_id": str(bid.author),
+            "buyer_id": str(bid.auction.author),
+            "amount": str(bid.offer),
+            "date": timezone.now().strftime("%Y:%m:%d-%H:%M:%S"),
+            "currency": bid.auction.currency,
+        }
+
+        event_headers = {
+            "event_id": str(uuid.uuid4()),
+            "event_name": "declaring_auction_winner",
+            "source_service": "auction",
+            "target_service": "accounts",
+            "message_type": "create",
+            "timestamp": timezone.now().strftime("%Y:%m:%d-%H:%M:%S"),
+            "priority": "High",
+            "event_type": "declaring_auction_winner",
+            "version": "1.0",
+        }
+
+        return event_publisher.publish_event(
+            event_body, event_headers, routing_key="declaring_auction_winner"
+        )
 
     def post(self, request, auction_id, bid_id, *args, **kwargs):
         try:

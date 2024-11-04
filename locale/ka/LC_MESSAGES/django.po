@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-04 08:27+0000\n"
+"POT-Creation-Date: 2024-11-04 15:38+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -74,16 +74,16 @@ msgstr "თქვენ არ შეგიძლიათ შეცვალო
 msgid "There was an error during the update of the auction. Please try again."
 msgstr "აუქციონის შექმნისას პრობლემამ იჩინა თავი. გთხოვთ სცადოთ თავიდან."
 
-#: auction/views.py:601
+#: auction/views.py:613
 msgid "Auction deleted successfully."
 msgstr "აუქციონი წარმატებით წაიშალა."
 
-#: auction/views.py:711
+#: auction/views.py:723
 #, python-brace-format
 msgid "Auction with UUID {id} does not exist."
 msgstr "აუქციონი მოცემული იდენტიფიკატორით {id} არ არსებობს."
 
-#: auction/views.py:720
+#: auction/views.py:732
 #, python-brace-format
 msgid ""
 "{deleted} auctions deleted and {marked_deleted} auctions marked as deleted."
@@ -91,7 +91,7 @@ msgstr ""
 "წაიშალა {deleted} აუქციონი და {marked_deleted} აუქციონი მონიშნულია, როგორც "
 "წაშლილი."
 
-#: auction/views.py:1091
+#: auction/views.py:1103
 msgid ""
 "Only the bids with a status of either Pending or Approved can be declared as "
 "winner bids."
@@ -99,49 +99,49 @@ msgstr ""
 "მხოლოდ დაეფრუვებული ან მომლოდინე რეჟიმის მქონე ბიდები შეიძლება გამოცხადნენ "
 "გამარჯვებულებად."
 
-#: auction/views.py:1107
+#: auction/views.py:1119
 msgid "You can only declare a winner after the auction has been completed."
 msgstr ""
 "გამარჯვებულის გამოცხადება მხოლოდ აუქციონის დასრულების შემდეგ შეგიძლიათ."
 
-#: auction/views.py:1149
+#: auction/views.py:1165
 msgid "Winner of this auction has successfully been declared"
 msgstr "აუქციონის გამარჯვებული წარმატებით გამოვლინდა."
 
-#: auction/views.py:1249
+#: auction/views.py:1291
 msgid "You can not cancel draft auctions."
 msgstr "თქვენ არ შეგიძლიათ დრაფტ სტატუსის მქონე აუქციონის გაუქმება."
 
-#: auction/views.py:1250
+#: auction/views.py:1292
 msgid "This auction is already canceled."
 msgstr "ეს აუქციონი უკვე გაუქმებულია."
 
-#: auction/views.py:1251
+#: auction/views.py:1293
 msgid "You can not cancel deleted auctions."
 msgstr "თქვენ არ შეგიძლიათ წაშლილი აუქციონის გაუქმება."
 
-#: auction/views.py:1253
+#: auction/views.py:1295
 msgid "You can not cancel auctions that have already been completed."
 msgstr "თქვენ არ შეგიძლიათ გააუქომთ აუქციონი, რომელიც უკვე დასრულებულია."
 
-#: auction/views.py:1275
+#: auction/views.py:1317
 msgid "Auction was successfully canceled."
 msgstr "აუქციონის გაუქმება წარმატებით განხორციელდა."
 
-#: auction/views.py:1367
+#: auction/views.py:1409
 msgid "You can not leave an auction that has already been completed."
 msgstr "თქვენ არ შეგიძლიათ დატოვოთ აუქციონი რომელიც უკვე დასრულდა."
 
-#: auction/views.py:1371
+#: auction/views.py:1413
 msgid "You can not leave an auction that has not started yet."
 msgstr "თქვენ არ შეგიძლიათ დატოვოთ აუქციონი, რომელიც ჯერ არ დაწყებულა."
 
-#: auction/views.py:1375
+#: auction/views.py:1417
 msgid "You can not leave an auction that has been cancelled, drafted."
 msgstr ""
 "თქვენ არ შეგიძლიათ გაუქმებული ან drafter სტატუსის მქონე აუქციონის დატოვება."
 
-#: auction/views.py:1380
+#: auction/views.py:1422
 msgid "As a winner of an auction, you can not leave it."
 msgstr "როგორც გამარჯვებული, თქვენ ვერ დატოვებთ აუქციონს."
 
