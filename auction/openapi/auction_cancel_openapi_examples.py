@@ -31,7 +31,7 @@ def examples():
             status_codes=[401],
         ),
         OpenApiExample(
-            "Error: No permission. (GET)",
+            "Error: No permission. (POST)",
             summary="No permission to cancel auction.",
             description="This example shows an error response when a user tries "
             "to cancel an auction that does not belong to them.",
@@ -49,7 +49,7 @@ def examples():
             status_codes=[403],
         ),
         OpenApiExample(
-            "Response example 5 (GET)",
+            "Response example 5 (POST)",
             summary="Auction not found",
             description="This example demonstrates the response for a scenario where "
             "the requested auction ID does not exist.",

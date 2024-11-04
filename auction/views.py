@@ -27,6 +27,7 @@ from auction.openapi import (
     auction_create_openapi_examples,
     auction_declare_winner_openapi_examples,
     auction_delete_openapi_examples,
+    auction_leave_openapi_examples,
     auction_retrieve_openapi_examples,
     auction_update_patch_openapi_examples,
     auction_update_put_openapi_examples,
@@ -1282,3 +1283,172 @@ class CancelAuctionView(generics.GenericAPIView):
                 "message": data,
             },
         )
+
+
+@extend_schema(
+    tags=["Auctions"],
+    responses={
+        200: inline_serializer(
+            name="LeaveAuction",
+            fields={
+                "message": serializers.CharField(),
+                "user_id": serializers.UUIDField(),
+                "cancelled_auction_count": serializers.IntegerField(),
+            },
+        ),
+        400: inline_serializer(
+            name="LeaveAuctionBadRequest",
+            fields={
+                "message": serializers.CharField(),
+            },
+        ),
+        401: inline_serializer(
+            name="LeaveAuctionBadUnauthorized",
+            fields={
+                "message": serializers.CharField(help_text="Authentication error message")
+            },
+        ),
+        403: inline_serializer(
+            name="LeaveAuctionForbidden",
+            fields={
+                "message": serializers.CharField(help_text="Permission error message")
+            },
+        ),
+        404: inline_serializer(
+            name="LeaveAuctionNotFound",
+            fields={
+                "message": serializers.CharField(help_text="Not found error message")
+            },
+        ),
+    },
+    examples=auction_leave_openapi_examples.examples(),
+)
+class LeaveAuctionView(generics.GenericAPIView):
+    """
+    Leave an auction by cancelling all user's bids.
+
+    This view allows authenticated users to leave an auction by cancelling all their active bids.
+    Users can leave the auction only if it is in progress and they are not the auction's winner.
+
+    **Permissions:**
+
+    - IsAuthenticated: Requires the user to be authenticated.
+    - IsSeller: Requires the user to be a seller to leave the auction.
+
+    **Response:**
+
+    - 200 (OK): Successfully left the auction. The response contains a
+    success message and details about the cancelled bids.
+    - 401 (Unauthorized): Authentication credentials are missing or invalid.
+    - 403 (Forbidden): User does not have permission to make request to this endpoint.
+    - 404 (Not Found): The specified auction does not exist or no active bids found for the user.
+
+    **Notes:**
+
+    - Users cannot leave an auction that has already been completed or is in the future.
+    - Auctions that have been cancelled, drafted, or have the user as the winner cannot be left.
+    - Upon successful execution:
+        - All active bids of the user for the auction are cancelled (their status is set to `Cancelled`).
+        - If the user's cancelled bid was the top bid, the auction's statistics are updated
+        to reflect the next highest bid.
+    """
+
+    permission_classes = [IsAuthenticated, IsSeller]
+    lookup_url_kwarg = "auction_id"
+    queryset = Auction.objects.all()
+
+    def validate_auction_status(self, auction):
+        if auction.end_date < timezone.now() or auction.status == StatusChoices.COMPLETED:
+            raise ValidationError(
+                _("You can not leave an auction that has already been completed."),
+            )
+        if auction.start_date > timezone.now():
+            raise ValidationError(
+                _("You can not leave an auction that has not started yet."),
+            )
+        if auction.status in [StatusChoices.CANCELED, StatusChoices.DRAFT]:
+            raise ValidationError(
+                _("You can not leave an auction that has been cancelled, drafted."),
+            )
+        if auction.statistics.winner_bid_object is not None and str(
+            auction.statistics.winner_bid_object.author
+        ) == str(self.request.user.id):
+            raise ValidationError(_("As a winner of an auction, you can not leave it."))
+
+        return True
+
+    def post(self, request, auction_id, *args, **kwargs):
+        auction = self.get_object()
+        self.validate_auction_status(auction)
+
+        try:
+            with transaction.atomic():
+                # Get all user's active bids for this auction
+                user_bids = Bid.objects.filter(
+                    auction=auction,
+                    author=request.user.id,
+                    status__in=[
+                        BidStatusChoices.PENDING,
+                        BidStatusChoices.APPROVED,
+                        BidStatusChoices.REJECTED,
+                    ],
+                )
+                user_bids_count = user_bids.count()
+
+                if not user_bids.exists():
+                    return Response(
+                        {"detail": "No active bids found for this auction"},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+
+                # Check if any of user's bids is the top bid
+                auction_stats = auction.statistics
+                needs_top_bid_update = False
+
+                if str(auction_stats.top_bid_author) == str(request.user.id):
+                    needs_top_bid_update = True
+
+                # Cancel all user's bids
+                user_bids.update(status=BidStatusChoices.CANCELLED)
+
+                # Update top bid if necessary
+                if needs_top_bid_update:
+                    # Get the next highest bid
+                    next_top_bid = (
+                        Bid.objects.filter(
+                            auction=auction,
+                            status__in=[
+                                BidStatusChoices.PENDING,
+                                BidStatusChoices.APPROVED,
+                            ],
+                        )
+                        .order_by("-offer")
+                        .first()
+                    )
+
+                    if next_top_bid:
+                        # Update auction statistics with new top bid
+                        auction_stats.top_bid = next_top_bid.offer
+                        auction_stats.top_bid_author = next_top_bid.author
+                        auction_stats.top_bid_object = next_top_bid
+                        auction_stats.save()
+                    else:
+                        # No more active bids
+                        auction_stats.top_bid = None
+                        auction_stats.top_bid_author = None
+                        auction_stats.top_bid_object = None
+                        auction_stats.save()
+
+                response_data = {
+                    "message": "Successfully left the auction",
+                    "user_id": str(self.request.user.id),
+                    "cancelled_auction_count": user_bids_count,
+                }
+
+                return Response(response_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {"detail": f"An error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

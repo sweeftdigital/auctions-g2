@@ -12,6 +12,7 @@ from auction.views import (
     DeclareWinnerView,
     DeleteAuctionView,
     DeleteBookmarkView,
+    LeaveAuctionView,
     RetrieveAuctionView,
     SellerAuctionListView,
     SellerDashboardListView,
@@ -62,4 +63,5 @@ urlpatterns = [
         name="declare-winner",
     ),
     path("cancel/<uuid:auction_id>/", CancelAuctionView.as_view(), name="cancel-auction"),
+    path("leave/<uuid:auction_id>/", LeaveAuctionView.as_view(), name="leave-auction"),
 ]
