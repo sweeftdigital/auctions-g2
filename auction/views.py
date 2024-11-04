@@ -67,6 +67,7 @@ from auction.serializers import (
 )
 from auction.tasks import revoke_auction_bids
 from auction.utils import get_currency_symbol
+from auctions.rabbitmq.producer import event_publisher
 from bid.models import Bid
 from bid.models.bid import StatusChoices as BidStatusChoices
 
@@ -162,6 +163,22 @@ class BuyerAuctionListView(ListAPIView):
                 # Map 'category' to 'category__name'
                 ordering = ordering.replace("category", "category__name")
             queryset = queryset.order_by(ordering)
+
+        event_body = {
+            "user_id": str(self.request.user.id),
+        }
+        event_headers = {
+            "event_name": "Message_recieve",
+            "source_service": "accounts",
+            "target_service": "auctions",
+            "message_type": "delete",
+            "priority": "High",
+            "version": "1.0",
+        }
+
+        event_publisher.publish_event(
+            event_body, event_headers, routing_key="Message_recieve"
+        )
 
         return queryset
 
