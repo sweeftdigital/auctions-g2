@@ -1263,9 +1263,22 @@ class CancelAuctionView(generics.GenericAPIView):
             self.validate_auction_status(auction)
             auction.status = StatusChoices.CANCELED
             auction.save()
+            self.notify_auction_group(auction)
             transaction.on_commit(lambda: revoke_auction_bids.delay(auction.id))
 
         return Response(
             {"message": _("Auction was successfully canceled.")},
             status=status.HTTP_200_OK,
+        )
+
+    def notify_auction_group(self, auction):
+        channel_layer = get_channel_layer()
+        data = {"auction_id": str(auction.id), "auction_status": "Cancelled"}
+
+        async_to_sync(channel_layer.group_send)(
+            f"auction_{str(auction.id)}",
+            {
+                "type": "auction_cancelled_notification",
+                "message": data,
+            },
         )
