@@ -53,6 +53,11 @@ class Bid(models.Model):
             "-updated_at",
             "-created_at",
         ]
+        indexes = [
+            models.Index(
+                fields=["auction", "created_at", "id"], name="idx_bid_auction_created"
+            ),
+        ]
 
     def __str__(self):
         return f"Bid of ${self.offer} - {self.description[:50]}"
