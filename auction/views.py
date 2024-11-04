@@ -346,7 +346,11 @@ class SellerDashboardListView(ListAPIView):
         queryset = (
             Auction.objects.select_related("statistics", "category")
             .prefetch_related("tags")
-            .filter(bids__author=user.id, start_date__lte=timezone.now())
+            .filter(
+                bids__author=user.id,
+                start_date__lte=timezone.now(),
+                status=StatusChoices.LIVE,
+            )
             .distinct()
         )
 
