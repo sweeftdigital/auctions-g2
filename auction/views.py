@@ -1079,10 +1079,11 @@ class DeclareWinnerView(generics.GenericAPIView):
             BidStatusChoices.REJECTED,
             BidStatusChoices.DELETED,
             BidStatusChoices.APPROVED,
+            BidStatusChoices.REVOKED,
         ]:
             raise ValidationError(
                 _(
-                    "Deleted, rejected or already approved bids cannot be declared as winners."
+                    "Only the bids with a status of either Pending or Approved can be declared as winner bids."
                 )
             )
 

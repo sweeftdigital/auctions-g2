@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-04 01:29+0000\n"
+"POT-Creation-Date: 2024-11-04 01:36+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -91,40 +91,38 @@ msgstr ""
 "წაიშალა {deleted} აუქციონი და {marked_deleted} აუქციონი მონიშნულია, როგორც "
 "წაშლილი."
 
-#: auction/views.py:1085
+#: auction/views.py:1086
 msgid ""
-"Deleted, rejected or already approved bids cannot be declared as winners."
-msgstr ""
-"წაშლილ, უარყოფილ ან უკვე დაეფრუვებულ ბიდს გამარჯვებულად ვერ გამოაცხადებთ."
+"Only the bids with a status of either Pending or Approved can be declared as "
+"winner bids."
+msgstr "მხოლოდ დაეფრუვებული ან მომლოდინე რეჟიმის მქონე ბიდები შეიძლება გამოცხადნენ გამარჯვებულებად."
 
-#: auction/views.py:1101
+#: auction/views.py:1102
 msgid "You can only declare a winner after the auction has been completed."
 msgstr ""
 "გამარჯვებულის გამოცხადება მხოლოდ აუქციონის დასრულების შემდეგ შეგიძლიათ."
 
-#: auction/views.py:1143
+#: auction/views.py:1144
 msgid "Winner of this auction has successfully been declared"
 msgstr "აუქციონის გამარჯვებული წარმატებით გამოვლინდა."
 
-#: auction/views.py:1243
-msgid "You can not cancel draft auctions."
-msgstr ""
-"თქვენ არ შეგიძლია დრაფტ სტატუსი მქონე აუქციონის გაუქმება."
-
 #: auction/views.py:1244
+msgid "You can not cancel draft auctions."
+msgstr "თქვენ არ შეგიძლიათ დრაფტ სტატუსის მქონე აუქციონის გაუქმება."
+
+#: auction/views.py:1245
 msgid "This auction is already canceled."
 msgstr "ეს აუქციონი უკვე გაუქმებულია."
 
-#: auction/views.py:1245
-msgid "You can not cancel deleted auctions."
-msgstr ""
-"თქვენ არ შეგიძლიათ წაშლილი აუქციონის გაუქმება."
-
 #: auction/views.py:1246
+msgid "You can not cancel deleted auctions."
+msgstr "თქვენ არ შეგიძლიათ წაშლილი აუქციონის გაუქმება."
+
+#: auction/views.py:1248
 msgid "You can not cancel auctions that have already been completed."
 msgstr "თქვენ არ შეგიძლიათ გააუქომთ აუქციონი, რომელიც უკვე დასრულებულია."
 
-#: auction/views.py:1266
+#: auction/views.py:1269
 msgid "Auction was successfully canceled."
 msgstr "აუქციონის გაუქმება წარმატებით განხორციელდა."
 
