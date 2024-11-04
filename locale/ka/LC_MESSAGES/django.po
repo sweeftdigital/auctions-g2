@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-04 03:05+0000\n"
+"POT-Creation-Date: 2024-11-04 05:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -128,20 +128,20 @@ msgstr "თქვენ არ შეგიძლიათ გააუქომ
 msgid "Auction was successfully canceled."
 msgstr "აუქციონის გაუქმება წარმატებით განხორციელდა."
 
-#: auction/views.py:1364
+#: auction/views.py:1363
 msgid "You can not leave an auction that has already been completed."
 msgstr "თქვენ არ შეგიძლიათ დატოვოთ აუქციონი რომელიც უკვე დასრულდა."
 
-#: auction/views.py:1370
+#: auction/views.py:1367
 msgid "You can not leave an auction that has not started yet."
 msgstr "თქვენ არ შეგიძლიათ დატოვოთ აუქციონი, რომელიც ჯერ არ დაწყებულა."
 
-#: auction/views.py:1376
-
+#: auction/views.py:1371
 msgid "You can not leave an auction that has been cancelled, drafted."
-msgstr "თქვენ არ შეგიძლიათ გაუქმებული ან drafter სტატუსის მქონე აუქციონის დატოვება."
+msgstr ""
+"თქვენ არ შეგიძლიათ გაუქმებული ან drafter სტატუსის მქონე აუქციონის დატოვება."
 
-#: auction/views.py:1381
+#: auction/views.py:1376
 msgid "As a winner of an auction, you can not leave it."
 msgstr "როგორც გამარჯვებული, თქვენ ვერ დატოვებთ აუქციონს."
 

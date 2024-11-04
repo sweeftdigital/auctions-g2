@@ -1409,7 +1409,7 @@ class LeaveAuctionView(generics.GenericAPIView):
                     needs_top_bid_update = True
 
                 # Cancel all user's bids
-                user_bids.update(status=BidStatusChoices.CANCELLED)
+                user_bids.update(status=BidStatusChoices.CANCELED)
 
                 # Update top bid if necessary
                 if needs_top_bid_update:
