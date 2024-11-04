@@ -1288,7 +1288,7 @@ class CancelAuctionView(generics.GenericAPIView):
 
     def notify_auction_group(self, auction):
         channel_layer = get_channel_layer()
-        data = {"auction_id": str(auction.id), "auction_status": "Cancelled"}
+        data = {"auction_id": str(auction.id), "auction_status": "Canceled"}
 
         async_to_sync(channel_layer.group_send)(
             f"auction_{str(auction.id)}",
