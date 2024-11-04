@@ -11,6 +11,16 @@ class IsOwner(BasePermission):
         return result
 
 
+class IsBookmarkOwner(BasePermission):
+    """
+    Custom permission to only allow owners of an object to delete it.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        result = str(obj.user_id) == str(request.user.id)
+        return result
+
+
 class IsNotSellerAndIsOwner(BasePermission):
     """
     Custom permission to only allow auction owners to delete their auctions,

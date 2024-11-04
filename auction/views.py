@@ -50,9 +50,9 @@ from auction.openapi import (
 from auction.permissions import (
     HasCountryInProfile,
     IsAuctionOwner,
+    IsBookmarkOwner,
     IsBuyer,
     IsNotSellerAndIsOwner,
-    IsOwner,
     IsSeller,
 )
 from auction.serializers import (
@@ -839,7 +839,7 @@ class DeleteBookmarkView(DestroyAPIView):
     """
 
     queryset = Bookmark.objects.all()
-    permission_classes = (IsAuthenticated, IsOwner)
+    permission_classes = (IsAuthenticated, IsBookmarkOwner)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
