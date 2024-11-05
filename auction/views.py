@@ -1770,7 +1770,7 @@ class SellerDashboardStatistics(APIView):
                 / last_month_winning_bid_count
             ) * 100
         else:
-            percentage_increase = 100
+            percentage_increase = 100 if monthly_winning_bid_count > 0 else 0
 
         return Response(
             {
