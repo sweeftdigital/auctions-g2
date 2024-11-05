@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import timedelta
 
@@ -1212,8 +1213,9 @@ class DeclareWinnerView(generics.GenericAPIView):
             "version": "1.0",
         }
 
+        event_body_json = json.dumps(event_body)
         return event_publisher.publish_event(
-            event_body, event_headers, routing_key="declaring_auction_winner"
+            event_body_json, event_headers, routing_key="declaring_auction_winner"
         )
 
     def post(self, request, auction_id, bid_id, *args, **kwargs):
