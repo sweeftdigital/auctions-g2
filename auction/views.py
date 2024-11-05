@@ -1721,6 +1721,9 @@ class SellerLeaderBoardStatisticsListView(generics.ListAPIView):
         return Response(response_data)
 
 
+@extend_schema(
+    tags=["Statistics"],
+)
 class SellerDashboardStatistics(APIView):
     permission_classes = [IsAuthenticated]
 
