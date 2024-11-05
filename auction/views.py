@@ -1,4 +1,5 @@
 import uuid
+from datetime import timedelta
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -25,6 +26,7 @@ from rest_framework.exceptions import NotFound, PermissionDenied, ValidationErro
 from rest_framework.generics import CreateAPIView, DestroyAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from auction.filters import (
     BookmarkFilterSet,
@@ -533,8 +535,16 @@ class RetrieveAuctionView(generics.RetrieveAPIView):
             if user_is_seller:
                 base_query = base_query.annotate(
                     has_bid=Exists(
-                        Bid.objects.filter(author=user_id, auction_id=OuterRef("pk"))
-                    ),
+                        Bid.objects.filter(
+                            author=user_id,
+                            auction_id=OuterRef("pk"),
+                            status__in=[
+                                BidStatusChoices.PENDING,
+                                BidStatusChoices.APPROVED,
+                                BidStatusChoices.REJECTED,
+                            ],
+                        )
+                    )
                 )
 
             # Get the auction with a single query
@@ -1581,7 +1591,7 @@ class BuyerLeaderBoardStatisticsListView(generics.ListAPIView):
                 "author_id": user["author"],
                 "author_nickname": user["author_nickname"],
                 "author_avatar": user["author_avatar"],
-                "completed_auctions_count": user["completed_auctions_count"],
+                "leaderboard_result": user["completed_auctions_count"],
             }
             for idx, user in enumerate(users)
         ]
@@ -1600,7 +1610,7 @@ class BuyerLeaderBoardStatisticsListView(generics.ListAPIView):
             "author_id": user_data["author"],
             "author_nickname": user_data["author_nickname"],
             "author_avatar": user_data["author_avatar"],
-            "completed_auctions_count": user_data["completed_auctions_count"],
+            "leaderboard_result": user_data["completed_auctions_count"],
         }
 
         response_data = {
@@ -1674,7 +1684,7 @@ class SellerLeaderBoardStatisticsListView(generics.ListAPIView):
                 "author_id": seller["winner_bid_author"],
                 "author_nickname": seller.get("winner_bid_author__nickname"),
                 "author_avatar": seller.get("winner_bid_author__avatar"),
-                "winning_bids_count": seller["winning_bids_count"],
+                "leaderboard_result": seller["winning_bids_count"],
             }
             for idx, seller in enumerate(sellers)
         ]
@@ -1693,7 +1703,7 @@ class SellerLeaderBoardStatisticsListView(generics.ListAPIView):
             "author_id": seller_data["author"],
             "author_nickname": seller_data["author_nickname"],
             "author_avatar": seller_data["author_avatar"],
-            "winning_bids_count": seller_data["winning_bids_count"],
+            "leaderboard_result": seller_data["winning_bids_count"],
         }
 
         response_data = {
@@ -1702,3 +1712,37 @@ class SellerLeaderBoardStatisticsListView(generics.ListAPIView):
         }
 
         return Response(response_data)
+
+
+class SellerDashboardStatistics(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user_uuid = request.user.id
+
+        # Get the start and end of the current month
+        now = timezone.now()
+        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        end_of_month = (start_of_month + timedelta(days=31)).replace(day=1) - timedelta(
+            seconds=1
+        )
+
+        # Count total winning bids by the user
+        winning_bid_count = AuctionStatistics.objects.filter(
+            winner_bid_object__author=user_uuid
+        ).count()
+
+        # Count winning bids by the user for the current month
+        monthly_winning_bid_count = AuctionStatistics.objects.filter(
+            winner_bid_object__author=user_uuid,
+            winner_bid_object__created_at__gte=start_of_month,
+            winner_bid_object__created_at__lte=end_of_month,
+        ).count()
+
+        return Response(
+            {
+                "total_products_sold": winning_bid_count,
+                "last_month_products_sold": monthly_winning_bid_count,
+            },
+            status=status.HTTP_200_OK,
+        )
