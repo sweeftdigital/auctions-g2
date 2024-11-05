@@ -51,7 +51,6 @@ from auction.openapi import (
     seller_dashboard_list_openapi_examples,
 )
 from auction.permissions import (
-    AlreadyHasAWinner,
     HasCountryInProfile,
     IsAuctionOwner,
     IsBookmarkOwner,
@@ -1101,7 +1100,6 @@ class DeclareWinnerView(generics.GenericAPIView):
         IsBuyer,
         IsAuctionOwner,
         HasCountryInProfile,
-        AlreadyHasAWinner,
     ]
 
     def get_bid(self, auction_id, bid_id):
@@ -1117,7 +1115,6 @@ class DeclareWinnerView(generics.GenericAPIView):
         if bid.status in [
             BidStatusChoices.REJECTED,
             BidStatusChoices.DELETED,
-            BidStatusChoices.APPROVED,
             BidStatusChoices.REVOKED,
         ]:
             raise ValidationError(
@@ -1140,6 +1137,9 @@ class DeclareWinnerView(generics.GenericAPIView):
             raise ValidationError(
                 _("You can only declare a winner after the auction has been completed.")
             )
+
+        if auction.statistics.winner_bid_object is not None:
+            raise ValidationError(_("You can have only one winner on an auction."))
 
     def update_auction_winner(self, bid):
         with transaction.atomic():

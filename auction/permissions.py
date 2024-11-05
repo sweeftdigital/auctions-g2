@@ -1,7 +1,5 @@
 from rest_framework.permissions import BasePermission
 
-from auction.models.auction import AuctionStatistics
-
 
 class IsOwner(BasePermission):
     """
@@ -73,16 +71,3 @@ class IsAuctionOwner(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return str(obj.auction.author) == str(request.user.id)
-
-
-class AlreadyHasAWinner(BasePermission):
-    def has_permission(self, request, view):
-        return True
-
-    def has_object_permission(self, request, view, obj):
-        auction_statistics = AuctionStatistics.objects.filter(auction=obj).first()
-
-        if auction_statistics:
-            return auction_statistics.winner_bid_object is not None
-
-        return False
