@@ -17,6 +17,7 @@ from auction.views import (
     RetrieveAuctionView,
     SellerAuctionListView,
     SellerDashboardListView,
+    SellerLeaderBoardStatisticsListView,
     UpdateAuctionView,
 )
 
@@ -69,5 +70,10 @@ urlpatterns = [
         "buyer/leaderboard/",
         BuyerLeaderBoardStatisticsListView.as_view(),
         name="buyer-leaderboard",
+    ),
+    path(
+        "seller/leaderboard/",
+        SellerLeaderBoardStatisticsListView.as_view(),
+        name="seller-leaderboard",
     ),
 ]

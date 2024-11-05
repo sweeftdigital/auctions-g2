@@ -1587,3 +1587,96 @@ class BuyerLeaderBoardStatisticsListView(generics.ListAPIView):
         }
 
         return Response(response_data)
+
+
+@extend_schema(
+    tags=["Statistics"],
+)
+class SellerLeaderBoardStatisticsListView(generics.ListAPIView):
+    permission_classes = [
+        IsAuthenticated,
+        IsSeller,
+    ]  # Assuming `IsSeller` is your custom permission
+    pagination_class = None
+
+    def get_top_50_queryset(self):
+        # Get the top 50 sellers by counting completed auctions where they were the winner
+        return (
+            AuctionStatistics.objects.filter(
+                auction__status=StatusChoices.COMPLETED,
+                winner_bid_author__isnull=False,  # Ensure a winner bid exists
+            )
+            .values("winner_bid_author")  # Group by the seller (winner)
+            .annotate(
+                winning_bids_count=Count("winner_bid_author")
+            )  # Count winning bids for each seller
+            .order_by("-winning_bids_count")[:50]
+        )
+
+    def get_user_stats(self, request):
+        seller_id = request.user.id
+        # Count completed auctions where the current user's bid was the winner
+        winning_bids_count = AuctionStatistics.objects.filter(
+            auction__status=StatusChoices.COMPLETED, winner_bid_author=seller_id
+        ).count()
+
+        # Rank all sellers with winning bids
+        all_sellers_ranked = (
+            AuctionStatistics.objects.filter(
+                auction__status=StatusChoices.COMPLETED, winner_bid_author__isnull=False
+            )
+            .values("winner_bid_author")
+            .annotate(winning_bids_count=Count("winner_bid_author"))
+            .order_by("-winning_bids_count")
+        )
+
+        # Find the current user's rank among all ranked sellers
+        seller_rank = None
+        for idx, entry in enumerate(all_sellers_ranked, start=1):
+            if str(seller_id) == str(entry["winner_bid_author"]):
+                seller_rank = idx
+                break
+
+        return {
+            "seller": seller_id,
+            "seller_nickname": getattr(request.user, "nickname", None),
+            "seller_avatar": getattr(request.user, "avatar", None),
+            "winning_bids_count": winning_bids_count,
+            "rank": seller_rank,
+        }
+
+    def format_sellers(self, sellers):
+        return [
+            {
+                "rank": idx + 1,
+                "seller_id": seller["winner_bid_author"],
+                "seller_nickname": seller.get("winner_bid_author__nickname"),
+                "seller_avatar": seller.get("winner_bid_author__avatar"),
+                "winning_bids_count": seller["winning_bids_count"],
+            }
+            for idx, seller in enumerate(sellers)
+        ]
+
+    def list(self, request, *args, **kwargs):
+        # Get top 50 sellers
+        top_50_sellers = list(self.get_top_50_queryset())
+
+        # Get requesting seller's stats
+        seller_data = self.get_user_stats(request)
+
+        seller_data_response = {
+            "rank": (
+                seller_data["rank"] if seller_data["winning_bids_count"] > 0 else None
+            ),
+            "seller_id": seller_data["seller"],
+            "seller_nickname": seller_data["seller_nickname"],
+            "seller_avatar": seller_data["seller_avatar"],
+            "winning_bids_count": seller_data["winning_bids_count"],
+        }
+
+        response_data = {
+            "seller_data": seller_data_response,
+            "results": self.format_sellers(top_50_sellers),
+        }
+
+        return Response(response_data)
