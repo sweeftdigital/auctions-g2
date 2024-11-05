@@ -51,6 +51,7 @@ from auction.openapi import (
     seller_dashboard_list_openapi_examples,
 )
 from auction.permissions import (
+    AlreadyHasAWinner,
     HasCountryInProfile,
     IsAuctionOwner,
     IsBookmarkOwner,
@@ -1095,7 +1096,13 @@ class DeclareWinnerView(generics.GenericAPIView):
     and the bid status will be set to `APPROVED`.
     """
 
-    permission_classes = [IsAuthenticated, IsBuyer, IsAuctionOwner, HasCountryInProfile]
+    permission_classes = [
+        IsAuthenticated,
+        IsBuyer,
+        IsAuctionOwner,
+        HasCountryInProfile,
+        AlreadyHasAWinner,
+    ]
 
     def get_bid(self, auction_id, bid_id):
         bid = get_object_or_404(
