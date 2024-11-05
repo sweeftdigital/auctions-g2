@@ -1718,31 +1718,53 @@ class SellerDashboardStatistics(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Get the current user's UUID
         user_uuid = request.user.id
 
-        # Get the start and end of the current month
+        # Get the current date and the start/end of the current month
         now = timezone.now()
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         end_of_month = (start_of_month + timedelta(days=31)).replace(day=1) - timedelta(
             seconds=1
         )
 
+        # Calculate the start and end of the previous month
+        start_of_last_month = (start_of_month - timedelta(days=1)).replace(day=1)
+        end_of_last_month = start_of_month - timedelta(seconds=1)
+
         # Count total winning bids by the user
         winning_bid_count = AuctionStatistics.objects.filter(
             winner_bid_object__author=user_uuid
         ).count()
 
-        # Count winning bids by the user for the current month
+        # Count winning bids for the current month
         monthly_winning_bid_count = AuctionStatistics.objects.filter(
             winner_bid_object__author=user_uuid,
             winner_bid_object__created_at__gte=start_of_month,
             winner_bid_object__created_at__lte=end_of_month,
         ).count()
 
+        # Count winning bids for the last month
+        last_month_winning_bid_count = AuctionStatistics.objects.filter(
+            winner_bid_object__author=user_uuid,
+            winner_bid_object__created_at__gte=start_of_last_month,
+            winner_bid_object__created_at__lte=end_of_last_month,
+        ).count()
+
+        # Calculate percentage increase
+        if last_month_winning_bid_count > 0:
+            percentage_increase = (
+                (monthly_winning_bid_count - last_month_winning_bid_count)
+                / last_month_winning_bid_count
+            ) * 100
+        else:
+            percentage_increase = 100
+
         return Response(
             {
                 "total_products_sold": winning_bid_count,
                 "last_month_products_sold": monthly_winning_bid_count,
+                "percentage_increase": str(percentage_increase),
             },
             status=status.HTTP_200_OK,
         )
