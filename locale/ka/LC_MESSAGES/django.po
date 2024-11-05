@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-04 15:38+0000\n"
+"POT-Creation-Date: 2024-11-05 06:25+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -74,16 +74,16 @@ msgstr "თქვენ არ შეგიძლიათ შეცვალო
 msgid "There was an error during the update of the auction. Please try again."
 msgstr "აუქციონის შექმნისას პრობლემამ იჩინა თავი. გთხოვთ სცადოთ თავიდან."
 
-#: auction/views.py:613
+#: auction/views.py:614
 msgid "Auction deleted successfully."
 msgstr "აუქციონი წარმატებით წაიშალა."
 
-#: auction/views.py:723
+#: auction/views.py:724
 #, python-brace-format
 msgid "Auction with UUID {id} does not exist."
 msgstr "აუქციონი მოცემული იდენტიფიკატორით {id} არ არსებობს."
 
-#: auction/views.py:732
+#: auction/views.py:733
 #, python-brace-format
 msgid ""
 "{deleted} auctions deleted and {marked_deleted} auctions marked as deleted."
@@ -91,7 +91,7 @@ msgstr ""
 "წაიშალა {deleted} აუქციონი და {marked_deleted} აუქციონი მონიშნულია, როგორც "
 "წაშლილი."
 
-#: auction/views.py:1103
+#: auction/views.py:1104
 msgid ""
 "Only the bids with a status of either Pending or Approved can be declared as "
 "winner bids."
@@ -99,7 +99,7 @@ msgstr ""
 "მხოლოდ დაეფრუვებული ან მომლოდინე რეჟიმის მქონე ბიდები შეიძლება გამოცხადნენ "
 "გამარჯვებულებად."
 
-#: auction/views.py:1119
+#: auction/views.py:1120
 msgid "You can only declare a winner after the auction has been completed."
 msgstr ""
 "გამარჯვებულის გამოცხადება მხოლოდ აუქციონის დასრულების შემდეგ შეგიძლიათ."

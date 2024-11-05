@@ -546,10 +546,12 @@ class SellerBidListView(ListAPIView):
             .prefetch_related("images")
         )
 
-        # If auction_id is provided, filter by auction
+        # If auction_id is provided, filter by auction and exclude cancelled bids
         if auction_id:
             auction = get_object_or_404(Auction, id=auction_id)
-            queryset = queryset.filter(auction=auction)
+            queryset = queryset.filter(auction=auction).exclude(
+                status=StatusChoices.CANCELED
+            )
 
         return queryset
 
