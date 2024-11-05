@@ -1490,6 +1490,7 @@ class LeaveAuctionView(generics.GenericAPIView):
                     "cancelled_auction_count": user_bids_count,
                 }
 
+                self.notify_auction_group(auction, self.request.user.id)
                 return Response(response_data, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -1497,6 +1498,22 @@ class LeaveAuctionView(generics.GenericAPIView):
                 {"detail": f"An error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+    def notify_auction_group(self, auction, user_id):
+        channel_layer = get_channel_layer()
+        data = {
+            "auction_id": str(auction.id),
+            "auction_status": "left",
+            "user_id": str(user_id),
+        }
+
+        async_to_sync(channel_layer.group_send)(
+            f"auction_{str(auction.id)}",
+            {
+                "type": "auction_left_notification",
+                "message": data,
+            },
+        )
 
 
 @extend_schema(

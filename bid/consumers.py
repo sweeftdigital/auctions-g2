@@ -111,3 +111,14 @@ class BidConsumer(CustomAsyncJsonWebsocketConsumer):
                 "data": event["message"],
             }
         )
+
+    async def auction_left_notification(self, event):
+        """
+        Handles real-time notifications for cancelled auctions.
+        """
+        await self.send_json(
+            {
+                "type": "auction_left_notification",
+                "data": event["message"],
+            }
+        )
