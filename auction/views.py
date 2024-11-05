@@ -12,9 +12,8 @@ from django.db.models import (
     OuterRef,
     Subquery,
     When,
-    Window,
 )
-from django.db.models.functions import Greatest, RowNumber
+from django.db.models.functions import Greatest
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -1505,104 +1504,86 @@ class LeaveAuctionView(generics.GenericAPIView):
 )
 class BuyerLeaderBoardStatisticsListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsBuyer]
+    pagination_class = None
 
-    def get_queryset(self):
+    def get_top_50_queryset(self):
         return (
             Auction.objects.filter(
                 status=StatusChoices.COMPLETED,
                 statistics__winner_bid_object__isnull=False,
             )
-            .values(
-                "author",
-                "author_nickname",
-                "author_avatar",
-            )
-            .annotate(
-                completed_auctions_count=Count("id"),
-                rank=Window(
-                    expression=RowNumber(), order_by=F("completed_auctions_count").desc()
-                ),
-            )
-            .order_by("-completed_auctions_count")
+            .values("author", "author_nickname", "author_avatar")
+            .annotate(completed_auctions_count=Count("id"))
+            .order_by("-completed_auctions_count")[:50]
         )
+
+    def get_user_stats(self, request):
+        user_id = request.user.id
+        completed_with_winner = Auction.objects.filter(
+            author=user_id,
+            status=StatusChoices.COMPLETED,
+            statistics__winner_bid_object__isnull=False,
+        )
+
+        # Rank all users with completed auctions with winning bids
+        all_users_ranked = (
+            Auction.objects.filter(
+                status=StatusChoices.COMPLETED,
+                statistics__winner_bid_object__isnull=False,
+            )
+            .values("author")
+            .annotate(completed_count=Count("id"))
+            .order_by("-completed_count")
+        )
+
+        # Find user's rank in all users
+        user_rank = None
+        completed_count = completed_with_winner.count()
+        for idx, entry in enumerate(all_users_ranked, start=1):
+            if str(user_id) == str(entry["author"]):
+                user_rank = idx
+                break
+
+        return {
+            "author": user_id,
+            "author_nickname": getattr(request.user, "nickname", None),
+            "author_avatar": getattr(request.user, "avatar", None),
+            "completed_auctions_count": completed_count,
+            "rank": user_rank,
+        }
 
     def format_users(self, users):
         return [
             {
-                "rank": user["rank"],
+                "rank": idx + 1,  # Set rank based on position in top 50 list
                 "author_id": user["author"],
                 "author_nickname": user["author_nickname"],
                 "author_avatar": user["author_avatar"],
                 "completed_auctions_count": user["completed_auctions_count"],
             }
-            for user in users
+            for idx, user in enumerate(users)
         ]
 
     def list(self, request, *args, **kwargs):
-        requesting_user_id = request.user.id
+        # Get top 50 users
+        top_50_users = list(self.get_top_50_queryset())
 
-        # Get the complete ordered queryset and materialize it
-        complete_queryset = list(self.get_queryset())
+        # Get requesting user's stats
+        user_data = self.get_user_stats(request)
 
-        # Get top 3 users
-        top_three = complete_queryset[:3]
-
-        # Get paginated results
-        page = self.paginate_queryset(complete_queryset)
-        formatted_users = self.format_users(page)
-
-        # Find user's data in the complete queryset
-        user_data = None
-        for item in complete_queryset:
-            if str(item["author"]) == str(
-                requesting_user_id
-            ):  # Convert both to strings to ensure matching
-                user_data = item
-                break
-
-        # If user not found in complete_queryset but exists in results, use that data
-        if not user_data:
-            for item in formatted_users:
-                if str(item["author_id"]) == str(requesting_user_id):
-                    user_data = {
-                        "rank": item["rank"],
-                        "author": item["author_id"],
-                        "author_nickname": item["author_nickname"],
-                        "author_avatar": item["author_avatar"],
-                        "completed_auctions_count": item["completed_auctions_count"],
-                    }
-                    break
-
-        if user_data:
-            user_data_response = {
-                "rank": user_data["rank"],
-                "author_id": user_data["author"],
-                "author_nickname": user_data["author_nickname"],
-                "author_avatar": user_data["author_avatar"],
-                "completed_auctions_count": user_data["completed_auctions_count"],
-            }
-        else:
-            user_data_response = {
-                "rank": None,
-                "author_id": requesting_user_id,
-                "author_nickname": (
-                    request.user.nickname if hasattr(request.user, "nickname") else None
-                ),
-                "author_avatar": (
-                    request.user.avatar if hasattr(request.user, "avatar") else None
-                ),
-                "completed_auctions_count": 0,
-            }
-
-        paginated_response = {
-            "user_data": user_data_response,
-            "top_three_users": self.format_users(top_three),
-            "results": formatted_users,
+        user_data_response = {
+            "rank": (
+                user_data["rank"] if user_data["completed_auctions_count"] > 0 else None
+            ),
+            "author_id": user_data["author"],
+            "author_nickname": user_data["author_nickname"],
+            "author_avatar": user_data["author_avatar"],
+            "completed_auctions_count": user_data["completed_auctions_count"],
         }
 
-        response = self.get_paginated_response(paginated_response)
-        response.data["user_data"] = paginated_response["user_data"]
-        response.data["top_three_users"] = paginated_response["top_three_users"]
-        response.data["results"] = paginated_response["results"]
+        response_data = {
+            "user_data": user_data_response,
+            "results": self.format_users(top_50_users),
+        }
 
-        return response
+        return Response(response_data)
