@@ -1638,9 +1638,9 @@ class SellerLeaderBoardStatisticsListView(generics.ListAPIView):
                 break
 
         return {
-            "seller": seller_id,
-            "seller_nickname": getattr(request.user, "nickname", None),
-            "seller_avatar": getattr(request.user, "avatar", None),
+            "author": seller_id,
+            "author_nickname": getattr(request.user, "nickname", None),
+            "author_avatar": getattr(request.user, "avatar", None),
             "winning_bids_count": winning_bids_count,
             "rank": seller_rank,
         }
@@ -1649,9 +1649,9 @@ class SellerLeaderBoardStatisticsListView(generics.ListAPIView):
         return [
             {
                 "rank": idx + 1,
-                "seller_id": seller["winner_bid_author"],
-                "seller_nickname": seller.get("winner_bid_author__nickname"),
-                "seller_avatar": seller.get("winner_bid_author__avatar"),
+                "author_id": seller["winner_bid_author"],
+                "author_nickname": seller.get("winner_bid_author__nickname"),
+                "author_avatar": seller.get("winner_bid_author__avatar"),
                 "winning_bids_count": seller["winning_bids_count"],
             }
             for idx, seller in enumerate(sellers)
@@ -1668,14 +1668,14 @@ class SellerLeaderBoardStatisticsListView(generics.ListAPIView):
             "rank": (
                 seller_data["rank"] if seller_data["winning_bids_count"] > 0 else None
             ),
-            "seller_id": seller_data["seller"],
-            "seller_nickname": seller_data["seller_nickname"],
-            "seller_avatar": seller_data["seller_avatar"],
+            "author_id": seller_data["author"],
+            "author_nickname": seller_data["author_nickname"],
+            "author_avatar": seller_data["author_avatar"],
             "winning_bids_count": seller_data["winning_bids_count"],
         }
 
         response_data = {
-            "seller_data": seller_data_response,
+            "user_data": seller_data_response,
             "results": self.format_sellers(top_50_sellers),
         }
 
