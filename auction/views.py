@@ -360,6 +360,11 @@ class SellerDashboardListView(ListAPIView):
             .prefetch_related("tags")
             .filter(
                 bids__author=user.id,
+                bids__status__in=[
+                    BidStatusChoices.PENDING,
+                    BidStatusChoices.APPROVED,
+                    BidStatusChoices.REJECTED,
+                ],
                 start_date__lte=timezone.now(),
                 status=StatusChoices.LIVE,
             )
