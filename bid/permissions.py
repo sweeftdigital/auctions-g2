@@ -3,6 +3,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import BasePermission
 
 from bid.models import Bid
+from bid.models.bid import StatusChoices
 
 
 class IsBidAuthorOrAuctionAuthor(BasePermission):
@@ -40,9 +41,11 @@ class OnlyFiveUniqueBidsPerUser(BasePermission):
         if auction_id is None:
             return False
 
-        user_bids_count = Bid.objects.filter(
-            auction_id=auction_id, author=request.user.id
-        ).count()
+        user_bids_count = (
+            Bid.objects.filter(auction_id=auction_id, author=request.user.id)
+            .exclude(status=StatusChoices.CANCELED)
+            .count()
+        )
 
         if user_bids_count >= 5:
             raise PermissionDenied(

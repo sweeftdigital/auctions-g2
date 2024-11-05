@@ -529,7 +529,7 @@ class SellerBidListView(ListAPIView):
                 status__in=[StatusChoices.APPROVED, StatusChoices.PENDING],
             )
             .order_by("offer", "-created_at")
-            .prefetch_related("images")[:3]
+            .prefetch_related("images")[:5]
         )
 
     def get_queryset(self):
