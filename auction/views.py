@@ -1727,7 +1727,7 @@ class SellerLeaderBoardStatisticsListView(generics.ListAPIView):
     tags=["Statistics"],
 )
 class SellerDashboardStatistics(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsSeller]
 
     def get(self, request):
         # Get the current user's UUID
@@ -1777,6 +1777,71 @@ class SellerDashboardStatistics(APIView):
                 "total_products_sold": winning_bid_count,
                 "last_month_products_sold": monthly_winning_bid_count,
                 "percentage_increase": str(percentage_increase),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+@extend_schema(
+    tags=["Statistics"],
+)
+class BuyerDashboardStatistics(APIView):
+    permission_classes = [IsAuthenticated, IsBuyer]
+
+    def get(self, request):
+        # Get the current user's UUID
+        user_uuid = request.user.id
+
+        # Get the current date and the start/end of the current month
+        now = timezone.now()
+        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        end_of_month = (start_of_month + timedelta(days=31)).replace(day=1) - timedelta(
+            seconds=1
+        )
+
+        # Calculate the start and end of the previous month
+        start_of_last_month = (start_of_month - timedelta(days=1)).replace(day=1)
+        end_of_last_month = start_of_month - timedelta(seconds=1)
+
+        # Count total completed auctions with winners
+        total_completed_auctions = AuctionStatistics.objects.filter(
+            auction__author=user_uuid,
+            auction__status=StatusChoices.COMPLETED,
+            winner_bid_object__isnull=False,
+        ).count()
+
+        # Count completed auctions for the current month
+        monthly_completed_auctions = AuctionStatistics.objects.filter(
+            auction__author=user_uuid,
+            auction__status=StatusChoices.COMPLETED,
+            winner_bid_object__isnull=False,
+            auction__end_date__gte=start_of_month,
+            auction__end_date__lte=end_of_month,
+        ).count()
+
+        # Count completed auctions for the last month
+        last_month_completed_auctions = AuctionStatistics.objects.filter(
+            auction__author=user_uuid,
+            auction__status=StatusChoices.COMPLETED,
+            winner_bid_object__isnull=False,
+            auction__end_date__gte=start_of_last_month,
+            auction__end_date__lte=end_of_last_month,
+        ).count()
+
+        # Calculate percentage increase
+        if last_month_completed_auctions > 0:
+            percentage_increase = (
+                (monthly_completed_auctions - last_month_completed_auctions)
+                / last_month_completed_auctions
+            ) * 100
+        else:
+            percentage_increase = 100 if monthly_completed_auctions > 0 else 0
+
+        return Response(
+            {
+                "total_completed_auctions": total_completed_auctions,
+                "last_month_completed_auctions": monthly_completed_auctions,
+                "percentage_increase": str(round(percentage_increase, 2)),
             },
             status=status.HTTP_200_OK,
         )

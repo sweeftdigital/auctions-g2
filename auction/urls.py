@@ -5,6 +5,7 @@ from auction.views import (
     BulkDeleteAuctionView,
     BuyerAuctionListView,
     BuyerDashboardListView,
+    BuyerDashboardStatistics,
     BuyerLeaderBoardStatisticsListView,
     CancelAuctionView,
     CreateBookmarkView,
@@ -81,5 +82,10 @@ urlpatterns = [
         "seller/dashboard/statistics/",
         SellerDashboardStatistics.as_view(),
         name="seller-dashboard-statistics",
+    ),
+    path(
+        "buyer/dashboard/statistics/",
+        BuyerDashboardStatistics.as_view(),
+        name="buyer-dashboard-statistics",
     ),
 ]
